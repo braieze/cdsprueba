@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conquistadores - Gestión Integral</title>
+    <title>Conquistadores - Gestión Ministerial</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
@@ -18,14 +16,14 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#FDFBF7',  // Fondo crema muy suave (del flyer)
-                            100: '#F7F3E8', // Crema más oscuro
+                            50: '#FDFBF7',  // Fondo Crema
+                            100: '#F7F3E8', 
                             200: '#EFE5D1',
-                            500: '#D97706', // Dorado/Ambar secundario
-                            600: '#C0392B', // Terracota/Rojo (Color principal del título "SABADO")
+                            500: '#D97706', // Ámbar/Dorado
+                            600: '#C0392B', // Terracota Principal
                             700: '#A93226',
                             800: '#7B241C',
-                            900: '#1A1A1A', // Negro suave
+                            900: '#5D1C16', // Terracota Oscuro (Sidebar)
                         }
                     },
                     fontFamily: {
@@ -35,14 +33,16 @@
             }
         }
     </script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDFBF7; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        
+        /* Animaciones */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
     </style>
 </head>
 <body class="text-slate-800">
@@ -51,701 +51,502 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- ICONOS ---
+        // --- ICONOS SVG ---
         const Icons = {
             Users: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
             Wallet: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>,
             LayoutDashboard: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
-            Calendar: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
-            ClipboardList: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12v-1h6v1"/><path d="M11 17h2"/><path d="M12 11v6"/></svg>,
+            Music: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
+            BookOpen: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+            Smile: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>,
+            Bell: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
+            LogOut: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
             Menu: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>,
-            X: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>,
-            Plus: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
-            ChevronRight: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
-            Phone: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
-            UserCheck: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
-            LogOut: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            Calendar: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
+            Send: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+            Clipboard: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
         };
 
-        // --- COMPONENTES UI GENÉRICOS ---
-
+        // --- COMPONENTES UI BASE ---
         const Card = ({ children, className = "" }) => (
-            <div className={`bg-white rounded-2xl shadow-sm border border-brand-200 p-6 ${className}`}>
-                {children}
-            </div>
+            <div className={`bg-white rounded-2xl shadow-sm border border-brand-200 p-6 ${className}`}>{children}</div>
         );
 
-        const Badge = ({ children, color = "brand", className="" }) => {
-            const colors = {
-                brand: "bg-brand-100 text-brand-700 border-brand-200",
-                green: "bg-emerald-50 text-emerald-700 border-emerald-100",
-                blue: "bg-blue-50 text-blue-700 border-blue-100",
-                gray: "bg-slate-100 text-slate-600 border-slate-200",
-            };
-            return (
-                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${colors[color] || colors.brand} ${className}`}>
-                    {children}
-                </span>
-            );
-        };
-
         const Button = ({ children, onClick, variant = "primary", className = "", icon: IconName, disabled=false }) => {
-            const base = "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none";
+            const base = "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
             const variants = {
                 primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-600/20",
                 secondary: "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50",
                 ghost: "text-slate-500 hover:bg-brand-50 hover:text-brand-700",
             };
             const Icon = IconName ? Icons[IconName] : null;
-            return (
-                <button onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`}>
-                    {Icon && <Icon width={18} height={18} />}
-                    {children}
-                </button>
-            );
+            return <button onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`}>{Icon && <Icon width={18}/>}{children}</button>;
         };
 
         const Input = ({ label, ...props }) => (
             <div className="flex flex-col gap-1.5 mb-4">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
-                <input className="w-full px-4 py-3 bg-brand-50 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:bg-white transition-all font-medium text-slate-700" {...props}/>
+                <input className="w-full px-4 py-3 bg-brand-50 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/30 transition-all font-medium text-slate-700" {...props}/>
             </div>
         );
 
-        const Select = ({ label, children, ...props }) => (
-            <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
-                <div className="relative">
-                    <select className="w-full px-4 py-3 bg-brand-50 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:bg-white transition-all font-medium text-slate-700 appearance-none" {...props}>
-                        {children}
-                    </select>
-                    <div className="absolute right-4 top-3.5 pointer-events-none text-slate-400">
-                        <Icons.ChevronRight width={16} className="rotate-90" />
-                    </div>
-                </div>
-            </div>
-        );
-
-        const Modal = ({ isOpen, onClose, title, children }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-slide-up">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                            <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
-                                <Icons.X width={24}/>
-                            </button>
-                        </div>
-                        <div className="p-6">
-                            {children}
-                        </div>
-                    </div>
-                </div>
-            );
+        const Badge = ({ children, color = "brand" }) => {
+             const colors = {
+                brand: "bg-brand-100 text-brand-800 border-brand-200",
+                green: "bg-emerald-100 text-emerald-800 border-emerald-200",
+                blue: "bg-blue-100 text-blue-800 border-blue-200",
+            };
+            return <span className={`px-2 py-0.5 rounded-md text-xs font-bold border ${colors[color] || colors.brand}`}>{children}</span>
         };
 
-        // --- MÓDULOS DEL SISTEMA ---
+        // --- MOCK DATA ---
+        const MOCK_MEMBERS = [
+            { id: 1, name: 'Carlos (Líder Alabanza)', age: 32, ministry: 'Alabanza', role: 'Leader', status: 'Activo' },
+            { id: 2, name: 'Ana (Pastora)', age: 45, ministry: 'Pastoral', role: 'Pastor', status: 'Activo' },
+            { id: 3, name: 'Lucas (Joven)', age: 16, ministry: 'Jóvenes', role: 'Member', status: 'Activo' },
+            { id: 4, name: 'Sofía (Niña)', age: 8, ministry: 'EBD', role: 'Child', status: 'Activo' },
+            { id: 5, name: 'Pedro (Servidor)', age: 28, ministry: 'Ujieres', role: 'Server', status: 'Activo' },
+            { id: 6, name: 'Marta (Maestra EBD)', age: 35, ministry: 'EBD', role: 'Leader', status: 'Activo' },
+            { id: 7, name: 'Juan (Líder Jóvenes)', age: 24, ministry: 'Jóvenes', role: 'Leader', status: 'Activo' },
+        ];
 
-        // 1. DASHBOARD COMPLETO
-        const Dashboard = ({ members, finances, events, rosters }) => {
-            // Cálculos rápidos
-            const nextEvent = events.find(e => new Date(e.date) >= new Date()) || events[0];
-            const activeMembers = members.filter(m => m.status === 'Activo').length;
-            const balance = finances.reduce((acc, curr) => curr.type === 'ingreso' ? acc + curr.amount : acc - curr.amount, 0);
-            
+        const MOCK_SONGS = [
+            { id: 1, title: 'Tu Fidelidad', tags: ['Adoración'], lastUsed: '2023-11-01' },
+            { id: 2, title: 'En los Montes', tags: ['Júbilo', 'Guerra'], lastUsed: '2023-10-20' },
+            { id: 3, title: 'Santo Espíritu', tags: ['Adoración'], lastUsed: '2023-11-15' },
+        ];
+
+        const MOCK_NOTIFICATIONS = [
+            { id: 1, from: 'Pastoral', to: 'all', message: 'Reunión general de servidores este Viernes 20hs.', date: '2023-11-20' },
+            { id: 2, from: 'Pastoral', to: 'Worship', message: 'Recordar subir lista de temas antes del lunes.', date: '2023-11-21' },
+        ];
+
+        // --- PANTALLAS ESPECÍFICAS ---
+
+        // 1. DASHBOARD COMPARTIDO (Componentes varían según rol)
+        const Dashboard = ({ user, members, notifications }) => {
+            const myNotifications = notifications.filter(n => n.to === 'all' || n.to === user.ministry || (user.role === 'Pastor'));
+
             return (
-                <div className="space-y-8 animate-fade-in">
-                    <div className="flex justify-between items-end">
+                <div className="space-y-6 animate-fade-in">
+                    <header className="flex justify-between items-end">
                         <div>
-                            <h2 className="text-3xl font-extrabold text-brand-900 tracking-tight">Panel de Control</h2>
-                            <p className="text-slate-500 font-medium mt-1">Visión general del ministerio</p>
+                            <h2 className="text-3xl font-extrabold text-brand-800">Hola, {user.name.split(' ')[0]} 👋</h2>
+                            <p className="text-slate-500 font-medium">Panel de {user.role === 'Pastor' ? 'Administración' : user.ministry}</p>
                         </div>
-                        <div className="hidden md:block text-right bg-white px-4 py-2 rounded-xl border border-brand-100 shadow-sm">
-                            <p className="text-xs font-bold text-slate-400 uppercase">Próximo Culto</p>
-                            <p className="text-lg font-bold text-brand-600">Martes 19:30hs</p>
+                        <div className="text-right hidden md:block">
+                            <p className="text-xs font-bold text-slate-400 uppercase">Fecha</p>
+                            <p className="text-lg font-bold text-brand-700">{new Date().toLocaleDateString()}</p>
                         </div>
-                    </div>
+                    </header>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <Card className="bg-gradient-to-br from-brand-600 to-brand-800 text-white border-none relative overflow-hidden">
-                            <div className="relative z-10">
-                                <p className="text-brand-100 font-bold text-xs uppercase tracking-wider mb-1">Tesorería</p>
-                                <h3 className="text-3xl font-extrabold">${balance.toLocaleString()}</h3>
-                                <p className="text-xs text-brand-200 mt-2">Saldo disponible</p>
-                            </div>
-                            <Icons.Wallet className="absolute right-4 bottom-4 text-brand-500 opacity-20 w-24 h-24" />
-                        </Card>
-
-                        <Card>
-                            <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2">Membresía</p>
-                            <h3 className="text-3xl font-extrabold text-slate-800">{members.length}</h3>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                <p className="text-xs text-slate-500 font-bold">{activeMembers} Activos</p>
-                            </div>
-                        </Card>
-
-                        <Card>
-                             <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2">Próximo Evento</p>
-                             <h3 className="text-xl font-bold text-slate-800 truncate">{nextEvent?.title || "Sin eventos"}</h3>
-                             <p className="text-sm text-brand-600 font-bold mt-1">
-                                {nextEvent ? new Date(nextEvent.date).toLocaleDateString() : "--"}
-                             </p>
-                        </Card>
-                        
-                        <Card className="border-l-4 border-l-brand-500">
-                             <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2">Servidores Hoy</p>
-                             <div className="flex -space-x-3 overflow-hidden py-1">
-                                {members.slice(0,4).map((m,i) => (
-                                    <div key={i} className="w-8 h-8 rounded-full bg-brand-100 border-2 border-white flex items-center justify-center text-xs font-bold text-brand-700" title={m.name}>
-                                        {m.name.charAt(0)}
-                                    </div>
-                                ))}
-                                <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-500">+2</div>
-                             </div>
-                             <p className="text-xs text-slate-400 mt-2">Equipo asignado</p>
-                        </Card>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Gráfico simplificado con HTML/CSS */}
-                        <Card>
-                            <h3 className="font-bold text-slate-700 mb-6 flex items-center gap-2">
-                                <Icons.Wallet width={20} className="text-brand-600"/> Flujo Financiero (Últimos meses)
+                    {/* Widgets Superiores */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Widget Notificaciones (Para todos) */}
+                        <Card className="border-l-4 border-l-brand-600 md:col-span-2">
+                            <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4">
+                                <Icons.Bell width={20} className="text-brand-600"/> Mensajes Importantes
                             </h3>
-                            <div className="h-48 flex items-end justify-between gap-2 px-2">
-                                {[65, 40, 75, 55, 80, 60].map((h, i) => (
-                                    <div key={i} className="w-full bg-brand-50 rounded-t-lg relative group">
-                                        <div 
-                                            style={{height: `${h}%`}} 
-                                            className="absolute bottom-0 w-full bg-brand-200 rounded-t-lg transition-all group-hover:bg-brand-400"
-                                        ></div>
-                                        <div 
-                                            style={{height: `${h - 15}%`}} 
-                                            className="absolute bottom-0 w-full bg-brand-600 rounded-t-lg opacity-80"
-                                        ></div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex justify-between mt-2 text-xs text-slate-400 font-bold uppercase">
-                                <span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span><span>Oct</span>
-                            </div>
-                        </Card>
-
-                        <Card>
-                            <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                                <Icons.UserCheck width={20} className="text-brand-600"/> Seguimiento Reciente
-                            </h3>
-                            <div className="space-y-4">
-                                {members.slice(0,3).map(m => (
-                                    <div key={m.id} className="flex gap-4 items-start p-3 rounded-xl hover:bg-brand-50 transition-colors cursor-pointer">
-                                        <div className="w-10 h-10 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center font-bold text-slate-600">
-                                            {m.name.charAt(0)}
+                            <div className="space-y-3">
+                                {myNotifications.length > 0 ? myNotifications.map(n => (
+                                    <div key={n.id} className="bg-brand-50 p-3 rounded-xl flex gap-3 items-start">
+                                        <div className="w-8 h-8 rounded-full bg-brand-200 flex items-center justify-center text-brand-800 font-bold text-xs flex-shrink-0">
+                                            {n.from.charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-sm text-slate-800">{m.name}</p>
-                                            <p className="text-xs text-slate-500 line-clamp-1">Visita realizada por el Pastor. Se siente animado.</p>
-                                            <p className="text-[10px] text-brand-500 font-bold mt-1 uppercase">Hace 2 días • Visita</p>
+                                            <p className="text-sm font-bold text-brand-900">{n.from}</p>
+                                            <p className="text-sm text-slate-600">{n.message}</p>
+                                            <p className="text-[10px] text-slate-400 mt-1">{n.date}</p>
                                         </div>
                                     </div>
-                                ))}
+                                )) : <p className="text-slate-400 italic">No tienes mensajes nuevos.</p>}
                             </div>
+                        </Card>
+                        
+                        {/* Widget Específico por Rol */}
+                        <Card className="bg-gradient-to-br from-brand-800 to-brand-900 text-white border-none">
+                            {user.ministry === 'Alabanza' && (
+                                <>
+                                    <p className="text-brand-200 text-xs font-bold uppercase">Próximo Turno</p>
+                                    <h3 className="text-2xl font-bold mt-1">Martes 19:30</h3>
+                                    <p className="text-sm text-brand-100 mt-2 opacity-80">Piano: Lucas, Voz: Ana...</p>
+                                </>
+                            )}
+                            {user.ministry === 'EBD' && (
+                                <>
+                                    <p className="text-brand-200 text-xs font-bold uppercase">Niños Asistentes</p>
+                                    <h3 className="text-3xl font-bold mt-1">{members.filter(m => m.age <= 12).length}</h3>
+                                    <p className="text-sm text-brand-100 mt-2 opacity-80">Total registrados</p>
+                                </>
+                            )}
+                            {user.role === 'Pastor' && (
+                                <>
+                                    <p className="text-brand-200 text-xs font-bold uppercase">Membresía Total</p>
+                                    <h3 className="text-3xl font-bold mt-1">{members.length}</h3>
+                                    <p className="text-sm text-brand-100 mt-2 opacity-80">
+                                        {members.filter(m => m.status === 'Activo').length} Activos
+                                    </p>
+                                </>
+                            )}
+                             {user.role === 'Server' && (
+                                <>
+                                    <p className="text-brand-200 text-xs font-bold uppercase">Tu Área</p>
+                                    <h3 className="text-2xl font-bold mt-1">{user.ministry}</h3>
+                                    <p className="text-sm text-brand-100 mt-2 opacity-80">Sirviendo con excelencia</p>
+                                </>
+                            )}
                         </Card>
                     </div>
                 </div>
             );
         };
 
-        // 2. MÓDULO DE MIEMBROS (CRM)
-        const MembersModule = ({ members, setMembers }) => {
-            const [isModalOpen, setModalOpen] = useState(false);
-            const [selectedMember, setSelectedMember] = useState(null);
-            const [viewMode, setViewMode] = useState('list'); // 'list' or 'details'
-            const [searchTerm, setSearchTerm] = useState("");
+        // 2. MÓDULO ALABANZA (Solo visible para Líder Alabanza / Pastor)
+        const WorshipModule = ({ user }) => {
+            const [tab, setTab] = useState('roster'); // 'roster' | 'songs'
+            const [songs, setSongs] = useState(MOCK_SONGS);
             
-            // Estado para nuevo miembro
-            const [newMember, setNewMember] = useState({
-                name: '', phone: '', email: '', dob: '', address: '',
-                ministry: 'Ninguno', status: 'Visitante', gender: 'M', joined: new Date().toISOString().split('T')[0]
-            });
-
-            const handleSaveMember = () => {
-                const collaborator = newMember.gender === 'M' ? 'Carlos (Líder Hombres)' : 'Ana (Líder Mujeres)';
-                const member = {
-                    id: Date.now(),
-                    ...newMember,
-                    assignedTo: collaborator,
-                    followUps: []
-                };
-                setMembers([member, ...members]);
-                setModalOpen(false);
-                setNewMember({ name: '', phone: '', email: '', dob: '', address: '', ministry: 'Ninguno', status: 'Visitante', gender: 'M', joined: '' });
-            };
-
-            const filtered = members.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            // Generación de fechas futuras (mock bimestral)
+            const futureDates = useMemo(() => {
+                const dates = [];
+                let d = new Date();
+                for(let i=0; i<8; i++) { // Próximos 8 cultos
+                    d.setDate(d.getDate() + (d.getDay() === 2 ? 4 : 3)); // Alternar Martes/Sabado aprox
+                    dates.push(new Date(d));
+                }
+                return dates;
+            }, []);
 
             return (
                 <div className="space-y-6 animate-fade-in">
                     <div className="flex justify-between items-center">
-                        <div>
-                            <h2 className="text-2xl font-bold text-brand-900">Directorio de la Iglesia</h2>
-                            <p className="text-slate-500 text-sm">Gestión pastoral y seguimiento</p>
-                        </div>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Nueva Ficha</Button>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-brand-100 flex gap-4">
-                        <div className="relative flex-1">
-                            <Icons.Users className="absolute left-3 top-3 text-slate-400" width={20}/>
-                            <input 
-                                type="text" 
-                                placeholder="Buscar persona..." 
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
+                        <h2 className="text-2xl font-bold text-brand-800 flex items-center gap-2">
+                            <Icons.Music className="text-brand-600"/> Gestión de Alabanza
+                        </h2>
+                        <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                            <button onClick={() => setTab('roster')} className={`px-4 py-1.5 rounded-md text-sm font-bold ${tab === 'roster' ? 'bg-brand-100 text-brand-800' : 'text-slate-500'}`}>Cuadrante</button>
+                            <button onClick={() => setTab('songs')} className={`px-4 py-1.5 rounded-md text-sm font-bold ${tab === 'songs' ? 'bg-brand-100 text-brand-800' : 'text-slate-500'}`}>Canciones</button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filtered.map(member => (
-                            <div key={member.id} onClick={() => setSelectedMember(member)} className="bg-white p-5 rounded-2xl border border-brand-100 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden">
-                                <div className={`absolute top-0 left-0 w-1 h-full ${member.status === 'Activo' ? 'bg-green-500' : 'bg-brand-300'}`}></div>
-                                <div className="flex justify-between items-start mb-4 pl-3">
-                                    <div className="w-12 h-12 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
-                                        {member.name.charAt(0)}
-                                    </div>
-                                    <Badge color={member.status === 'Activo' ? 'green' : 'gray'}>{member.status}</Badge>
-                                </div>
-                                <div className="pl-3">
-                                    <h3 className="font-bold text-lg text-slate-800 group-hover:text-brand-700 transition-colors">{member.name}</h3>
-                                    <p className="text-sm text-slate-500 mb-1">{member.ministry}</p>
-                                    <p className="text-xs font-medium text-brand-600 flex items-center gap-1 mt-3 bg-brand-50 w-fit px-2 py-1 rounded-md">
-                                        <Icons.UserCheck width={14}/> Colab: {member.assignedTo}
+                    {tab === 'roster' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {futureDates.map((date, idx) => (
+                                <Card key={idx} className="hover:border-brand-400 transition-colors cursor-pointer group">
+                                    <p className="text-xs font-bold text-brand-600 uppercase mb-2">
+                                        {date.toLocaleDateString(undefined, {weekday: 'long'})}
                                     </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* MODAL NUEVO MIEMBRO */}
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Registrar Nueva Persona">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input label="Nombre Completo" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-                            <Input label="Teléfono" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} />
-                            <Select label="Sexo" value={newMember.gender} onChange={e => setNewMember({...newMember, gender: e.target.value})}>
-                                <option value="M">Masculino</option>
-                                <option value="F">Femenino</option>
-                            </Select>
-                            <Input label="Fecha Nacimiento" type="date" value={newMember.dob} onChange={e => setNewMember({...newMember, dob: e.target.value})} />
-                            <Input label="Dirección" className="md:col-span-2" value={newMember.address} onChange={e => setNewMember({...newMember, address: e.target.value})} />
-                            <Select label="Estado Eclesiástico" value={newMember.status} onChange={e => setNewMember({...newMember, status: e.target.value})}>
-                                <option>Visitante</option>
-                                <option>Regular</option>
-                                <option>Activo</option>
-                                <option>Bautizado</option>
-                            </Select>
-                            <Select label="Ministerio Interés" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
-                                <option>Ninguno</option>
-                                <option>Ujieres</option>
-                                <option>Alabanza</option>
-                                <option>Niños</option>
-                                <option>Multimedia</option>
-                            </Select>
-                        </div>
-                        <div className="mt-6 flex justify-end gap-3">
-                            <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleSaveMember}>Guardar Ficha</Button>
-                        </div>
-                    </Modal>
-
-                    {/* DETALLE MIEMBRO (MODAL) */}
-                    <Modal isOpen={!!selectedMember} onClose={() => setSelectedMember(null)} title="Ficha de Miembro">
-                        {selectedMember && (
-                            <div>
-                                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                                    <div className="w-16 h-16 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-2xl shadow-lg shadow-brand-200">
-                                        {selectedMember.name.charAt(0)}
+                                    <h3 className="text-xl font-extrabold text-slate-800 mb-4">
+                                        {date.toLocaleDateString(undefined, {day: 'numeric', month: 'short'})}
+                                    </h3>
+                                    <div className="text-sm space-y-1 text-slate-600">
+                                        <p><span className="font-bold text-slate-400">Líder:</span> {idx % 2 === 0 ? 'Carlos' : 'Ana'}</p>
+                                        <p><span className="font-bold text-slate-400">Canciones:</span> {idx === 0 ? '3 seleccionadas' : <span className="text-red-500 font-bold">Pendiente</span>}</p>
                                     </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-slate-800">{selectedMember.name}</h2>
-                                        <div className="flex gap-2 mt-1">
-                                            <Badge>{selectedMember.ministry}</Badge>
-                                            <Badge color="blue">{selectedMember.status}</Badge>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-6">
-                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                        <h4 className="font-bold text-slate-700 text-sm uppercase tracking-wide mb-3">Información de Contacto</h4>
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                            <div><span className="text-slate-400">Teléfono:</span> <p className="font-medium">{selectedMember.phone}</p></div>
-                                            <div><span className="text-slate-400">Email:</span> <p className="font-medium">{selectedMember.email || '--'}</p></div>
-                                            <div><span className="text-slate-400">Cumpleaños:</span> <p className="font-medium">{selectedMember.dob || '--'}</p></div>
-                                            <div><span className="text-slate-400">Dirección:</span> <p className="font-medium">{selectedMember.address || '--'}</p></div>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h4 className="font-bold text-slate-700 text-sm uppercase tracking-wide">Historial de Seguimiento</h4>
-                                            <button className="text-xs text-brand-600 font-bold hover:underline">+ Agregar Nota</button>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <div className="p-3 border-l-2 border-brand-400 bg-white shadow-sm rounded-r-lg">
-                                                <p className="text-xs text-slate-400 mb-1">20 Nov 2023 - Visita Hogar</p>
-                                                <p className="text-sm text-slate-600">Se le visitó para orar por su familia. Recibió muy bien la palabra.</p>
-                                            </div>
-                                            {/* Mock empty state */}
-                                            {(!selectedMember.followUps || selectedMember.followUps.length === 0) && (
-                                                <p className="text-slate-400 text-sm italic">No hay registros recientes.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </Modal>
-                </div>
-            );
-        };
-
-        // 3. MÓDULO DE TESORERÍA (FINANZAS)
-        const FinanceModule = ({ finances, setFinances }) => {
-            const [tab, setTab] = useState('cierres'); // 'cierres' | 'transacciones'
-            const [isModalOpen, setModalOpen] = useState(false);
-            
-            // Mock de datos para el cierre
-            const [closingData, setClosingData] = useState({ date: '', type: 'Martes', cash: 0, transfer: 0, details: '' });
-
-            const handleSaveClosing = () => {
-                const total = Number(closingData.cash) + Number(closingData.transfer);
-                const newClosing = {
-                    id: Date.now(),
-                    type: 'ingreso', // Para simplificar la lógica general
-                    category: `Cierre Culto ${closingData.type}`,
-                    amount: total,
-                    date: closingData.date,
-                    isClosing: true,
-                    details: closingData
-                };
-                setFinances([newClosing, ...finances]);
-                setModalOpen(false);
-            };
-
-            return (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h2 className="text-2xl font-bold text-brand-900">Tesorería</h2>
-                            <p className="text-slate-500 text-sm">Control de diezmos, ofrendas y gastos</p>
-                        </div>
-                        <div className="flex bg-white p-1 rounded-xl border border-slate-200">
-                            <button onClick={() => setTab('cierres')} className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${tab === 'cierres' ? 'bg-brand-100 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Cierres de Culto</button>
-                            <button onClick={() => setTab('transacciones')} className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${tab === 'transacciones' ? 'bg-brand-100 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Movimientos</button>
-                        </div>
-                    </div>
-
-                    {tab === 'cierres' && (
-                        <div className="space-y-6">
-                            <Card className="bg-brand-50 border-brand-200">
-                                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                    <div className="text-center md:text-left">
-                                        <h3 className="font-bold text-brand-800 text-lg">Nuevo Cierre de Caja</h3>
-                                        <p className="text-sm text-brand-600">Registrar total recaudado en culto.</p>
-                                    </div>
-                                    <Button onClick={() => setModalOpen(true)} icon="Plus">Realizar Cierre</Button>
-                                </div>
-                            </Card>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {finances.filter(f => f.isClosing).map(cierre => (
-                                    <div key={cierre.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 w-24 h-24 bg-brand-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                                        <div className="relative z-10">
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">{new Date(cierre.date).toLocaleDateString()}</p>
-                                            <h3 className="text-xl font-bold text-slate-800">{cierre.category}</h3>
-                                            <div className="my-4">
-                                                <p className="text-3xl font-extrabold text-brand-600">${cierre.amount.toLocaleString()}</p>
-                                            </div>
-                                            <div className="pt-4 border-t border-slate-100 flex justify-between text-sm">
-                                                <span className="text-slate-500">Efectivo: <b>${cierre.details.cash}</b></span>
-                                                <span className="text-slate-500">Transf: <b>${cierre.details.transfer}</b></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    {idx === 0 && <div className="mt-3 text-xs bg-red-50 text-red-600 font-bold px-2 py-1 rounded inline-block">Cierra el Lunes</div>}
+                                </Card>
+                            ))}
                         </div>
                     )}
 
-                    {tab === 'transacciones' && (
+                    {tab === 'songs' && (
                         <Card>
+                            <div className="flex justify-between mb-4">
+                                <h3 className="font-bold text-slate-700">Biblioteca de Temas</h3>
+                                <Button className="!py-1 !px-3 text-xs" icon="Clipboard">Nueva Canción</Button>
+                            </div>
                             <table className="w-full text-left text-sm">
-                                <thead className="text-slate-400 font-bold uppercase border-b border-slate-100">
-                                    <tr>
-                                        <th className="pb-3 pl-2">Fecha</th>
-                                        <th className="pb-3">Categoría</th>
-                                        <th className="pb-3 text-right pr-2">Monto</th>
-                                    </tr>
+                                <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
+                                    <tr><th className="p-3 rounded-l-lg">Título</th><th className="p-3">Etiquetas</th><th className="p-3 rounded-r-lg text-right">Última vez</th></tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {finances.map(t => (
-                                        <tr key={t.id} className="hover:bg-brand-50/50">
-                                            <td className="py-3 pl-2 text-slate-500">{new Date(t.date).toLocaleDateString()}</td>
-                                            <td className="py-3 font-medium text-slate-700">
-                                                <span className={`inline-block w-2 h-2 rounded-full mr-2 ${t.type === 'ingreso' ? 'bg-green-400' : 'bg-red-400'}`}></span>
-                                                {t.category}
-                                            </td>
-                                            <td className={`py-3 text-right pr-2 font-bold ${t.type === 'ingreso' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {t.type === 'gasto' ? '-' : '+'}${t.amount.toLocaleString()}
-                                            </td>
+                                <tbody>
+                                    {songs.map(s => (
+                                        <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50">
+                                            <td className="p-3 font-bold text-slate-700">{s.title}</td>
+                                            <td className="p-3"><div className="flex gap-1">{s.tags.map(t => <Badge key={t} color="blue">{t}</Badge>)}</div></td>
+                                            <td className="p-3 text-right text-slate-400 font-mono">{s.lastUsed}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </Card>
                     )}
-
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Registrar Cierre de Culto">
-                        <div className="grid grid-cols-1 gap-4">
-                            <Input label="Fecha del Culto" type="date" value={closingData.date} onChange={e => setClosingData({...closingData, date: e.target.value})} />
-                            <Select label="Tipo de Reunión" value={closingData.type} onChange={e => setClosingData({...closingData, type: e.target.value})}>
-                                <option>Martes - Oración</option>
-                                <option>Sábado - Jóvenes/Familia</option>
-                                <option>Domingo - General</option>
-                                <option>Evento Especial</option>
-                            </Select>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input label="Total en Efectivo" type="number" placeholder="0.00" value={closingData.cash} onChange={e => setClosingData({...closingData, cash: e.target.value})} />
-                                <Input label="Total Transferencias" type="number" placeholder="0.00" value={closingData.transfer} onChange={e => setClosingData({...closingData, transfer: e.target.value})} />
-                            </div>
-                            <Input label="Observaciones" placeholder="Ej. Hubo venta de comida..." value={closingData.details} onChange={e => setClosingData({...closingData, details: e.target.value})} />
-                        </div>
-                        <div className="mt-6 flex justify-end gap-3">
-                            <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleSaveClosing}>Guardar Cierre</Button>
-                        </div>
-                    </Modal>
                 </div>
             );
         };
 
-        // 4. MÓDULO DE SERVIDORES Y CALENDARIO
-        const ServersModule = ({ members, rosters, setRosters }) => {
-            const [selectedDate, setSelectedDate] = useState("");
+        // 3. MÓDULO EBD / JÓVENES (Reutilizable con filtros)
+        const MinistryDirectoryModule = ({ title, members, minAge, maxAge, icon: Icon }) => {
+            const filteredMembers = members.filter(m => m.age >= minAge && m.age <= maxAge);
 
-            const generateRoster = () => {
-                if (!selectedDate) return alert("Selecciona una fecha");
-                
-                // Lógica de simulación simple: toma miembros random
-                const getRandomMember = (role) => {
-                    const available = members.filter(m => m.ministry === role || m.ministry === 'Liderazgo');
-                    return available[Math.floor(Math.random() * available.length)]?.name || "Sin asignar";
-                };
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-brand-800 flex items-center gap-2">
+                            <Icon className="text-brand-600"/> {title}
+                        </h2>
+                        <div className="bg-brand-100 text-brand-800 px-3 py-1 rounded-lg text-xs font-bold">
+                            {filteredMembers.length} Personas
+                        </div>
+                    </div>
 
-                const newRoster = {
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {filteredMembers.map(m => (
+                            <div key={m.id} className="bg-white p-4 rounded-xl border border-brand-200 shadow-sm flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-lg border border-brand-100">
+                                    {m.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-slate-800">{m.name}</h4>
+                                    <p className="text-xs text-slate-500">{m.age} años • {m.status}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <Card className="bg-brand-50 border-dashed border-2 border-brand-300">
+                        <div className="text-center py-6">
+                            <h3 className="font-bold text-brand-800 text-lg">Próximo Evento / Clase</h3>
+                            <p className="text-slate-500 text-sm mb-4">No hay actividades conflictivas registradas.</p>
+                            <Button variant="secondary" icon="Calendar">Planificar Actividad</Button>
+                        </div>
+                    </Card>
+                </div>
+            );
+        };
+
+        // 4. MÓDULO PASTOR (Notificaciones y Control)
+        const PastorModule = ({ setNotifications, notifications }) => {
+            const [msg, setMsg] = useState('');
+            const [target, setTarget] = useState('all');
+
+            const handleSend = () => {
+                if(!msg) return;
+                const newNote = {
                     id: Date.now(),
-                    date: selectedDate,
-                    areas: {
-                        'Ujieres': [getRandomMember('Ujieres'), getRandomMember('Ujieres')],
-                        'Alabanza': [getRandomMember('Alabanza')],
-                        'Multimedia': [getRandomMember('Multimedia')],
-                        'Limpieza': ['Equipo A']
-                    }
+                    from: 'Pastoral',
+                    to: target,
+                    message: msg,
+                    date: new Date().toLocaleDateString()
                 };
-                setRosters([newRoster, ...rosters]);
-                setSelectedDate("");
+                setNotifications([newNote, ...notifications]);
+                setMsg('');
+                alert("Mensaje enviado a los dispositivos.");
             };
 
             return (
                 <div className="space-y-6 animate-fade-in">
-                    <div>
-                        <h2 className="text-2xl font-bold text-brand-900">Planificación de Servidores</h2>
-                        <p className="text-slate-500 text-sm">Organización de cultos y eventos</p>
-                    </div>
-
-                    <Card className="bg-brand-50 border-brand-200">
-                        <h3 className="font-bold text-brand-800 mb-4">Generador de Cuadrante</h3>
-                        <div className="flex gap-4 items-end">
-                            <div className="flex-1">
-                                <Input label="Fecha del Culto" type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
-                            </div>
-                            <div className="mb-4">
-                                <Button onClick={generateRoster} icon="ClipboardList">Generar Automático</Button>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {rosters.map(r => (
-                            <Card key={r.id} className="relative">
-                                <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-                                    <h4 className="font-bold text-lg text-brand-700">Culto {new Date(r.date).toLocaleDateString(undefined, {weekday: 'short'})}</h4>
-                                    <span className="text-xs font-bold text-slate-400">{new Date(r.date).toLocaleDateString()}</span>
+                    <h2 className="text-2xl font-bold text-brand-800 flex items-center gap-2">
+                        <Icons.Send className="text-brand-600"/> Centro de Mensajería
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Card>
+                            <h3 className="font-bold text-slate-700 mb-4">Enviar Notificación Push</h3>
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-slate-400 uppercase">Destinatario</label>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setTarget('all')} className={`flex-1 py-2 rounded-lg text-sm font-bold border ${target === 'all' ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-slate-200 text-slate-500'}`}>Todos</button>
+                                        <button onClick={() => setTarget('Alabanza')} className={`flex-1 py-2 rounded-lg text-sm font-bold border ${target === 'Alabanza' ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-slate-200 text-slate-500'}`}>Alabanza</button>
+                                        <button onClick={() => setTarget('Liderazgo')} className={`flex-1 py-2 rounded-lg text-sm font-bold border ${target === 'Liderazgo' ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-slate-200 text-slate-500'}`}>Líderes</button>
+                                    </div>
                                 </div>
-                                <div className="space-y-3 text-sm">
-                                    {Object.entries(r.areas).map(([area, people]) => (
-                                        <div key={area} className="flex justify-between">
-                                            <span className="text-slate-500 font-medium">{area}:</span>
-                                            <span className="font-bold text-slate-700 text-right">{Array.isArray(people) ? people.join(", ") : people}</span>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase">Mensaje / Devocional</label>
+                                    <textarea 
+                                        className="w-full p-3 border border-brand-200 rounded-xl bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-600/30 h-32 text-sm"
+                                        placeholder="Escribe aquí el anuncio o devocional..."
+                                        value={msg}
+                                        onChange={e => setMsg(e.target.value)}
+                                    ></textarea>
+                                </div>
+                                <Button onClick={handleSend} className="w-full" icon="Send">Enviar Ahora</Button>
+                            </div>
+                        </Card>
+
+                        <Card>
+                            <h3 className="font-bold text-slate-700 mb-4">Historial Enviado</h3>
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                                {notifications.filter(n => n.from === 'Pastoral').map(n => (
+                                    <div key={n.id} className="border-b border-slate-100 pb-3 last:border-0">
+                                        <div className="flex justify-between">
+                                            <Badge color="gray">Para: {n.to}</Badge>
+                                            <span className="text-[10px] text-slate-400">{n.date}</span>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="mt-4 pt-3 border-t border-slate-50 flex justify-end">
-                                    <button className="text-xs font-bold text-brand-600 hover:text-brand-800">Editar Equipo</button>
-                                </div>
-                            </Card>
-                        ))}
+                                        <p className="text-sm text-slate-600 mt-1">{n.message}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
                     </div>
                 </div>
             );
         };
 
-        const CalendarModule = ({ events }) => {
-            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            // Mock visual de un mes
-            const monthDays = Array.from({length: 31}, (_, i) => i + 1);
-
-            return (
-                <div className="space-y-6 animate-fade-in">
-                     <div>
-                        <h2 className="text-2xl font-bold text-brand-900">Calendario Mensual</h2>
-                        <p className="text-slate-500 text-sm">Eventos y actividades</p>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-sm border border-brand-200 p-6">
-                        <div className="grid grid-cols-7 gap-4 mb-4 text-center">
-                            {days.map(d => <div key={d} className="font-bold text-slate-400 uppercase text-xs">{d}</div>)}
-                        </div>
-                        <div className="grid grid-cols-7 gap-2">
-                            {monthDays.map(day => {
-                                // Buscar evento simple por día (mock)
-                                const dayEvents = events.filter(e => new Date(e.date).getDate() === day);
-                                return (
-                                    <div key={day} className="min-h-[80px] border border-slate-100 rounded-lg p-2 hover:bg-brand-50 transition-colors relative">
-                                        <span className="text-xs font-bold text-slate-400">{day}</span>
-                                        {dayEvents.map(e => (
-                                            <div key={e.id} className="mt-1 bg-brand-100 text-brand-700 text-[10px] font-bold px-1 py-0.5 rounded truncate">
-                                                {e.title}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
-                </div>
-            )
-        }
-
-        // --- APP PRINCIPAL ---
-
+        // --- APP PRINCIPAL (CONTENEDOR) ---
         const App = () => {
+            // Estado Global
+            const [user, setUser] = useState(null); // null = login screen
             const [activeTab, setActiveTab] = useState('dashboard');
             const [isSidebarOpen, setSidebarOpen] = useState(false);
-            
-            // --- DATOS INICIALES (MOCK) ---
-            const [members, setMembers] = useState([
-                { id: 1, name: 'Carlos Gomez', phone: '11-4455-6677', ministry: 'Liderazgo', status: 'Activo', gender: 'M', assignedTo: 'Pastor', joined: '2022-01-01' },
-                { id: 2, name: 'Ana Rodriguez', phone: '11-9988-7766', ministry: 'Alabanza', status: 'Activo', gender: 'F', assignedTo: 'Maria', joined: '2023-03-15' },
-                { id: 3, name: 'Lucas Martinez', phone: '11-2233-4455', ministry: 'Multimedia', status: 'Regular', gender: 'M', assignedTo: 'Carlos', joined: '2023-06-20' },
-                { id: 4, name: 'Sofia Perez', phone: '11-5566-7788', ministry: 'Ninguno', status: 'Visitante', gender: 'F', assignedTo: 'Ana', joined: '2023-11-10' },
-            ]);
+            const [members, setMembers] = useState(MOCK_MEMBERS);
+            const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
 
-            const [finances, setFinances] = useState([
-                { id: 101, type: 'ingreso', amount: 45000, category: 'Cierre Culto Martes', date: '2023-11-14', isClosing: true, details: {cash: 40000, transfer: 5000} },
-                { id: 1, type: 'gasto', amount: 8500, category: 'Luz y Agua', date: '2023-11-15', isClosing: false },
-                { id: 2, type: 'gasto', amount: 3000, category: 'Limpieza', date: '2023-11-16', isClosing: false },
-            ]);
+            // Mock Login (Simulador de Roles)
+            if (!user) {
+                return (
+                    <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+                        <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-brand-100">
+                            <div className="text-center mb-8">
+                                <div className="w-16 h-16 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg shadow-brand-600/40">
+                                    <span className="font-extrabold text-2xl">C</span>
+                                </div>
+                                <h1 className="text-2xl font-extrabold text-slate-800">Bienvenido</h1>
+                                <p className="text-slate-500">Selecciona un rol para simular la experiencia</p>
+                            </div>
+                            <div className="space-y-3">
+                                <button onClick={() => setUser(MOCK_MEMBERS[1])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
+                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Pastoral</div>
+                                    <div className="text-xs text-slate-500">Acceso total + Enviar notificaciones</div>
+                                </button>
+                                <button onClick={() => setUser(MOCK_MEMBERS[0])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
+                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Líder de Alabanza</div>
+                                    <div className="text-xs text-slate-500">Planificación bimestral + Canciones</div>
+                                </button>
+                                <button onClick={() => setUser(MOCK_MEMBERS[5])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
+                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Líder EBD (Niños)</div>
+                                    <div className="text-xs text-slate-500">Directorio < 12 años + Clases</div>
+                                </button>
+                                <button onClick={() => setUser(MOCK_MEMBERS[6])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
+                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Líder Jóvenes</div>
+                                    <div className="text-xs text-slate-500">Directorio 13-25 años + Eventos</div>
+                                </button>
+                                <button onClick={() => setUser(MOCK_MEMBERS[4])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
+                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Servidor General</div>
+                                    <div className="text-xs text-slate-500">Vista limitada + Mensajes</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
 
-            const [rosters, setRosters] = useState([
-                { id: 1, date: '2023-11-18', areas: { 'Ujieres': ['Lucas M.', 'Pedro'], 'Alabanza': ['Ana R.', 'Coro'], 'Limpieza': ['Grupo Jóvenes'] } }
-            ]);
-
-            const [events, setEvents] = useState([
-                { id: 1, title: 'Sábado en Familia', date: '2023-11-25' },
-                { id: 2, title: 'Cierre Mensual', date: '2023-11-30' },
-            ]);
-
+            // Componente Sidebar Item
             const SidebarItem = ({ id, icon: IconName, label }) => {
                 const Icon = Icons[IconName];
                 const isActive = activeTab === id;
                 return (
                     <button 
                         onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 ${
                             isActive 
-                                ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/20' 
-                                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                ? 'bg-brand-600 text-white shadow-lg shadow-black/20' 
+                                : 'text-brand-200 hover:bg-brand-800 hover:text-white'
                         }`}
                     >
-                        <Icon width={20} className={isActive ? 'text-brand-200' : 'text-slate-500 group-hover:text-white'} />
+                        <Icon width={20} className={isActive ? 'text-white' : 'opacity-70'} />
                         {label}
                     </button>
                 );
             };
 
             return (
-                <div className="min-h-screen flex selection:bg-brand-200 selection:text-brand-900">
-                    {/* SIDEBAR */}
+                <div className="min-h-screen flex bg-brand-50 selection:bg-brand-200 selection:text-brand-900 font-sans">
+                    
+                    {/* SIDEBAR - Color Terracota Oscuro (#5D1C16 -> bg-brand-900) */}
                     <aside className={`
-                        fixed md:sticky top-0 h-screen w-72 bg-[#1A1A1A] text-white p-6 z-40 transition-transform duration-300 shadow-2xl flex flex-col justify-between
+                        fixed md:sticky top-0 h-screen w-72 bg-[#5D1C16] text-white p-6 z-40 transition-transform duration-300 shadow-2xl flex flex-col justify-between
                         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                     `}>
                         <div>
-                            <div className="flex items-center gap-3 mb-10 px-2">
-                                {/* LOGO PLACEHOLDER O IMAGEN */}
-                                <div className="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-600/50">
-                                    C
-                                </div>
-                                <div className="leading-tight">
-                                    <h1 className="font-extrabold text-lg tracking-tight">Conquistadores</h1>
-                                    <p className="text-[10px] text-brand-500 font-bold uppercase tracking-widest">Gestión Interna</p>
+                            <div className="flex items-center gap-3 mb-10 px-2 mt-2">
+                                <div className="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center text-white font-extrabold shadow-lg border border-brand-500">C</div>
+                                <div>
+                                    <h1 className="font-bold text-lg leading-none tracking-tight">Conquistadores</h1>
+                                    <p className="text-[10px] text-brand-300 uppercase tracking-widest font-bold mt-1">Gestión Interna</p>
                                 </div>
                             </div>
 
-                            <nav className="space-y-1">
-                                <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-2">Menú Principal</p>
+                            <nav className="space-y-1.5">
                                 <SidebarItem id="dashboard" icon="LayoutDashboard" label="Inicio" />
-                                <SidebarItem id="members" icon="Users" label="Directorio" />
-                                <SidebarItem id="finance" icon="Wallet" label="Tesorería" />
-                                <SidebarItem id="servers" icon="ClipboardList" label="Servidores" />
-                                <SidebarItem id="calendar" icon="Calendar" label="Calendario" />
+                                
+                                {/* MENÚS DINÁMICOS SEGÚN ROL */}
+                                {(user.role === 'Pastor' || user.ministry === 'Alabanza') && (
+                                    <SidebarItem id="worship" icon="Music" label="Alabanza" />
+                                )}
+                                {(user.role === 'Pastor' || user.ministry === 'EBD') && (
+                                    <SidebarItem id="ebd" icon="Smile" label="Escuela Bíblica" />
+                                )}
+                                {(user.role === 'Pastor' || user.ministry === 'Jóvenes') && (
+                                    <SidebarItem id="youth" icon="Users" label="Jóvenes" />
+                                )}
+                                {(user.role === 'Pastor') && (
+                                    <>
+                                        <SidebarItem id="finance" icon="Wallet" label="Tesorería" />
+                                        <SidebarItem id="admin" icon="Send" label="Mensajería" />
+                                    </>
+                                )}
                             </nav>
                         </div>
 
-                        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-xs font-bold text-white border-2 border-[#1A1A1A]">P</div>
-                            <div className="overflow-hidden">
-                                <p className="text-sm font-bold text-white truncate">Pastor Principal</p>
-                                <p className="text-xs text-slate-500 truncate">Admin</p>
+                        <div className="bg-brand-800/50 rounded-xl p-4 border border-brand-700 flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center text-sm font-bold text-white border-2 border-brand-900">
+                                {user.name.charAt(0)}
                             </div>
-                            <button className="ml-auto text-slate-400 hover:text-white"><Icons.LogOut width={16}/></button>
+                            <div className="overflow-hidden flex-1">
+                                <p className="text-sm font-bold text-white truncate">{user.name.split(' ')[0]}</p>
+                                <p className="text-[11px] text-brand-200 truncate uppercase font-bold">{user.ministry}</p>
+                            </div>
+                            <button onClick={() => setUser(null)} className="text-brand-300 hover:text-white transition-colors" title="Salir">
+                                <Icons.LogOut width={18}/>
+                            </button>
                         </div>
                     </aside>
 
-                    {/* OVERLAY MOVIL */}
-                    {isSidebarOpen && <div className="fixed inset-0 bg-black/60 z-30 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
+                    {/* OVERLAY MÓVIL */}
+                    {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
 
                     {/* CONTENIDO PRINCIPAL */}
-                    <main className="flex-1 h-screen overflow-y-auto relative bg-[#FDFBF7]">
-                        {/* HEADER MOVIL */}
-                        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-brand-100 px-6 py-4 flex justify-between items-center md:hidden">
+                    <main className="flex-1 h-screen overflow-y-auto relative">
+                        {/* HEADER MÓVIL */}
+                        <header className="bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-brand-200 px-6 py-4 flex justify-between items-center md:hidden">
                             <div className="font-bold text-brand-900 text-lg">Conquistadores</div>
-                            <button onClick={() => setSidebarOpen(true)} className="p-2 text-slate-600 active:bg-slate-100 rounded-lg">
+                            <button onClick={() => setSidebarOpen(true)} className="p-2 text-brand-800 active:bg-brand-100 rounded-lg">
                                 <Icons.Menu width={24} />
                             </button>
                         </header>
 
-                        <div className="p-6 md:p-10 max-w-7xl mx-auto pb-24">
-                            {activeTab === 'dashboard' && <Dashboard members={members} finances={finances} events={events} rosters={rosters} />}
-                            {activeTab === 'members' && <MembersModule members={members} setMembers={setMembers} />}
-                            {activeTab === 'finance' && <FinanceModule finances={finances} setFinances={setFinances} />}
-                            {activeTab === 'servers' && <ServersModule members={members} rosters={rosters} setRosters={setRosters} />}
-                            {activeTab === 'calendar' && <CalendarModule events={events} />}
+                        <div className="p-6 md:p-10 max-w-6xl mx-auto pb-24">
+                            {/* RENDERIZADO CONDICIONAL DE VISTAS */}
+                            {activeTab === 'dashboard' && <Dashboard user={user} members={members} notifications={notifications} />}
+                            
+                            {(activeTab === 'worship' && (user.role === 'Pastor' || user.ministry === 'Alabanza')) && 
+                                <WorshipModule user={user} />
+                            }
+                            
+                            {(activeTab === 'ebd' && (user.role === 'Pastor' || user.ministry === 'EBD')) && 
+                                <MinistryDirectoryModule title="Escuela Bíblica" icon={Icons.Smile} members={members} minAge={0} maxAge={12} />
+                            }
+                            
+                            {(activeTab === 'youth' && (user.role === 'Pastor' || user.ministry === 'Jóvenes')) && 
+                                <MinistryDirectoryModule title="Red de Jóvenes" icon={Icons.Users} members={members} minAge={13} maxAge={25} />
+                            }
+                            
+                            {(activeTab === 'admin' && user.role === 'Pastor') && 
+                                <PastorModule notifications={notifications} setNotifications={setNotifications} />
+                            }
+                            
+                            {/* Placeholder para vistas no implementadas en detalle en este snippet */}
+                            {activeTab === 'finance' && (
+                                <div className="text-center py-20 animate-fade-in">
+                                    <div className="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-600">
+                                        <Icons.Wallet width={40}/>
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-slate-700">Módulo Tesorería</h2>
+                                    <p className="text-slate-500">Visible solo para Pastores (Implementación previa)</p>
+                                </div>
+                            )}
                         </div>
                     </main>
                 </div>
@@ -755,12 +556,5 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-    
-    <style>
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
-    </style>
 </body>
 </html>
