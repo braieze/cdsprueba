@@ -3,25 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conquistadores - Gestión Integral</title>
+    <title>Conquistadores - Gestión Eclesiástica</title>
     
-    <!-- Librerías Externas (React, Tailwind, Recharts) -->
+    <!-- Librerías Externas -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Recharts: Librería de Gráficos -->
     <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
     
-    <!-- Fuentes y Configuración -->
+    <!-- Fuentes -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         brand: {
-                            50: '#FDF8F6', 100: '#F2E8E5', 200: '#EADDD7', 500: '#E67E22', 
-                            600: '#D35400', 700: '#A04000', 800: '#6E2C00', 900: '#4A1D05'
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c', 
+                            800: '#9a3412', 900: '#7c2d12'
+                        },
+                        dark: {
+                            900: '#0f172a', 800: '#1e293b', 700: '#334155'
                         }
                     },
                     fontFamily: { sans: ['Inter', 'sans-serif'] }
@@ -30,38 +37,44 @@
         }
     </script>
     <style>
-        /* Estilos base y animaciones */
-        body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-enter { animation: enter 0.4s ease-out forwards; }
+        @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
-        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } = Recharts;
+        // --- CONFIGURACIÓN E INICIALIZACIÓN ---
+        const { useState, useEffect, useMemo } = React;
+        
+        // Acceso seguro a Recharts desde window para evitar errores si carga lento
+        const Recharts = window.Recharts || {};
+        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } = Recharts;
 
-        // --- SISTEMA DE ICONOS (CORREGIDO Y REFORZADO) ---
-        // Se usa React.Fragment para agrupar múltiples paths y cumplir con la sintaxis de JSX.
+        // --- ICONOS SVG (Inline para evitar dependencias externas rotas) ---
         const Icons = {
-            Users: <React.Fragment><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></React.Fragment>,
-            Wallet: <React.Fragment><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></React.Fragment>,
-            LayoutDashboard: <React.Fragment><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></React.Fragment>,
-            Music: <React.Fragment><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></React.Fragment>,
-            Smile: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></React.Fragment>,
-            Bell: <React.Fragment><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></React.Fragment>,
-            Calendar: <React.Fragment><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></React.Fragment>,
-            Target: <React.Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></React.Fragment>,
-            Send: <React.Fragment><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></React.Fragment>,
-            Plus: <React.Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></React.Fragment>,
-            Trash: <React.Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></React.Fragment>,
-            LogOut: <React.Fragment><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></React.Fragment>,
-            ChevronRight: <React.Fragment><polyline points="9 18 15 12 9 6"/></React.Fragment>,
-            Menu: <React.Fragment><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></React.Fragment>
+            Home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>,
+            Users: <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>,
+            Wallet: <path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>,
+            Music: <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>,
+            Book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>,
+            Smile: <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>,
+            Bell: <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>,
+            Calendar: <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>,
+            LogOut: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>,
+            Plus: <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>,
+            X: <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>,
+            Menu: <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>,
+            Search: <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>,
+            Mail: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>,
+            ChevronRight: <polyline points="9 18 15 12 9 6"/>,
+            Check: <polyline points="20 6 9 17 4 12"/>,
+            Trash: <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
         };
 
         const Icon = ({ name, size = 20, className = "" }) => (
@@ -70,164 +83,140 @@
             </svg>
         );
 
-        // --- UTILS ---
-        const formatCurrency = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(val);
-        const formatDate = (d) => new Date(d + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-        const getAge = (d) => new Date().getFullYear() - new Date(d).getFullYear();
+        // --- DATOS INICIALES (MOCK) ---
+        const INITIAL_DATA = {
+            members: [
+                { id: 1, name: 'Pastor Roberto', role: 'Pastor', ministry: 'Pastoral', phone: '11-5555-0001', photo: 'https://ui-avatars.com/api/?name=Roberto+Perez&background=0d9488&color=fff', status: 'Activo', birth: '1975-05-20', address: 'Av. Principal 123', visits: 52, lastVisit: '2023-11-26', notes: [] },
+                { id: 2, name: 'Lucas Diaz', role: 'Líder', ministry: 'Alabanza', phone: '11-5555-0002', photo: 'https://ui-avatars.com/api/?name=Lucas+Diaz&background=ea580c&color=fff', status: 'Activo', birth: '1995-03-15', address: 'Calle 4 nro 500', visits: 48, lastVisit: '2023-11-26', notes: ['Se le asignó llave de sala de ensayo.'] },
+                { id: 3, name: 'Sofia M.', role: 'Líder', ministry: 'EBD', phone: '11-5555-0003', photo: 'https://ui-avatars.com/api/?name=Sofia+M&background=0891b2&color=fff', status: 'Activo', birth: '1990-08-10', address: 'Barrio Norte', visits: 45, lastVisit: '2023-11-26', notes: [] },
+                { id: 4, name: 'Javier K.', role: 'Líder', ministry: 'Jóvenes', phone: '11-5555-0004', photo: 'https://ui-avatars.com/api/?name=Javier+K&background=7c3aed&color=fff', status: 'Activo', birth: '2000-12-01', address: 'Centro', visits: 40, lastVisit: '2023-11-19', notes: [] },
+                { id: 5, name: 'Maria Gomez', role: 'Miembro', ministry: 'General', phone: '11-5555-0005', photo: 'https://ui-avatars.com/api/?name=Maria+G&background=64748b&color=fff', status: 'Activo', birth: '1985-02-14', address: 'Calle 2', visits: 12, lastVisit: '2023-10-15', notes: ['Visitar próxima semana.'] },
+            ],
+            finances: [
+                { id: 1, date: '2023-11-26', type: 'Culto', cash: 45000, transfer: 32000, tithesCount: 15, notes: 'Culto Dominical' },
+                { id: 2, date: '2023-11-19', type: 'Culto', cash: 38000, transfer: 28000, tithesCount: 12, notes: 'Culto Dominical' },
+                { id: 3, date: '2023-11-28', type: 'Gasto', cash: -5000, transfer: 0, tithesCount: 0, notes: 'Compra Artículos Limpieza' },
+            ],
+            worship: [
+                { id: 1, date: '2023-12-03', theme: 'Domingo de Victoria', songs: ['Tu Fidelidad', 'Cuerdas de Amor', 'Digno'], team: { Vocal: ['Lucas Diaz', 'Sofia M.'], Guitarra: ['Lucas Diaz'], Bateria: [], Bajo: [] } },
+                { id: 2, date: '2023-12-10', theme: 'Navidad Anticipada', songs: ['Noche de Paz', 'Vino Celestial'], team: { Vocal: ['Lucas Diaz'], Guitarra: [], Bateria: [], Bajo: [] } }
+            ],
+            ebd: [
+                { id: 1, date: '2023-12-03', topic: 'La Creación', teachers: ['Sofia M.'], students: 15 },
+                { id: 2, date: '2023-12-10', topic: 'El Arca de Noé', teachers: ['Sofia M.'], students: 0 }
+            ],
+            youth: [
+                { id: 1, date: '2023-12-02', title: 'Noche de Cine', location: 'SUM Iglesia', notes: 'Traer refrescos' }
+            ],
+            messages: [
+                { id: 1, from: 'Pastor Roberto', to: 'Líderes', content: 'Reunión de planificación este sábado 18hs.', date: '2023-11-28' },
+                { id: 2, from: 'Sistema', to: 'Todos', content: 'Recordatorio: Ensayo general viernes 20hs.', date: '2023-11-27' }
+            ]
+        };
 
-        // --- COMPONENTES UI BASICOS ---
-        const Card = ({ children, title, icon, action, className = "" }) => (
-            <div className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-100 ${className}`}>
-                {(title || icon) && (
-                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-50">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            {icon && <span className="text-brand-600 bg-brand-50 p-1.5 rounded-lg"><Icon name={icon} size={18}/></span>}
-                            {title}
-                        </h3>
-                        {action}
-                    </div>
-                )}
-                {children}
-            </div>
+        // --- COMPONENTES UI REUTILIZABLES ---
+        
+        const Card = ({ children, className = "" }) => (
+            <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 ${className}`}>{children}</div>
         );
-
-        const Button = ({ children, onClick, variant = 'primary', icon, className="" }) => {
-            const base = "flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all active:scale-95";
-            const styles = {
-                primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-500/20",
-                secondary: "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50",
-                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
-            };
-            return <button onClick={onClick} className={`${base} ${styles[variant]} ${className}`}>{icon && <Icon name={icon} size={16}/>}{children}</button>;
-        };
-
-        const Badge = ({ children, color = 'slate' }) => {
-            const colors = {
-                brand: "bg-brand-100 text-brand-700", green: "bg-emerald-100 text-emerald-700",
-                blue: "bg-blue-100 text-blue-700", red: "bg-red-100 text-red-700", slate: "bg-slate-100 text-slate-600"
-            };
-            return <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${colors[color] || colors.slate}`}>{children}</span>;
-        };
-
-        // Alerta de mensaje reemplaza el 'alert()' nativo
-        const CustomAlert = ({ message, type = 'info', onClose }) => {
-            const colors = { info: 'bg-blue-100 border-blue-400 text-blue-700', success: 'bg-emerald-100 border-emerald-400 text-emerald-700', error: 'bg-red-100 border-red-400 text-red-700' };
-            useEffect(() => {
-                if(message) {
-                    const timer = setTimeout(onClose, 3000); // Se oculta automáticamente
-                    return () => clearTimeout(timer);
-                }
-            }, [message, onClose]);
-            
-            if (!message) return null;
-
-            return (
-                <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl border-l-4 shadow-lg ${colors[type]} animate-fade-in`}>
-                    <p className="font-semibold text-sm">{message}</p>
-                </div>
-            );
-        };
 
         const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6">
-                        <div className="flex justify-between items-center mb-6">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-enter">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
                             <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-800"><Icon name="Plus" className="rotate-45"/></button>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Icon name="X" /></button>
                         </div>
-                        {children}
+                        <div className="p-6">{children}</div>
                     </div>
                 </div>
             );
         };
 
-        const FormInput = ({ label, type = "text", ...props }) => (
-            <div className="mb-4">
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{label}</label>
-                <input type={type} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all" {...props} />
-            </div>
-        );
-
-        // --- DATOS INICIALES (MOCK) ---
-        const INITIAL_DATA = {
-            members: [
-                { id: 1, name: 'Carlos Gomez', birthDate: '1995-05-15', ministry: 'Alabanza', role: 'Líder', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Carlos+Gomez&background=random', visits: 15, lastVisit: '2023-11-20', followUp: 'Llamar por nueva guitarra', phone: '1155551234' },
-                { id: 2, name: 'Ana Perez', birthDate: '1980-03-10', ministry: 'Pastoral', role: 'Pastor', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Ana+Perez&background=random', visits: 48, lastVisit: '2023-11-26', followUp: 'Planificación 2024', phone: '1155555678' },
-                { id: 3, name: 'Lucas Torres', birthDate: '2008-07-22', ministry: 'Jóvenes', role: 'Miembro', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Lucas+Torres&background=random', visits: 20, lastVisit: '2023-11-26', followUp: 'Confirmar campamento', phone: '1155559012' },
-                { id: 4, name: 'Marta Ríos', birthDate: '1990-11-05', ministry: 'EBD', role: 'Maestra', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Marta+Rios&background=random', visits: 40, lastVisit: '2023-11-20', followUp: 'Reunión de maestros', phone: '1155553456' },
-            ],
-            finances: [
-                { id: 1, date: '2023-11-05', type: 'Culto', cash: 25000, transfer: 40000, tithes: 12, notes: 'Ofrenda dominical' },
-                { id: 2, date: '2023-11-12', type: 'Culto', cash: 18000, transfer: 30000, tithes: 10, notes: 'Ofrenda misionera' },
-                { id: 3, date: '2023-11-15', type: 'Gasto', cash: -5000, transfer: 0, tithes: 0, notes: 'Material EBD' },
-            ],
-            worship: [
-                { id: 1, date: '2023-12-03', type: 'Culto', theme: 'Fe Inquebrantable', songs: ['Tu Fidelidad', 'Océanos'], roster: { Vocal: ['Carlos'], Bateria: [], Bajo: [], Guitarra: [] } },
-                { id: 2, date: '2023-12-01', type: 'Ensayo', theme: 'Ensayo General', songs: ['Repertorio Domingo'], roster: { Vocal: ['Carlos'], Bateria: [], Bajo: [], Guitarra: [] } }
-            ],
-            ebd: [
-                { id: 1, date: '2023-12-03', topic: 'El Arca de Noé', collaborators: ['Marta'], ageGroup: 'Niños (4-8)' }
-            ],
-            youth: [
-                { id: 1, date: '2023-12-08', title: 'Noche de Cine', location: 'Salón Principal', type: 'Social' }
-            ],
-            messages: [
-                { id: 1, from: 'Pastor', to: 'Líderes', text: 'Reunión de planificación el sábado.', date: '2023-11-25' },
-                { id: 2, from: 'Sistema', to: 'Todos', text: 'Bienvenido al nuevo sistema de gestión.', date: '2023-11-20' }
-            ]
+        const Badge = ({ children, type = 'default' }) => {
+            const styles = {
+                default: "bg-slate-100 text-slate-600",
+                success: "bg-emerald-100 text-emerald-700",
+                warning: "bg-amber-100 text-amber-700",
+                danger: "bg-red-100 text-red-700",
+                brand: "bg-brand-100 text-brand-700",
+            };
+            return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${styles[type] || styles.default}`}>{children}</span>;
         };
 
-        // --- MODULOS DEL SISTEMA ---
+        const Button = ({ children, onClick, variant = 'primary', className = "", icon }) => {
+            const variants = {
+                primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-500/30",
+                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
+                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
+            };
+            return (
+                <button onClick={onClick} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all active:scale-95 ${variants[variant]} ${className}`}>
+                    {icon && <Icon name={icon} size={18} />}
+                    {children}
+                </button>
+            );
+        };
 
-        // 1. DASHBOARD & HOME
+        // --- MÓDULOS PRINCIPALES ---
+
+        // 1. DASHBOARD
         const Dashboard = ({ user, data }) => {
-            const balance = data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
-            
-            // Lógica "Tus Servicios"
             const myServices = useMemo(() => {
-                return [
-                    ...data.worship.filter(s => {
-                        const myName = user.name.split(' ')[0];
-                        return Object.values(s.roster).flat().some(n => user.name.includes(n)) || user.ministry === 'Alabanza';
-                    }).map(s => ({...s, area: 'Alabanza', title: s.theme})),
-                    ...data.ebd.filter(c => user.ministry === 'EBD').map(c => ({...c, area: 'EBD', title: c.topic})),
-                    ...data.youth.filter(e => user.ministry === 'Jóvenes').map(e => ({...e, area: 'Jóvenes', title: e.title}))
-                ].sort((a,b) => new Date(a.date) - new Date(b.date)).filter(s => new Date(s.date) >= new Date());
+                const services = [];
+                // Buscar en Alabanza
+                data.worship.forEach(s => {
+                    const isVocal = s.team.Vocal.includes(user.name);
+                    const isGuitar = s.team.Guitarra.includes(user.name);
+                    if (isVocal || isGuitar || user.ministry === 'Alabanza') {
+                        services.push({ ...s, area: 'Alabanza', role: isVocal ? 'Vocal' : (isGuitar ? 'Guitarra' : 'Líder') });
+                    }
+                });
+                // Buscar en EBD
+                data.ebd.forEach(c => {
+                    if (c.teachers.includes(user.name) || user.ministry === 'EBD') services.push({ ...c, area: 'EBD', theme: c.topic });
+                });
+                return services.sort((a,b) => new Date(a.date) - new Date(b.date));
             }, [data, user]);
 
-            const chartData = useMemo(() => {
-                return data.finances.filter(f => f.type === 'Culto').map(f => ({ name: formatDate(f.date), total: f.cash + f.transfer }));
-            }, [data.finances]);
-
+            const totalBalance = data.finances.reduce((acc, curr) => acc + curr.cash + curr.transfer, 0);
 
             return (
-                <div className="space-y-6 animate-fade-in">
+                <div className="space-y-6 animate-enter">
+                    {/* Header Bienvenida */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-800">Hola, {user.name.split(' ')[0]} 👋</h2>
-                            <p className="text-slate-500 text-sm">Panel de {user.role}</p>
+                            <h2 className="text-3xl font-bold text-slate-800">Hola, {user.name.split(' ')[0]} 👋</h2>
+                            <p className="text-slate-500 font-medium">Panel de {user.role}</p>
                         </div>
                         {user.role === 'Pastor' && (
-                            <div className="bg-white px-5 py-3 rounded-xl shadow-sm border border-slate-100 flex gap-6">
-                                <div><p className="text-xs text-slate-400 font-bold uppercase">Balance</p><p className="text-xl font-bold text-brand-600">{formatCurrency(balance)}</p></div>
-                                <div className="border-l pl-6"><p className="text-xs text-slate-400 font-bold uppercase">Miembros</p><p className="text-xl font-bold text-slate-700">{data.members.length}</p></div>
+                            <div className="bg-white p-2 pr-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+                                <div className="bg-brand-100 p-3 rounded-xl text-brand-600"><Icon name="Wallet" /></div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase">Tesorería Actual</p>
+                                    <p className="text-xl font-bold text-slate-800">${totalBalance.toLocaleString()}</p>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    {/* ALERTA DE SERVICIOS (PARA TODOS) */}
-                    <Card title="Tus Próximos Servicios" icon="Bell" className="border-l-4 border-l-brand-500 bg-brand-50/30">
+                    {/* Alerta de Próximos Servicios (Para TODOS) */}
+                    <Card className="border-l-4 border-l-brand-500 bg-gradient-to-r from-brand-50 to-white">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2"><Icon name="Bell" size={18} className="text-brand-600"/> TUS PRÓXIMOS SERVICIOS</h3>
+                        </div>
                         {myServices.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {myServices.slice(0, 3).map((s, i) => (
-                                    <div key={i} className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <Badge color="brand">{s.area}</Badge>
-                                            <span className="text-xs font-bold text-slate-400">{formatDate(s.date)}</span>
+                                {myServices.slice(0,3).map((s, i) => (
+                                    <div key={i} className="bg-white p-3 rounded-xl border border-brand-100 shadow-sm flex flex-col gap-1">
+                                        <div className="flex justify-between">
+                                            <Badge type="brand">{s.area}</Badge>
+                                            <span className="text-xs font-bold text-slate-400">{new Date(s.date+'T00:00:00').toLocaleDateString('es-AR', {day:'numeric', month:'short'})}</span>
                                         </div>
-                                        <p className="font-bold text-slate-800">{s.title}</p>
+                                        <p className="font-bold text-sm text-slate-800 truncate">{s.theme || s.topic}</p>
+                                        <p className="text-xs text-slate-500">Rol: {s.role || 'Colaborador'}</p>
                                     </div>
                                 ))}
                             </div>
@@ -235,58 +224,72 @@
                     </Card>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Panel Izquierdo */}
                         <div className="lg:col-span-2 space-y-6">
                             {user.role === 'Pastor' && (
-                                <Card title="Resumen Financiero (Ofrendas)" icon="Wallet">
+                                <Card>
+                                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Icon name="Wallet"/> Evolución de Ofrendas</h3>
                                     <div className="h-64">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={chartData}>
-                                                <defs>
-                                                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#E67E22" stopOpacity={0.8}/>
-                                                        <stop offset="95%" stopColor="#E67E22" stopOpacity={0}/>
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0"/>
-                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12}} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12}} tickFormatter={(val)=>`$${val/1000}k`}/>
-                                                <Tooltip formatter={(val)=>formatCurrency(val)} />
-                                                <Area type="monotone" dataKey="total" stroke="#E67E22" fillOpacity={1} fill="url(#colorTotal)" />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
+                                        {window.Recharts ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={data.finances.filter(f => f.type === 'Culto')}>
+                                                    <defs>
+                                                        <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#f97316" stopOpacity={0.8}/>
+                                                            <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
+                                                    <XAxis dataKey="date" tickFormatter={(d) => new Date(d+'T00:00:00').getDate()} axisLine={false} tickLine={false} />
+                                                    <YAxis axisLine={false} tickLine={false} tickFormatter={(v) => `$${v/1000}k`} />
+                                                    <Tooltip formatter={(value) => `$${value}`} />
+                                                    <Area type="monotone" dataKey="cash" stroke="#f97316" fillOpacity={1} fill="url(#colorCash)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        ) : <div className="flex items-center justify-center h-full text-slate-400">Cargando gráfico...</div>}
                                     </div>
                                 </Card>
                             )}
-                            <Card title="Mensajes Recientes" icon="Send">
-                                <div className="space-y-3">
+                            
+                            <Card>
+                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Icon name="Mail"/> Mensajes Recientes</h3>
+                                <div className="space-y-4">
                                     {data.messages.map(m => (
-                                        <div key={m.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-brand-200 flex items-center justify-center text-brand-800 font-bold text-xs">{m.from[0]}</div>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between"><span className="font-bold text-sm">{m.from}</span> <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span></div>
-                                                <p className="text-sm text-slate-600">{m.text}</p>
+                                        <div key={m.id} className="flex gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                                {m.from.substring(0,2)}
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between w-full mb-1">
+                                                    <p className="font-bold text-sm text-slate-800">{m.from}</p>
+                                                    <span className="text-[10px] text-slate-400">{m.date}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600">{m.content}</p>
+                                                <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded mt-1 inline-block font-medium">Para: {m.to}</span>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </Card>
                         </div>
-                        <div className="lg:col-span-1">
-                            <Card title="Calendario Semanal" icon="Calendar" className="h-full">
-                                <div className="space-y-4">
+
+                        {/* Panel Derecho */}
+                        <div className="space-y-6">
+                            <Card className="bg-slate-800 text-white">
+                                <h3 className="font-bold mb-4 flex items-center gap-2"><Icon name="Calendar"/> Calendario General</h3>
+                                <div className="space-y-3">
                                     {[...data.worship, ...data.ebd, ...data.youth]
-                                        .filter(e => new Date(e.date) >= new Date())
                                         .sort((a,b) => new Date(a.date) - new Date(b.date))
                                         .slice(0, 5)
-                                        .map((ev, i) => (
-                                            <div key={i} className="flex gap-3 items-center">
-                                                <div className="bg-slate-100 px-2 py-1 rounded text-center min-w-[3rem]">
-                                                    <span className="block text-xs font-bold text-slate-500">{new Date(ev.date).getDate()}</span>
-                                                    <span className="block text-[10px] text-slate-400 uppercase">{new Date(ev.date).toLocaleDateString('es-AR',{month:'short'})}</span>
+                                        .map((e, i) => (
+                                            <div key={i} className="flex gap-3 items-center border-b border-slate-700 pb-2 last:border-0 last:pb-0">
+                                                <div className="bg-slate-700 p-2 rounded text-center min-w-[3.5rem]">
+                                                    <span className="block text-xl font-bold leading-none">{new Date(e.date+'T00:00:00').getDate()}</span>
+                                                    <span className="text-[10px] uppercase text-slate-400">{new Date(e.date+'T00:00:00').toLocaleDateString('es-AR', {month:'short'})}</span>
                                                 </div>
-                                                <div className="border-b border-slate-50 flex-1 pb-2">
-                                                    <p className="font-semibold text-sm text-slate-700 truncate">{ev.theme || ev.topic || ev.title}</p>
-                                                    <Badge>{ev.type || 'Evento'}</Badge>
+                                                <div>
+                                                    <p className="font-semibold text-sm truncate">{e.theme || e.topic || e.title}</p>
+                                                    <p className="text-xs text-slate-400">{e.songs ? 'Culto' : (e.topic ? 'Clase EBD' : 'Jóvenes')}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -298,444 +301,394 @@
             );
         };
 
-        // 2. DIRECTORIO DE MIEMBROS
-        const MembersModule = ({ user, data, updateData, setAppMessage }) => {
+        // 2. DIRECTORIO
+        const Directory = ({ data, setData, user }) => {
             const [selectedMember, setSelectedMember] = useState(null);
-            const [isAddOpen, setAddOpen] = useState(false);
-            const [newMember, setNewMember] = useState({ name: '', ministry: 'General', birthDate: '', role: 'Miembro', status: 'Activo', photo: '', visits: 0, lastVisit: '', followUp: '', phone: '' });
+            const [searchTerm, setSearchTerm] = useState("");
+            const [isAdding, setIsAdding] = useState(false);
+            const [newMember, setNewMember] = useState({});
 
-            const handleDelete = (id) => {
-                if(window.confirm("¿Estás seguro de que quieres eliminar a este miembro? Esta acción es irreversible.")) {
-                    updateData('members', prev => prev.filter(m => m.id !== id));
-                    setSelectedMember(null);
-                    setAppMessage({text: `Miembro eliminado con éxito.`, type: 'success'});
-                }
+            const handleAddMember = () => {
+                const member = { ...newMember, id: Date.now(), visits: 0, notes: [], photo: `https://ui-avatars.com/api/?name=${newMember.name}&background=random` };
+                setData(prev => ({ ...prev, members: [...prev.members, member] }));
+                setIsAdding(false);
             };
-            
-            const handleAdd = () => {
-                updateData('members', prev => [...prev, { 
-                    ...newMember, 
-                    id: Date.now(), 
-                    photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(newMember.name)}&background=random`,
-                    visits: 0, status: 'Activo', lastVisit: new Date().toISOString().split('T')[0] 
-                }]);
-                setAddOpen(false);
-                setNewMember({ name: '', ministry: 'General', birthDate: '', role: 'Miembro', status: 'Activo', photo: '', visits: 0, lastVisit: '', followUp: '', phone: '' });
-                setAppMessage({text: `Miembro ${newMember.name.split(' ')[0]} agregado.`, type: 'success'});
-            };
+
+            const filteredMembers = data.members.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.ministry.toLowerCase().includes(searchTerm.toLowerCase()));
 
             return (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-slate-800">Directorio de Miembros</h2>
-                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Miembro</Button>
+                <div className="space-y-6 animate-enter">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="relative w-full md:w-96">
+                            <Icon name="Search" className="absolute left-3 top-3 text-slate-400" size={18}/>
+                            <input 
+                                type="text" 
+                                placeholder="Buscar por nombre o ministerio..." 
+                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Button icon="Plus" onClick={() => setIsAdding(true)}>Nuevo Miembro</Button>
                     </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {data.members.map(m => (
-                            <div key={m.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col gap-4">
-                                <div className="flex gap-4 items-center">
-                                    <img src={m.photo} alt={m.name} className="w-14 h-14 rounded-full bg-slate-200 object-cover"/>
-                                    <div>
-                                        <h3 className="font-bold text-slate-800">{m.name}</h3>
-                                        <p className="text-xs text-brand-600 font-bold uppercase">{m.ministry} • {m.role}</p>
-                                        <p className="text-xs text-slate-400">{getAge(m.birthDate)} años</p>
+                        {filteredMembers.map(m => (
+                            <div key={m.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow group cursor-pointer relative" onClick={() => setSelectedMember(m)}>
+                                <div className="absolute top-4 right-4">
+                                    <Badge type={m.status === 'Activo' ? 'success' : 'danger'}>{m.status}</Badge>
+                                </div>
+                                <div className="flex flex-col items-center text-center mt-2">
+                                    <img src={m.photo} alt={m.name} className="w-20 h-20 rounded-full object-cover mb-3 ring-4 ring-slate-50"/>
+                                    <h3 className="font-bold text-slate-800 text-lg">{m.name}</h3>
+                                    <p className="text-sm text-brand-600 font-semibold">{m.role} • {m.ministry}</p>
+                                    
+                                    <div className="mt-4 w-full bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                                            <span>Asistencia</span>
+                                            <span>{m.visits} visitas</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <div className="h-full bg-brand-500 rounded-full" style={{width: `${Math.min(m.visits, 100)}%`}}></div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <div className="flex justify-between text-xs mb-1 font-semibold text-slate-500">
-                                        <span>Asistencia</span> <span>{m.visits} visitas</span>
-                                    </div>
-                                    <div className="w-full bg-slate-200 h-1.5 rounded-full"><div className="bg-brand-500 h-1.5 rounded-full" style={{width: `${Math.min(m.visits*2, 100)}%`}}></div></div>
-                                </div>
-                                <Button variant="secondary" onClick={() => setSelectedMember(m)} className="w-full">Ver Ficha</Button>
                             </div>
                         ))}
                     </div>
 
-                    <Modal isOpen={!!selectedMember} onClose={() => setSelectedMember(null)} title={`Ficha Técnica: ${selectedMember?.name || ''}`}>
+                    {/* Modal Detalle Miembro */}
+                    <Modal isOpen={!!selectedMember} onClose={() => setSelectedMember(null)} title="Ficha Técnica">
                         {selectedMember && (
                             <div className="space-y-6">
-                                <div className="flex items-center gap-4 border-b pb-4">
-                                    <img src={selectedMember.photo} className="w-20 h-20 rounded-full"/>
-                                    <div>
-                                        <h2 className="text-xl font-bold">{selectedMember.name}</h2>
-                                        <Badge color={selectedMember.status === 'Activo' ? 'green' : 'red'}>{selectedMember.status}</Badge>
+                                <div className="flex gap-6 items-start">
+                                    <img src={selectedMember.photo} className="w-24 h-24 rounded-2xl bg-slate-100 object-cover" />
+                                    <div className="flex-1">
+                                        <div className="flex justify-between">
+                                            <h2 className="text-2xl font-bold text-slate-800">{selectedMember.name}</h2>
+                                            <Badge type="brand">{selectedMember.role}</Badge>
+                                        </div>
+                                        <p className="text-slate-500 mb-2">{selectedMember.ministry}</p>
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <div className="bg-slate-50 p-2 rounded">🎂 {new Date().getFullYear() - new Date(selectedMember.birth).getFullYear()} años</div>
+                                            <div className="bg-slate-50 p-2 rounded">📞 {selectedMember.phone}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Edad</p><p className="font-bold">{getAge(selectedMember.birthDate)} años</p></div>
-                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Ministerio</p><p className="font-bold">{selectedMember.ministry}</p></div>
-                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Rol</p><p className="font-bold">{selectedMember.role}</p></div>
-                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Teléfono</p><a href={`tel:${selectedMember.phone}`} className="font-bold text-blue-600 hover:underline">{selectedMember.phone}</a></div>
+
+                                <div className="border-t border-slate-100 pt-4">
+                                    <h4 className="font-bold text-slate-800 mb-2">Notas de Seguimiento</h4>
+                                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-2">
+                                        {selectedMember.notes.length > 0 ? selectedMember.notes.map((n,i) => (
+                                            <p key={i} className="text-sm text-amber-900 border-b border-amber-200 last:border-0 pb-1 last:pb-0">• {n}</p>
+                                        )) : <p className="text-sm text-amber-700 italic">No hay notas registradas.</p>}
+                                        <button className="text-xs font-bold text-amber-700 hover:text-amber-900 mt-2">+ Agregar Nota</button>
+                                    </div>
                                 </div>
-                                <div className="bg-amber-50 border border-amber-100 p-4 rounded-lg text-sm text-amber-900">
-                                    <p className="font-bold mb-1">Seguimiento / Notas (Última visita: {formatDate(selectedMember.lastVisit)}):</p>
-                                    <p>{selectedMember.followUp}</p>
-                                </div>
+
                                 {user.role === 'Pastor' && (
-                                    <Button variant="danger" onClick={() => handleDelete(selectedMember.id)} icon="Trash" className="w-full">Eliminar Miembro</Button>
+                                    <div className="flex justify-end pt-4">
+                                        <Button variant="danger" icon="Trash">Eliminar Miembro</Button>
+                                    </div>
                                 )}
                             </div>
                         )}
                     </Modal>
 
-                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Agregar Nuevo Miembro">
-                        <FormInput label="Nombre Completo" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormInput label="Fecha Nacimiento" type="date" value={newMember.birthDate} onChange={e => setNewMember({...newMember, birthDate: e.target.value})} />
-                            <FormInput label="Teléfono" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div><label className="text-xs font-bold text-slate-500 uppercase">Ministerio</label>
-                            <select className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
-                                <option value="General">General</option><option value="Alabanza">Alabanza</option><option value="EBD">EBD</option><option value="Jóvenes">Jóvenes</option><option value="Pastoral">Pastoral</option>
-                            </select></div>
-                            <div><label className="text-xs font-bold text-slate-500 uppercase">Rol</label>
-                            <select className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg" value={newMember.role} onChange={e => setNewMember({...newMember, role: e.target.value})}>
-                                <option value="Miembro">Miembro</option><option value="Líder">Líder</option><option value="Pastor">Pastor</option><option value="Maestro">Maestro</option>
-                            </select></div>
-                        </div>
-                        <FormInput label="Seguimiento / Notas Iniciales" value={newMember.followUp} onChange={e => setNewMember({...newMember, followUp: e.target.value})} />
-                        
-                        <div className="flex justify-end gap-2 mt-6">
-                            <Button variant="secondary" onClick={() => setAddOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd} icon="Plus">Guardar Miembro</Button>
+                    {/* Modal Agregar Miembro */}
+                    <Modal isOpen={isAdding} onClose={() => setIsAdding(false)} title="Nuevo Miembro">
+                        <div className="grid grid-cols-1 gap-4">
+                            <input className="input-field p-3 border rounded-lg" placeholder="Nombre Completo" onChange={e => setNewMember({...newMember, name: e.target.value})} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <input className="p-3 border rounded-lg" type="date" onChange={e => setNewMember({...newMember, birth: e.target.value})} />
+                                <input className="p-3 border rounded-lg" placeholder="Teléfono" onChange={e => setNewMember({...newMember, phone: e.target.value})} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <select className="p-3 border rounded-lg bg-white" onChange={e => setNewMember({...newMember, role: e.target.value})}>
+                                    <option>Miembro</option><option>Líder</option><option>Pastor</option>
+                                </select>
+                                <select className="p-3 border rounded-lg bg-white" onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
+                                    <option>General</option><option>Alabanza</option><option>EBD</option><option>Jóvenes</option>
+                                </select>
+                            </div>
+                            <Button onClick={handleAddMember} className="w-full">Guardar Ficha</Button>
                         </div>
                     </Modal>
                 </div>
             );
         };
 
-        // 3. FINANZAS
-        const FinanceModule = ({ data, updateData, setAppMessage }) => {
-            const [isAddOpen, setAddOpen] = useState(false);
-            const [newMove, setNewMove] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
-
-            const handleAdd = () => {
-                const isExpense = newMove.type === 'Gasto';
-                const move = { 
-                    ...newMove, 
-                    id: Date.now(), 
-                    cash: isExpense ? -Math.abs(newMove.cash) : +newMove.cash, 
-                    transfer: isExpense ? -Math.abs(newMove.transfer) : +newMove.transfer
-                };
-                
-                // Validación simple
-                if (!newMove.date || (move.cash === 0 && move.transfer === 0)) {
-                    setAppMessage({text: 'Debe ingresar una fecha y al menos un monto.', type: 'error'});
-                    return;
-                }
-                
-                updateData('finances', prev => [move, ...prev]);
-                setAddOpen(false);
-                setNewMove({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
-                setAppMessage({text: `Movimiento de ${move.type} registrado.`, type: 'success'});
+        // 3. MINISTERIO DE ALABANZA
+        const Worship = ({ data, setData }) => {
+            const [isPlanning, setIsPlanning] = useState(false);
+            const [newService, setNewService] = useState({ date: '', theme: '', songs: [], team: { Vocal: [], Guitarra: [], Bateria: [], Bajo: [] } });
+            
+            // Simulación de búsqueda de músicos
+            const musicians = data.members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor');
+            
+            const handleAddSong = () => {
+                const song = prompt("Nombre de la canción:");
+                if(song) setNewService(prev => ({...prev, songs: [...prev.songs, song]}));
             };
 
-            const totalBalance = data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
-
-            return (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-slate-800">Tesorería</h2>
-                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Movimiento</Button>
-                    </div>
-                    
-                    <Card className="bg-brand-600 text-white">
-                        <p className="text-sm font-semibold opacity-80">Balance Total Actual</p>
-                        <p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
-                    </Card>
-
-                    <Card>
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
-                                <tr>
-                                    <th className="p-3">Fecha</th><th className="p-3">Concepto</th><th className="p-3 text-right">Efectivo</th><th className="p-3 text-right">Transf.</th><th className="p-3 text-center">Diez.</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {data.finances.sort((a,b) => new Date(b.date) - new Date(a.date)).map(f => (
-                                    <tr key={f.id} className="hover:bg-slate-50">
-                                        <td className="p-3 font-medium">{formatDate(f.date)}</td>
-                                        <td className="p-3"><Badge color={f.type==='Gasto'?'red':'green'}>{f.type}</Badge> <span className="text-slate-500 ml-2">{f.notes}</span></td>
-                                        <td className={`p-3 text-right font-mono font-bold ${f.cash<0?'text-red-500':'text-emerald-600'}`}>{formatCurrency(f.cash)}</td>
-                                        <td className={`p-3 text-right font-mono font-bold ${f.transfer<0?'text-red-500':'text-blue-600'}`}>{formatCurrency(f.transfer)}</td>
-                                        <td className="p-3 text-center">{f.tithes || '-'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </Card>
-                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Registrar Movimiento">
-                        <div className="mb-4"><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full border p-2 rounded bg-slate-50 border-slate-200" value={newMove.type} onChange={e => setNewMove({...newMove, type: e.target.value})}><option value="Culto">Cierre Culto</option><option value="Gasto">Gasto</option></select></div>
-                        <FormInput label="Fecha" type="date" value={newMove.date} onChange={e => setNewMove({...newMove, date: e.target.value})} />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormInput label="Monto Efectivo" type="number" value={newMove.cash} onChange={e => setNewMove({...newMove, cash: +e.target.value})} />
-                            <FormInput label="Monto Transferencia" type="number" value={newMove.transfer} onChange={e => setNewMove({...newMove, transfer: +e.target.value})} />
-                        </div>
-                        {newMove.type === 'Culto' && <FormInput label="Cant. Diezmantes" type="number" value={newMove.tithes} onChange={e => setNewMove({...newMove, tithes: +e.target.value})} />}
-                        <FormInput label="Notas / Detalle" value={newMove.notes} onChange={e => setNewMove({...newMove, notes: e.target.value})} />
-                        <div className="flex justify-end mt-4"><Button onClick={handleAdd} icon="Wallet">Registrar</Button></div>
-                    </Modal>
-                </div>
-            );
-        };
-
-        // 4. ALABANZA
-        const WorshipModule = ({ data, updateData, setAppMessage }) => {
-            const [isAddOpen, setAddOpen] = useState(false);
-            const [newService, setNewService] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', theme: '', songs: '', roster: { Vocal: [], Bateria: [], Bajo: [], Guitarra: [] } });
-
-            const handleAdd = () => {
-                const songsList = newService.songs.split(',').map(s=>s.trim()).filter(s => s.length > 0);
-                updateData('worship', prev => [{...newService, id: Date.now(), songs: songsList}, ...prev]);
-                setAddOpen(false);
-                setNewService({ date: new Date().toISOString().split('T')[0], type: 'Culto', theme: '', songs: '', roster: { Vocal: [], Bateria: [], Bajo: [], Guitarra: [] } });
-                setAppMessage({text: `Servicio de Alabanza planificado para ${formatDate(newService.date)}.`, type: 'success'});
-            };
-
-            const toggleMusician = (inst, name) => {
+            const toggleMusician = (role, name) => {
                 setNewService(prev => {
-                    const current = prev.roster[inst] || [];
-                    const updated = current.includes(name) ? current.filter(n=>n!==name) : [...current, name];
-                    return {...prev, roster: {...prev.roster, [inst]: updated}};
+                    const current = prev.team[role];
+                    const updated = current.includes(name) ? current.filter(n => n !== name) : [...current, name];
+                    return { ...prev, team: { ...prev.team, [role]: updated } };
                 });
             };
 
-            // Solo miembros del ministerio de Alabanza
-            const musicians = data.members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor').map(m => m.name.split(' ')[0]);
-            
-            // Roles para la planificación
-            const allRoles = ['Vocal', 'Bateria', 'Bajo', 'Guitarra', 'Teclado', 'Sonido'];
+            const saveService = () => {
+                setData(prev => ({ ...prev, worship: [...prev.worship, { ...newService, id: Date.now() }] }));
+                setIsPlanning(false);
+            };
 
             return (
-                <div className="space-y-6 animate-fade-in">
+                <div className="space-y-6 animate-enter">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-slate-800">Ministerio de Alabanza</h2>
-                        <Button onClick={() => setAddOpen(true)} icon="Plus">Planificar Servicio</Button>
+                        <Button icon="Plus" onClick={() => setIsPlanning(true)}>Planificar Culto</Button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {data.worship.sort((a,b) => new Date(b.date) - new Date(a.date)).map(s => (
-                            <Card key={s.id}>
-                                <div className="flex justify-between mb-2">
-                                    <Badge color={s.type==='Ensayo'?'slate':'brand'}>{s.type}</Badge>
-                                    <span className="text-xs font-bold text-slate-400">{formatDate(s.date)}</span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {data.worship.map(s => (
+                            <Card key={s.id} className="relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-2 h-full bg-brand-500"></div>
+                                <div className="flex justify-between mb-4 pl-2">
+                                    <h3 className="font-bold text-xl">{s.theme}</h3>
+                                    <Badge>{new Date(s.date+'T00:00:00').toLocaleDateString('es-AR')}</Badge>
                                 </div>
-                                <h3 className="font-bold text-lg mb-2">{s.theme}</h3>
-                                <div className="bg-slate-50 p-2 rounded mb-2">
-                                    <p className="text-[10px] uppercase font-bold text-slate-400">Canciones</p>
-                                    <p className="text-sm italic text-slate-600">{s.songs.length > 0 ? s.songs.join(' • ') : 'Pendiente de canciones'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Equipo Asignado</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {Object.entries(s.roster).map(([role, list]) => list.length>0 && (
-                                            <Badge key={role} color="blue">{role}: {list.join(', ')}</Badge>
-                                        ))}
+                                <div className="space-y-4 pl-2">
+                                    <div className="bg-slate-50 p-3 rounded-lg">
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Setlist</p>
+                                        <ul className="list-disc list-inside text-sm text-slate-700">
+                                            {s.songs.map((song, i) => <li key={i}>{song}</li>)}
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Equipo</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {Object.entries(s.team).map(([role, members]) => members.length > 0 && (
+                                                <span key={role} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100">
+                                                    <b>{role}:</b> {members.join(', ')}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </Card>
                         ))}
                     </div>
-                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Planificar Servicio/Ensayo">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormInput label="Fecha" type="date" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
-                            <div><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg" value={newService.type} onChange={e => setNewService({...newService, type: e.target.value})}><option value="Culto">Culto</option><option value="Ensayo">Ensayo</option></select></div>
-                        </div>
-                        <FormInput label="Tema/Foco" value={newService.theme} onChange={e => setNewService({...newService, theme: e.target.value})} />
-                        <FormInput label="Canciones (Separa con comas)" value={newService.songs} placeholder="Ej: Tu Amor, Océanos, Santo Dios" onChange={e => setNewService({...newService, songs: e.target.value})} />
-                        <div className="border-t pt-4 mt-4">
-                            <p className="font-bold text-sm mb-2">Asignar Equipo por Roles</p>
-                            <div className="space-y-3 max-h-60 overflow-y-auto hide-scroll p-2 rounded-lg bg-slate-50 border border-slate-100">
-                                {allRoles.map(inst => (
-                                    <div key={inst}>
-                                        <p className="text-xs font-bold text-slate-600 mb-1">{inst}</p>
+
+                    <Modal isOpen={isPlanning} onClose={() => setIsPlanning(false)} title="Planificador de Alabanza">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="text-xs font-bold uppercase text-slate-500">Fecha</label><input type="date" className="w-full border p-2 rounded" onChange={e => setNewService({...newService, date: e.target.value})}/></div>
+                                <div><label className="text-xs font-bold uppercase text-slate-500">Tema</label><input type="text" className="w-full border p-2 rounded" placeholder="Ej: Domingo de Gracia" onChange={e => setNewService({...newService, theme: e.target.value})}/></div>
+                            </div>
+                            
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="text-xs font-bold uppercase text-slate-500">Canciones</label>
+                                    <button onClick={handleAddSong} className="text-xs text-brand-600 font-bold">+ Agregar</button>
+                                </div>
+                                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg min-h-[3rem]">
+                                    {newService.songs.map((s,i) => <Badge key={i} type="brand">{s}</Badge>)}
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-2">
+                                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Armado de Banda</label>
+                                {['Vocal', 'Guitarra', 'Bateria', 'Bajo'].map(inst => (
+                                    <div key={inst} className="mb-3">
+                                        <p className="text-xs font-bold text-slate-700 mb-1">{inst}</p>
                                         <div className="flex flex-wrap gap-1">
                                             {musicians.map(m => (
-                                                <button key={m} onClick={() => toggleMusician(inst, m)} className={`px-2 py-1 text-xs border rounded-lg transition-all ${newService.roster[inst]?.includes(m) ? 'bg-blue-600 text-white font-semibold' : 'bg-white text-slate-600 hover:bg-slate-100'}`}>{m}</button>
+                                                <button key={m.id} 
+                                                    onClick={() => toggleMusician(inst, m.name)}
+                                                    className={`text-xs px-2 py-1 rounded border transition-colors ${newService.team[inst].includes(m.name) ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>
+                                                    {m.name}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
                                 ))}
                             </div>
+                            <Button onClick={saveService} className="w-full">Guardar Planificación</Button>
                         </div>
-                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Guardar Planificación</Button></div>
                     </Modal>
                 </div>
             );
         };
 
-        // 5. ESCUELA BIBLICA & JOVENES (Módulo genérico reforzado)
-        const GenericModule = ({ title, items, updateData, dataKey, fields, setAppMessage }) => {
-            const [isAddOpen, setAddOpen] = useState(false);
-            const initialNewItem = fields.reduce((acc, f) => ({...acc, [f.key]: f.type === 'array' ? [] : (f.type === 'date' ? new Date().toISOString().split('T')[0] : '')}), {});
-            const [newItem, setNewItem] = useState(initialNewItem);
+        // 4. TESORERÍA (Solo Pastor)
+        const Finances = ({ data, setData }) => {
+            const [isClosing, setIsClosing] = useState(false);
+            const [closure, setClosure] = useState({ date: '', cash: 0, transfer: 0, tithesCount: 0, notes: '' });
 
-            const handleAdd = () => {
-                const itemToAdd = {...newItem, id: Date.now()};
-                
-                // Procesar campos de colaboradores/miembros si son arrays (se asume input de texto separado por comas)
-                fields.filter(f => f.type === 'array').forEach(f => {
-                    itemToAdd[f.key] = typeof newItem[f.key] === 'string' ? newItem[f.key].split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
-                });
-                
-                updateData(dataKey, prev => [itemToAdd, ...prev]);
-                setAddOpen(false);
-                setNewItem(initialNewItem);
-                setAppMessage({text: `${title.split(' ')[0]} registrado con éxito.`, type: 'success'});
-            };
-            
-            const handleFieldChange = (key, value) => {
-                setNewItem(prev => ({...prev, [key]: value}));
+            const handleCloseService = () => {
+                setData(prev => ({ ...prev, finances: [{ ...closure, id: Date.now(), type: 'Culto' }, ...prev.finances] }));
+                setIsClosing(false);
             };
 
             return (
-                <div className="space-y-6 animate-fade-in">
+                <div className="space-y-6 animate-enter">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-slate-800">Tesorería Eclesiástica</h2>
+                        <Button icon="Plus" onClick={() => setIsClosing(true)}>Nuevo Cierre de Culto</Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Card className="bg-brand-600 text-white shadow-brand-500/40 shadow-lg">
+                            <p className="text-brand-100 font-medium text-sm">Total en Caja (General)</p>
+                            <p className="text-3xl font-bold mt-1">${data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0).toLocaleString()}</p>
+                        </Card>
+                        <Card>
+                            <p className="text-slate-400 font-bold text-xs uppercase">Promedio Mensual</p>
+                            <p className="text-2xl font-bold text-slate-800 mt-1">$125,000</p>
+                        </Card>
+                        <Card>
+                            <p className="text-slate-400 font-bold text-xs uppercase">Diezmantes Activos</p>
+                            <p className="text-2xl font-bold text-slate-800 mt-1">24 Familias</p>
+                        </Card>
+                    </div>
+
+                    <Card>
+                        <h3 className="font-bold text-slate-800 mb-4">Movimientos Recientes</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                                    <tr>
+                                        <th className="p-3 rounded-l-lg">Fecha</th>
+                                        <th className="p-3">Detalle</th>
+                                        <th className="p-3 text-right">Efectivo</th>
+                                        <th className="p-3 text-right">Banco</th>
+                                        <th className="p-3 text-center rounded-r-lg">Diezmantes</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {data.finances.map(f => (
+                                        <tr key={f.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="p-3 font-medium">{new Date(f.date+'T00:00:00').toLocaleDateString('es-AR')}</td>
+                                            <td className="p-3">
+                                                <Badge type={f.type === 'Gasto' ? 'danger' : 'success'}>{f.type}</Badge>
+                                                <span className="ml-2 text-slate-600">{f.notes}</span>
+                                            </td>
+                                            <td className={`p-3 text-right font-mono ${f.cash < 0 ? 'text-red-500' : 'text-slate-700'}`}>${f.cash.toLocaleString()}</td>
+                                            <td className="p-3 text-right font-mono text-slate-700">${f.transfer.toLocaleString()}</td>
+                                            <td className="p-3 text-center text-slate-500">{f.tithesCount > 0 ? f.tithesCount : '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+
+                    <Modal isOpen={isClosing} onClose={() => setIsClosing(false)} title="Cierre de Culto / Movimiento">
+                        <div className="space-y-4">
+                            <input type="date" className="w-full border p-3 rounded-lg" onChange={e => setClosure({...closure, date: e.target.value})}/>
+                            <input type="text" placeholder="Notas / Detalle del culto" className="w-full border p-3 rounded-lg" onChange={e => setClosure({...closure, notes: e.target.value})}/>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="text-xs font-bold uppercase">Efectivo</label><input type="number" className="w-full border p-3 rounded-lg" onChange={e => setClosure({...closure, cash: parseInt(e.target.value)})}/></div>
+                                <div><label className="text-xs font-bold uppercase">Transferencia</label><input type="number" className="w-full border p-3 rounded-lg" onChange={e => setClosure({...closure, transfer: parseInt(e.target.value)})}/></div>
+                            </div>
+                            <div><label className="text-xs font-bold uppercase">Cantidad de Diezmantes</label><input type="number" className="w-full border p-3 rounded-lg" onChange={e => setClosure({...closure, tithesCount: parseInt(e.target.value)})}/></div>
+                            <Button onClick={handleCloseService} className="w-full">Registrar Cierre</Button>
+                        </div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // 5. ESCUELA BÍBLICA & JOVENES (Genéricos mejorados)
+        const MinistryModule = ({ title, items, onAdd, type }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            const [newItem, setNewItem] = useState({});
+
+            const handleSave = () => {
+                onAdd({ ...newItem, id: Date.now() });
+                setIsOpen(false);
+            };
+
+            return (
+                <div className="space-y-6 animate-enter">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
-                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Evento/Clase</Button>
+                        <Button icon="Plus" onClick={() => setIsOpen(true)}>Nuevo Evento/Clase</Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {items.sort((a,b) => new Date(b.date) - new Date(a.date)).map(i => (
-                            <Card key={i.id} title={i[fields[1].key]} icon={dataKey === 'ebd' ? 'Smile' : 'Target'}>
-                                <div className="text-sm text-slate-600 space-y-2 pt-1">
-                                    <p className="font-bold text-brand-600"><Icon name="Calendar" size={14} className="inline mr-1"/>{formatDate(i.date)}</p>
-                                    {fields.slice(2).map(f => (
-                                        <div key={f.key}>
-                                            <p className="text-xs uppercase font-bold text-slate-400">{f.label}</p>
-                                            {f.type === 'array' ? (
-                                                <div className="flex flex-wrap gap-1 mt-0.5">
-                                                    {i[f.key].map((item, idx) => <Badge key={idx} color="blue">{item}</Badge>)}
-                                                </div>
-                                            ) : (
-                                                <p className="font-medium text-slate-700">{i[f.key]}</p>
-                                            )}
-                                        </div>
-                                    ))}
+                        {items.map(i => (
+                            <Card key={i.id} className="flex gap-4">
+                                <div className="bg-slate-100 p-3 rounded-xl flex flex-col items-center justify-center min-w-[4rem]">
+                                    <span className="font-bold text-xl text-slate-800">{new Date(i.date+'T00:00:00').getDate()}</span>
+                                    <span className="text-xs uppercase text-slate-500">{new Date(i.date+'T00:00:00').toLocaleDateString('es-AR',{month:'short'})}</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-800">{i.topic || i.title}</h3>
+                                    <p className="text-sm text-slate-500">{i.teachers ? `Maestros: ${i.teachers.join(', ')}` : i.location}</p>
+                                    {i.students !== undefined && <Badge>Alumnos: {i.students}</Badge>}
                                 </div>
                             </Card>
                         ))}
                     </div>
-                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title={`Nuevo en ${title}`}>
-                        {fields.map(f => (
-                            <FormInput 
-                                key={f.key} 
-                                label={f.label} 
-                                type={f.type === 'array' ? 'text' : f.type || 'text'} 
-                                value={newItem[f.key]} 
-                                placeholder={f.placeholder}
-                                onChange={e => handleFieldChange(f.key, e.target.value)} 
-                            />
-                        ))}
-                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Guardar</Button></div>
+                    
+                    <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={`Nuevo en ${title}`}>
+                        <div className="space-y-4">
+                            <input type="date" className="w-full border p-3 rounded-lg" onChange={e => setNewItem({...newItem, date: e.target.value})}/>
+                            <input type="text" placeholder={type === 'ebd' ? 'Tema de la Clase' : 'Título del Evento'} className="w-full border p-3 rounded-lg" onChange={e => setNewItem({...newItem, [type==='ebd'?'topic':'title']: e.target.value})}/>
+                            {type === 'ebd' ? (
+                                <input type="text" placeholder="Maestros (separar con comas)" className="w-full border p-3 rounded-lg" onChange={e => setNewItem({...newItem, teachers: e.target.value.split(',')})}/>
+                            ) : (
+                                <input type="text" placeholder="Lugar" className="w-full border p-3 rounded-lg" onChange={e => setNewItem({...newItem, location: e.target.value})}/>
+                            )}
+                            <Button onClick={handleSave} className="w-full">Guardar</Button>
+                        </div>
                     </Modal>
                 </div>
             );
         };
 
-        // 6. MENSAJERIA
-        const MessagingModule = ({ data, updateData, setAppMessage }) => {
-            const [msg, setMsg] = useState({ to: 'Todos', text: '' });
-            const handleSend = () => {
-                if(!msg.text.trim()) {
-                    setAppMessage({text: 'El mensaje no puede estar vacío.', type: 'error'});
-                    return;
-                }
-
-                updateData('messages', prev => [{
-                    id: Date.now(), from: 'Pastor', to: msg.to, text: msg.text, date: new Date().toISOString().split('T')[0]
-                }, ...prev]);
-                
-                setMsg({ to: 'Todos', text: '' });
-                setAppMessage({text: `Mensaje enviado a ${msg.to}.`, type: 'success'});
-            };
-            
-            const recipientOptions = ['Todos', 'Líderes', 'Alabanza', 'EBD', 'Jóvenes', ...data.members.map(m => m.name)];
-
-            return (
-                <div className="space-y-6 animate-fade-in">
-                    <h2 className="text-2xl font-bold text-slate-800">Mensajería Masiva</h2>
-                    <Card title="Redactar Mensaje" icon="Send">
-                        <div className="mb-4">
-                            <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Destinatario</label>
-                            <select className="w-full border p-2 rounded-lg bg-slate-50 border-slate-200" value={msg.to} onChange={e => setMsg({...msg, to: e.target.value})}>
-                                {recipientOptions.map(r => <option key={r} value={r}>{r}</option>)}
-                            </select>
-                        </div>
-                        <div className="mb-4">
-                            <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Mensaje</label>
-                            <textarea className="w-full border p-4 rounded-xl h-32 bg-slate-50 border-slate-200 focus:ring-brand-500 focus:ring-2 focus:bg-white transition-all" value={msg.text} onChange={e => setMsg({...msg, text: e.target.value})} placeholder="Escribe aquí tu comunicado..."></textarea>
-                        </div>
-                        <div className="flex justify-end"><Button onClick={handleSend} icon="Send">Enviar Comunicación</Button></div>
-                    </Card>
-
-                    <Card title="Historial de Mensajes" icon="Bell">
-                        <div className="space-y-3 max-h-96 overflow-y-auto hide-scroll">
-                            {data.messages.map(m => (
-                                <div key={m.id} className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm flex gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-800 font-bold text-sm">{m.from[0]}</div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start">
-                                            <div className="font-bold text-sm text-slate-800">{m.from} <Badge color="slate" className="ml-2">Para: {m.to}</Badge></div> 
-                                            <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span>
-                                        </div>
-                                        <p className="text-sm text-slate-600 mt-1">{m.text}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        // --- APP SHELL (Componente Principal) ---
+        // --- APP SHELL (Estructura Principal) ---
         const App = () => {
-            // Usuario logueado (simulado)
-            const [user, setUser] = useState(null); 
-            // Pestaña activa en el sidebar
+            const [user, setUser] = useState(null);
             const [activeTab, setActiveTab] = useState('dashboard');
-            // Datos centrales
             const [data, setData] = useState(INITIAL_DATA);
-            // Control del sidebar en móviles
             const [sidebarOpen, setSidebarOpen] = useState(false);
-            // Mensajes de la app (feedback)
-            const [appMessage, setAppMessage] = useState({ text: '', type: 'info' });
 
-            // Función genérica para actualizar cualquier parte del estado
-            const updateData = (key, action) => {
-                setData(prev => ({ ...prev, [key]: typeof action === 'function' ? action(prev[key]) : action }));
-            };
+            // Helpers para actualizar data genérica
+            const addEBD = (item) => setData(prev => ({...prev, ebd: [...prev.ebd, item]}));
+            const addYouth = (item) => setData(prev => ({...prev, youth: [...prev.youth, item]}));
 
-            // Módulos de datos para el módulo genérico
-            const EBD_FIELDS = [
-                {key:'date',label:'Fecha',type:'date'},
-                {key:'topic',label:'Tema de la Clase', placeholder: 'Ej: El Arca de Noé'},
-                {key:'ageGroup',label:'Grupo Edad', placeholder: 'Ej: Niños (4-8) / Preadolescentes'},
-                {key:'collaborators',label:'Maestros/Colaboradores (Sep. comas)', type:'array', placeholder: 'Ej: Juan, María'}
-            ];
-            
-            const YOUTH_FIELDS = [
-                {key:'date',label:'Fecha',type:'date'},
-                {key:'title',label:'Título del Evento', placeholder: 'Ej: Noche de Cine'},
-                {key:'type',label:'Tipo de Evento', placeholder: 'Ej: Social / Discipulado / Servicio'},
-                {key:'location',label:'Lugar', placeholder: 'Ej: Salón Principal / Casa de Familia'}
-            ];
-
-            // Pantalla de login simulada
+            // Login Simulado
             if (!user) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center bg-brand-50 p-4">
-                        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full">
+                    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+                        <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl">
                             <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-4"><Icon name="Target" size={32}/></div>
-                                <h1 className="text-2xl font-bold text-slate-800">Conquistadores</h1>
-                                <p className="text-slate-500">Selecciona tu rol para acceder</p>
+                                <div className="bg-brand-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg shadow-brand-500/40">
+                                    <Icon name="Home" size={32}/>
+                                </div>
+                                <h1 className="text-2xl font-bold text-slate-800">Conquistadores App</h1>
+                                <p className="text-slate-500">Sistema de Gestión Integral</p>
                             </div>
                             <div className="space-y-3">
-                                <button onClick={() => setUser({name:'Ana Perez', role:'Pastor', ministry:'Pastoral'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-brand-100 p-2 rounded-xl"><Icon name="Users"/></div><div className="text-left font-bold text-slate-700">Pastor <span className="block text-xs font-normal text-slate-500">Acceso Total</span></div></button>
-                                <button onClick={() => setUser({name:'Carlos Gomez', role:'Líder', ministry:'Alabanza'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-blue-100 p-2 rounded-xl"><Icon name="Music"/></div><div className="text-left font-bold text-slate-700">Líder Alabanza <span className="block text-xs font-normal text-slate-500">Gestión Música</span></div></button>
-                                <button onClick={() => setUser({name:'Marta Ríos', role:'Líder', ministry:'EBD'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-emerald-100 p-2 rounded-xl"><Icon name="Smile"/></div><div className="text-left font-bold text-slate-700">Líder EBD <span className="block text-xs font-normal text-slate-500">Gestión Clases</span></div></button>
+                                {[
+                                    { name: 'Pastor Roberto', role: 'Pastor', icon: 'Home', color: 'bg-brand-50 text-brand-700' },
+                                    { name: 'Lucas Diaz', role: 'Líder Alabanza', ministry: 'Alabanza', icon: 'Music', color: 'bg-blue-50 text-blue-700' },
+                                    { name: 'Sofia M.', role: 'Líder EBD', ministry: 'EBD', icon: 'Book', color: 'bg-emerald-50 text-emerald-700' },
+                                    { name: 'Javier K.', role: 'Líder Jóvenes', ministry: 'Jóvenes', icon: 'Smile', color: 'bg-purple-50 text-purple-700' }
+                                ].map((u, i) => (
+                                    <button key={i} onClick={() => setUser({ name: u.name, role: u.role || 'Líder', ministry: u.ministry || 'Pastoral' })} 
+                                        className="w-full p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-4 transition-all hover:scale-[1.02]">
+                                        <div className={`p-3 rounded-lg ${u.color}`}><Icon name={u.icon} /></div>
+                                        <div className="text-left">
+                                            <p className="font-bold text-slate-800">{u.role}</p>
+                                            <p className="text-xs text-slate-500">{u.name}</p>
+                                        </div>
+                                        <Icon name="ChevronRight" className="ml-auto text-slate-300"/>
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -743,62 +696,81 @@
             }
 
             const NavItem = ({ id, icon, label }) => (
-                <button onClick={() => { setActiveTab(id); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === id ? 'bg-brand-600 text-white shadow-lg' : 'text-brand-100 hover:bg-brand-800 hover:text-white'}`}>
-                    <Icon name={icon} size={18} className={activeTab === id ? 'opacity-100' : 'opacity-70'}/> {label}
+                <button 
+                    onClick={() => { setActiveTab(id); setSidebarOpen(false); }} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all mb-1 ${activeTab === id ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/20' : 'text-brand-100/70 hover:bg-brand-800 hover:text-white'}`}>
+                    <Icon name={icon} /> {label}
                 </button>
             );
 
             return (
-                <div className="flex h-screen bg-brand-50/50">
+                <div className="flex h-screen bg-slate-50 overflow-hidden">
                     {/* Sidebar */}
-                    <aside className={`fixed md:relative z-40 w-72 bg-brand-900 h-full p-6 flex flex-col justify-between transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                        <div>
-                            <div className="flex items-center gap-3 mb-10 text-white"><div className="bg-white/10 p-2 rounded-lg"><Icon name="Target"/></div><span className="font-bold text-lg">Conquistadores App</span></div>
-                            <nav className="space-y-1">
-                                <NavItem id="dashboard" icon="LayoutDashboard" label="Inicio" />
-                                <NavItem id="members" icon="Users" label="Directorio" />
-                                <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500 uppercase tracking-widest">Ministerios</div>
+                    <aside className={`fixed md:relative z-40 w-72 bg-brand-900 text-white h-full flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+                        <div className="p-6">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="bg-white/10 p-2 rounded-lg"><Icon name="Home" /></div>
+                                <span className="font-bold text-lg tracking-tight">Conquistadores</span>
+                            </div>
+                            <nav>
+                                <NavItem id="dashboard" icon="Home" label="Inicio" />
+                                <NavItem id="directory" icon="Users" label="Directorio" />
+                                <div className="my-4 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Ministerios</div>
                                 {(user.role === 'Pastor' || user.ministry === 'Alabanza') && <NavItem id="worship" icon="Music" label="Alabanza" />}
-                                {(user.role === 'Pastor' || user.ministry === 'EBD') && <NavItem id="ebd" icon="Smile" label="Escuela Bíblica" />}
-                                {(user.role === 'Pastor' || user.ministry === 'Jóvenes') && <NavItem id="youth" icon="Target" label="Jóvenes" />}
+                                {(user.role === 'Pastor' || user.ministry === 'EBD') && <NavItem id="ebd" icon="Book" label="Escuela Bíblica" />}
+                                {(user.role === 'Pastor' || user.ministry === 'Jóvenes') && <NavItem id="youth" icon="Smile" label="Jóvenes" />}
                                 {user.role === 'Pastor' && (
                                     <>
-                                        <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500 uppercase tracking-widest">Admin</div>
-                                        <NavItem id="finance" icon="Wallet" label="Tesorería" />
-                                        <NavItem id="messaging" icon="Send" label="Mensajería" />
+                                        <div className="my-4 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Admin</div>
+                                        <NavItem id="finances" icon="Wallet" label="Tesorería" />
+                                        <NavItem id="messages" icon="Mail" label="Mensajería" />
                                     </>
                                 )}
                             </nav>
                         </div>
-                        <div className="flex items-center gap-3 text-white p-3 bg-brand-800 rounded-xl">
-                            <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm">{user.name.split(' ')[0][0]}</div>
-                            <div className="flex-1 overflow-hidden"><p className="font-bold text-sm truncate">{user.name}</p><p className="text-[10px] text-brand-300 uppercase">{user.role}</p></div>
-                            <button onClick={() => setUser(null)} className="text-brand-300 hover:text-white"><Icon name="LogOut"/></button>
+                        <div className="mt-auto p-6 bg-brand-950">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-brand-700 flex items-center justify-center font-bold">{user.name[0]}</div>
+                                <div className="flex-1 overflow-hidden">
+                                    <p className="font-bold text-sm truncate">{user.name}</p>
+                                    <p className="text-xs text-brand-400">{user.role}</p>
+                                </div>
+                                <button onClick={() => setUser(null)} className="text-brand-400 hover:text-white"><Icon name="LogOut" /></button>
+                            </div>
                         </div>
                     </aside>
-                    
-                    {/* Overlay en móvil */}
-                    {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
-                    
-                    {/* Contenido principal */}
-                    <main className="flex-1 overflow-y-auto relative">
-                        <header className="md:hidden bg-white p-4 sticky top-0 z-20 shadow-sm flex justify-between items-center">
-                            <span className="font-bold text-brand-900">App</span>
-                            <button onClick={() => setSidebarOpen(true)} className="text-brand-800"><Icon name="Menu"/></button>
+
+                    {/* Main Content */}
+                    <main className="flex-1 overflow-y-auto relative w-full">
+                        <header className="md:hidden bg-white p-4 sticky top-0 z-30 shadow-sm flex justify-between items-center">
+                            <span className="font-bold text-brand-900">Conquistadores</span>
+                            <button onClick={() => setSidebarOpen(true)} className="text-slate-600"><Icon name="Menu" /></button>
                         </header>
-                        <div className="p-6 md:p-10 max-w-7xl mx-auto pb-24">
+
+                        <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
                             {activeTab === 'dashboard' && <Dashboard user={user} data={data} />}
-                            {activeTab === 'members' && <MembersModule user={user} data={data} updateData={updateData} setAppMessage={setAppMessage} />}
-                            {activeTab === 'worship' && <WorshipModule data={data} updateData={updateData} setAppMessage={setAppMessage} />}
-                            {activeTab === 'finance' && user.role === 'Pastor' && <FinanceModule data={data} updateData={updateData} setAppMessage={setAppMessage} />}
-                            {activeTab === 'messaging' && user.role === 'Pastor' && <MessagingModule data={data} updateData={updateData} setAppMessage={setAppMessage} />}
-                            {activeTab === 'ebd' && (user.role === 'Pastor' || user.ministry === 'EBD') && <GenericModule title="Escuela Bíblica" items={data.ebd} updateData={updateData} dataKey="ebd" fields={EBD_FIELDS} setAppMessage={setAppMessage} />}
-                            {activeTab === 'youth' && (user.role === 'Pastor' || user.ministry === 'Jóvenes') && <GenericModule title="Jóvenes" items={data.youth} updateData={updateData} dataKey="youth" fields={YOUTH_FIELDS} setAppMessage={setAppMessage} />}
+                            {activeTab === 'directory' && <Directory data={data} setData={setData} user={user} />}
+                            {activeTab === 'worship' && <Worship data={data} setData={setData} />}
+                            {activeTab === 'finances' && <Finances data={data} setData={setData} />}
+                            {activeTab === 'ebd' && <MinistryModule title="Escuela Bíblica" items={data.ebd} onAdd={addEBD} type="ebd" />}
+                            {activeTab === 'youth' && <MinistryModule title="Jóvenes" items={data.youth} onAdd={addYouth} type="youth" />}
+                            {activeTab === 'messages' && (
+                                <div className="animate-enter">
+                                    <h2 className="text-2xl font-bold text-slate-800 mb-6">Mensajería Masiva</h2>
+                                    <Card>
+                                        <textarea placeholder="Escribe tu mensaje aquí..." className="w-full border p-4 rounded-xl h-32 mb-4 bg-slate-50 focus:bg-white transition-colors"></textarea>
+                                        <div className="flex justify-between items-center">
+                                            <select className="border p-2 rounded-lg bg-white"><option>Todos</option><option>Líderes</option><option>Alabanza</option></select>
+                                            <Button icon="Mail">Enviar Mensaje</Button>
+                                        </div>
+                                    </Card>
+                                </div>
+                            )}
                         </div>
                     </main>
-
-                    {/* Alerta de feedback global */}
-                    <CustomAlert message={appMessage.text} type={appMessage.type} onClose={() => setAppMessage({text: ''})} />
+                    
+                    {/* Overlay Móvil */}
+                    {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
                 </div>
             );
         };
