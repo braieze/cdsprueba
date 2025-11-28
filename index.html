@@ -2,74 +2,72 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conquistadores App - Gestión Real</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Conquistadores App - Excellence</title>
     
-    <!-- React & ReactDOM -->
+    <!-- 1. React Core -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- Babel para JSX -->
+    <!-- 2. Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- 3. PropTypes (REQUERIDO ANTES DE RECHARTS) -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+
+    <!-- 4. Recharts -->
+    <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Recharts (Gráficos) -->
-    <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
-    
-    <!-- FIREBASE SDKs -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <!-- Fuentes e Iconos -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans (Más moderno que Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
                     colors: {
-                        brand: { 50:'#fff7ed', 100:'#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500:'#f97316', 600:'#ea580c', 700:'#c2410c', 800: '#9a3412', 900:'#7c2d12', 950: '#431407' },
-                        dark: { 800: '#1e293b', 900: '#0f172a' }
+                        brand: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 900:'#1e3a8a' },
+                        accent: { 500: '#f59e0b', 600: '#d97706' }, // Amber for highlights
+                        surface: '#f8fafc'
                     },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     boxShadow: {
                         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-                        'glow': '0 0 15px rgba(249, 115, 22, 0.3)'
+                        'glow': '0 0 15px rgba(59, 130, 246, 0.3)'
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #334155; }
+        body { background-color: #f1f5f9; -webkit-font-smoothing: antialiased; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .animate-enter { animation: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes enter { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         
-        /* Animaciones */
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .slide-in { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        /* Modern Inputs */
+        .input-ui { @apply w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium; }
+        .label-ui { @apply block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1; }
         
-        /* Scrollbar Oculto pero funcional */
-        .hide-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-        .hide-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .hide-scroll::-webkit-scrollbar-track { background: transparent; }
-
-        /* Estilos Inputs Modernos */
-        .input-glass { @apply w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all px-4 py-3 shadow-sm; }
-        .label-glass { @apply block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1; }
-        
-        /* Utilidades */
-        .card-hover { @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-white border border-slate-100 rounded-2xl; }
+        /* Custom Checkbox for multiselect */
+        .check-box { @apply w-5 h-5 rounded border border-slate-300 flex items-center justify-center transition-colors; }
+        .check-box.checked { @apply bg-brand-600 border-brand-600 text-white; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- FIREBASE INIT ---
+        // --- 1. CONFIGURACIÓN FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDXK_EcXsFGhRmXfkKG8SMdsM69c4PNfHw",
             authDomain: "conquistadoresapp.firebaseapp.com",
@@ -78,221 +76,82 @@
             messagingSenderId: "518647225464",
             appId: "1:518647225464:web:b3344ca5172498187e218d"
         };
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // --- LIBRARIES ---
+        // --- 2. UTILS & HOOKS ---
         const { useState, useEffect, useMemo } = React;
-        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } = window.Recharts;
+        const { BarChart, Bar, XAxis, YAxis, Tooltip: RechartsTooltip, ResponsiveContainer, Cell } = window.Recharts;
 
-        // --- ICONS (LUCIDE STYLE - FIXED) ---
-        // Se agregaron React.Fragment para envolver múltiples paths
-        const Icon = ({ name, size = 20, className = "", strokeWidth = 2 }) => {
+        // Icon System (Feather Icons)
+        const Icon = ({ name, size = 20, className = "", fill="none" }) => {
             const icons = {
                 Home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>,
-                Users: <React.Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></React.Fragment>,
-                Wallet: <React.Fragment><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></React.Fragment>,
-                Music: <React.Fragment><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></React.Fragment>,
-                Book: <React.Fragment><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></React.Fragment>,
-                Smile: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></React.Fragment>,
-                Bell: <React.Fragment><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></React.Fragment>,
-                Calendar: <React.Fragment><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></React.Fragment>,
-                LogOut: <React.Fragment><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></React.Fragment>,
-                Plus: <React.Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></React.Fragment>,
-                X: <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
-                Menu: <React.Fragment><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></React.Fragment>,
-                Trash: <React.Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></React.Fragment>,
-                Edit: <React.Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></React.Fragment>,
-                Hand: <React.Fragment><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></React.Fragment>,
-                Mail: <React.Fragment><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></React.Fragment>,
-                Clipboard: <React.Fragment><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></React.Fragment>,
+                Users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
+                Calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+                Music: <><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></>,
+                Briefcase: <rect x="2" y="7" width="20" height="14" rx="2" ry="2" transform="translate(0 -2)"/>,
+                DollarSign: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,
+                Bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>,
+                Menu: <><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>,
+                X: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
                 ChevronLeft: <polyline points="15 18 9 12 15 6"/>,
                 ChevronRight: <polyline points="9 18 15 12 9 6"/>,
-                ChevronUp: <polyline points="18 15 12 9 6 15"/>,
                 ChevronDown: <polyline points="6 9 12 15 18 9"/>,
                 Check: <polyline points="20 6 9 17 4 12"/>,
-                Mic: <React.Fragment><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></React.Fragment>
+                Plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+                Trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
+                Info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>,
+                LogOut: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+                BookOpen: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
+                Smile: <><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></>
             };
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name] || <circle cx="12" cy="12" r="10"/>}
-                </svg>
-            );
+            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
         };
 
-        // --- UTILS ---
-        const formatDate = (d) => {
+        const formatDate = (d, fmt = 'short') => {
             if(!d) return '';
             const date = new Date(d);
             if(d.length === 10) date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+            if(fmt === 'long') return date.toLocaleDateString('es-AR', { weekday:'long', day: 'numeric', month: 'long' });
+            if(fmt === 'month') return date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
             return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
         };
-        const formatFullDate = (d) => {
-            const date = new Date(d);
-            if(d.length === 10) date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-            return date.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        };
-        const formatCurrency = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(val);
-        const getMonthName = (date) => date.toLocaleString('es-AR', { month: 'long' });
 
-        // --- COMPONENTS ---
-        
-        // 1. Unified Event Modal (The "Super Div")
-        const UnifiedEventModal = ({ isOpen, onClose, eventData, allData }) => {
-            if (!isOpen || !eventData) return null;
+        const formatMoney = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(amount);
 
-            // Extraer info de todas las colecciones que coincidan con la fecha
-            const dateKey = eventData.date;
-            
-            const linkedWorship = allData.worship.find(w => w.date === dateKey);
-            const linkedServers = allData.servers.find(s => s.date === dateKey);
-            const linkedEbd = allData.ebd.find(e => e.date === dateKey);
-            const linkedYouth = allData.youth.find(y => y.date === dateKey);
-            
-            return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md fade-in">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                        {/* Header con gradiente */}
-                        <div className="bg-gradient-to-r from-brand-600 to-brand-500 p-8 text-white relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-10"><Icon name="Calendar" size={120}/></div>
-                            <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition"><Icon name="X" size={20}/></button>
-                            
-                            <div className="relative z-10">
-                                <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-sm">Visión General</span>
-                                <h2 className="text-3xl font-extrabold mt-3">{eventData.title || eventData.theme || 'Actividad General'}</h2>
-                                <p className="opacity-90 mt-1 flex items-center gap-2 text-lg"><Icon name="Calendar" size={18}/> {formatFullDate(dateKey)}</p>
-                                <p className="opacity-80 flex items-center gap-2"><Icon name="Bell" size={18}/> {eventData.time || 'Horario a confirmar'}</p>
-                            </div>
-                        </div>
-
-                        <div className="p-8 space-y-8">
-                            {/* Predicador (Si existe en Worship) */}
-                            {linkedWorship?.preacher && (
-                                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <div className="bg-blue-100 p-3 rounded-full text-blue-600"><Icon name="Mic" size={24}/></div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-blue-500 uppercase tracking-wide">Predicador / Orador</h4>
-                                        <p className="text-xl font-bold text-slate-800">{linkedWorship.preacher}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Columna Izquierda: Alabanza y Orden */}
-                                <div className="space-y-6">
-                                    <div className="border border-slate-100 rounded-2xl p-5 shadow-sm">
-                                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 border-b pb-2"><Icon name="Music" className="text-brand-500"/> Alabanza</h3>
-                                        {linkedWorship ? (
-                                            <div className="space-y-3">
-                                                {Object.entries(linkedWorship.team || {}).map(([inst, ppl]) => (
-                                                    <div key={inst} className="text-sm">
-                                                        <span className="font-semibold text-slate-500 block text-xs uppercase">{inst}</span>
-                                                        <span className="text-slate-700 font-medium">{Array.isArray(ppl) ? ppl.join(', ') : ppl}</span>
-                                                    </div>
-                                                ))}
-                                                {linkedWorship.songList?.length > 0 && (
-                                                    <div className="mt-4 bg-slate-50 p-3 rounded-xl">
-                                                        <p className="text-xs font-bold text-slate-400 mb-2">SETLIST</p>
-                                                        <ul className="list-disc list-inside text-sm space-y-1 text-slate-600">
-                                                            {linkedWorship.songList.map((s,i)=><li key={i}>{s}</li>)}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : <p className="text-sm text-slate-400 italic">No hay datos de alabanza.</p>}
-                                    </div>
-                                </div>
-
-                                {/* Columna Derecha: Servidores y Ministerios */}
-                                <div className="space-y-6">
-                                    <div className="border border-slate-100 rounded-2xl p-5 shadow-sm">
-                                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 border-b pb-2"><Icon name="Hand" className="text-brand-500"/> Servidores</h3>
-                                        {linkedServers ? (
-                                            <div className="grid grid-cols-1 gap-3">
-                                                {Object.entries(linkedServers.assignments || {}).map(([role, ppl]) => (
-                                                    <div key={role} className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg">
-                                                        <span className="text-xs font-bold text-slate-500 uppercase">{role}</span>
-                                                        <span className="text-sm font-bold text-slate-700">{Array.isArray(ppl) ? ppl.join(', ') : ppl}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : <p className="text-sm text-slate-400 italic">No hay cronograma de servidores.</p>}
-                                    </div>
-
-                                    {(linkedEbd || linkedYouth) && (
-                                        <div className="border border-slate-100 rounded-2xl p-5 shadow-sm">
-                                            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 border-b pb-2"><Icon name="Users" className="text-brand-500"/> Actividades Específicas</h3>
-                                            {linkedEbd && <div className="mb-2"><span className="badge-blue">EBD</span> <span className="text-sm font-medium ml-2">{linkedEbd.title || linkedEbd.topic}</span></div>}
-                                            {linkedYouth && <div><span className="badge-purple">Jóvenes</span> <span className="text-sm font-medium ml-2">{linkedYouth.title || linkedYouth.topic}</span></div>}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Tarea Específica (si se abrió desde una tarea) */}
-                            {eventData.isTask && (
-                                <div className="mt-6 bg-amber-50 border border-amber-100 p-4 rounded-xl">
-                                    <h4 className="font-bold text-amber-800 flex items-center gap-2"><Icon name="Clipboard"/> Tu Misión Específica</h4>
-                                    <p className="text-amber-700 mt-1">{eventData.description}</p>
-                                    <p className="text-xs text-amber-600 mt-2 font-semibold">Vence: {formatDate(eventData.dueDate)}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
+        // --- 3. UI COMPONENTS MODERNOS ---
         const Card = ({ children, className = "", onClick }) => (
-            <div onClick={onClick} className={`card-hover p-6 ${className} ${onClick ? 'cursor-pointer' : ''}`}>
+            <div onClick={onClick} className={`bg-white rounded-2xl p-6 shadow-soft border border-slate-100 ${className}`}>
                 {children}
             </div>
         );
 
         const Button = ({ children, onClick, variant = 'primary', icon, className = "", disabled=false }) => {
-            const styles = { 
-                primary: "bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:shadow-glow hover:translate-y-[-1px]", 
-                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50", 
+            const variants = {
+                primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-glow",
+                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
                 danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
-                ghost: "bg-transparent text-slate-500 hover:text-brand-600 hover:bg-brand-50 border-transparent" 
+                ghost: "bg-transparent text-slate-500 hover:bg-slate-100"
             };
             return (
-                <button disabled={disabled} onClick={onClick} className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all text-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${styles[variant]} ${className}`}>
+                <button disabled={disabled} onClick={onClick} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}>
                     {icon && <Icon name={icon} size={18} />}{children}
                 </button>
-            );
-        };
-
-        const MonthNavigator = ({ currentDate, onMonthChange }) => {
-            const nextMonth = () => {
-                const d = new Date(currentDate);
-                d.setMonth(d.getMonth() + 1);
-                onMonthChange(d);
-            };
-            const prevMonth = () => {
-                const d = new Date(currentDate);
-                d.setMonth(d.getMonth() - 1);
-                onMonthChange(d);
-            };
-            return (
-                <div className="flex items-center justify-between bg-white rounded-xl p-1 border border-slate-200 shadow-sm w-full md:w-64">
-                    <button onClick={prevMonth} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-brand-600 transition"><Icon name="ChevronLeft" size={20}/></button>
-                    <span className="font-bold text-slate-800 capitalize select-none">{getMonthName(currentDate)} {currentDate.getFullYear()}</span>
-                    <button onClick={nextMonth} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-brand-600 transition"><Icon name="ChevronRight" size={20}/></button>
-                </div>
             );
         };
 
         const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all scale-100">
-                        <div className="p-5 border-b border-slate-50 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
-                            <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-red-500"><Icon name="X" /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-enter">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
+                            <h3 className="text-xl font-extrabold text-slate-800 tracking-tight">{title}</h3>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Icon name="X" /></button>
                         </div>
                         <div className="p-6">{children}</div>
                     </div>
@@ -300,55 +159,74 @@
             );
         };
 
-        const Avatar = ({ url, name, size="md" }) => {
-            const sizes = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-16 h-16 text-lg" };
-            return (
-                <div className={`${sizes[size]} rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold border-2 border-white shadow-sm overflow-hidden`}>
-                    {url ? <img src={url} alt={name} className="w-full h-full object-cover"/> : name.charAt(0)}
+        // Componente de Acordeón para Tareas/Mensajes
+        const AccordionItem = ({ title, subtitle, date, status, children, isOpen, onToggle, badgeColor }) => (
+            <div className={`border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? 'shadow-lg ring-1 ring-brand-500/20 bg-white' : 'bg-slate-50 hover:bg-white'}`}>
+                <div className="p-4 cursor-pointer flex justify-between items-center" onClick={onToggle}>
+                    <div className="flex items-center gap-3">
+                        <div className={`w-2 h-12 rounded-full ${badgeColor}`}></div>
+                        <div>
+                            <h4 className="font-bold text-slate-800">{title}</h4>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">{subtitle}</p>
+                        </div>
+                    </div>
+                    <div className="text-right flex items-center gap-3">
+                        <div className="hidden sm:block">
+                            <span className="block text-xs font-bold text-slate-400">{date}</span>
+                            <span className="block text-[10px] uppercase font-bold tracking-wider text-slate-300">{status}</span>
+                        </div>
+                        <Icon name="ChevronDown" className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                    </div>
                 </div>
-            );
-        };
+                {isOpen && (
+                    <div className="px-6 pb-6 pt-2 border-t border-slate-100 bg-white animate-enter">
+                        {children}
+                    </div>
+                )}
+            </div>
+        );
 
-        // --- APP LOGIC ---
+        // --- 4. DATA LOGIC & APP ---
         const App = () => {
+            // Auth State
             const [user, setUser] = useState(null);
             const [profile, setProfile] = useState(null);
-            const [loading, setLoading] = useState(true);
-            const [activeTab, setActiveTab] = useState('dashboard');
             
+            // App State
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [sidebarOpen, setSidebarOpen] = useState(false);
+            const [quickActionOpen, setQuickActionOpen] = useState(false);
+
             // Data Collections
             const [members, setMembers] = useState([]);
+            const [finances, setFinances] = useState([]);
             const [worship, setWorship] = useState([]);
             const [servers, setServers] = useState([]);
-            const [finances, setFinances] = useState([]);
-            const [tasks, setTasks] = useState([]);
-            const [messages, setMessages] = useState([]);
             const [ebd, setEbd] = useState([]);
             const [youth, setYouth] = useState([]);
+            const [tasks, setTasks] = useState([]);
+            const [messages, setMessages] = useState([]);
             const [songs, setSongs] = useState([]);
 
-            // Unified Modal State
-            const [unifiedModalOpen, setUnifiedModalOpen] = useState(false);
-            const [selectedEventForModal, setSelectedEventForModal] = useState(null);
-
-            // Auth & Data Fetching
+            // Listeners
             useEffect(() => {
                 const unsubAuth = auth.onAuthStateChanged(async (u) => {
                     if (u) {
                         setUser(u);
                         const snap = await db.collection('members').where('email', '==', u.email).get();
                         if (!snap.empty) {
-                            setProfile({ id: snap.docs[0].id, ...snap.docs[0].data() });
+                            setProfile({ ...snap.docs[0].data(), id: snap.docs[0].id });
                         } else {
-                            const all = await db.collection('members').get();
-                            if (all.empty) {
-                                const newAdmin = { name: u.displayName, email: u.email, role: 'Pastor', ministry: 'Pastoral', photo: u.photoURL, createdAt: new Date().toISOString() };
-                                const ref = await db.collection('members').add(newAdmin);
-                                setProfile({ id: ref.id, ...newAdmin });
+                            const check = await db.collection('members').get();
+                            if(check.empty) { // Primer usuario es Pastor
+                                const admin = { name: u.displayName, email: u.email, role: 'Pastor', ministry: 'General', photo: u.photoURL, status: 'Activo' };
+                                await db.collection('members').add(admin);
+                                setProfile(admin);
                             }
                         }
+                    } else {
+                        setUser(null); setProfile(null);
                     }
-                    setLoading(false);
                 });
                 return () => unsubAuth();
             }, []);
@@ -356,588 +234,520 @@
             useEffect(() => {
                 if (!profile) return;
                 const subs = [
-                    db.collection('members').onSnapshot(s => setMembers(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('worship').onSnapshot(s => setWorship(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('servers').onSnapshot(s => setServers(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('finances').onSnapshot(s => setFinances(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('tasks').onSnapshot(s => setTasks(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('messages').onSnapshot(s => setMessages(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('ebd').onSnapshot(s => setEbd(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('youth').onSnapshot(s => setYouth(s.docs.map(d => ({id:d.id, ...d.data()})))),
-                    db.collection('songs').onSnapshot(s => setSongs(s.docs.map(d => ({id:d.id, ...d.data()}))))
+                    db.collection('members').onSnapshot(s => setMembers(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('finances').onSnapshot(s => setFinances(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('worship').onSnapshot(s => setWorship(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('servers').onSnapshot(s => setServers(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('ebd').onSnapshot(s => setEbd(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('youth').onSnapshot(s => setYouth(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('tasks').onSnapshot(s => setTasks(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('messages').onSnapshot(s => setMessages(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('songs').onSnapshot(s => setSongs(s.docs.map(d=>({id:d.id, ...d.data()}))))
                 ];
                 return () => subs.forEach(unsub => unsub());
             }, [profile]);
 
-            const handleUnifiedClick = (eventItem) => {
-                setSelectedEventForModal(eventItem);
-                setUnifiedModalOpen(true);
+            // CRUD Helpers
+            const add = (col, data) => db.collection(col).add(data);
+            const update = (col, id, data) => db.collection(col).doc(id).update(data);
+            const del = (col, id) => { if(window.confirm("¿Confirmar eliminación?")) db.collection(col).doc(id).delete(); };
+            const login = () => auth.signInWithPopup(googleProvider);
+
+            // Universal Context Finder (Para Tareas/Calendario)
+            const getContextForDate = (dateStr) => {
+                const allEvents = [
+                    ...worship.map(e => ({...e, src: 'Alabanza'})),
+                    ...servers.map(e => ({...e, src: 'Servidores'})),
+                    ...ebd.map(e => ({...e, src: 'EBD'})),
+                    ...youth.map(e => ({...e, src: 'Jóvenes'}))
+                ];
+                return allEvents.filter(e => e.date === dateStr);
             };
 
-            const Login = () => (
-                <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
-                    <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-brand-100 rounded-full blur-3xl opacity-50"></div>
-                    <Card className="w-full max-w-md text-center py-16 px-8 relative z-10 shadow-2xl border-0">
-                        <div className="inline-flex p-4 bg-brand-50 rounded-3xl mb-6 text-brand-600 shadow-sm"><Icon name="Home" size={48}/></div>
-                        <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Conquistadores</h1>
-                        <p className="text-slate-500 mb-8 font-medium">Plataforma de Gestión Integral</p>
-                        <Button onClick={()=>auth.signInWithPopup(googleProvider)} className="w-full py-4 text-lg justify-center shadow-brand-500/30 shadow-lg">Entrar con Google</Button>
-                    </Card>
-                </div>
-            );
+            // --- VISTAS INTERNAS ---
 
-            if (loading) return <div className="h-screen flex items-center justify-center text-brand-600 font-bold animate-pulse">Cargando ecosistema...</div>;
-            if (!user || !profile) return <Login />;
-
-            // --- SUB-COMPONENTS ---
-
-            // 1. DASHBOARD
+            // 1. DASHBOARD REDISEÑADO
             const Dashboard = () => {
-                // Combine upcoming events for "My Agenda"
-                const myServices = useMemo(() => {
-                    const list = [];
-                    // Worship
-                    worship.forEach(w => {
-                        Object.entries(w.team || {}).forEach(([inst, ppl]) => {
-                            const people = Array.isArray(ppl) ? ppl : [ppl];
-                            if(people.includes(profile.name)) list.push({...w, role: inst, origin: 'Alabanza'});
-                        });
-                    });
-                    // Servers
-                    servers.forEach(s => {
-                        Object.entries(s.assignments || {}).forEach(([role, ppl]) => {
-                            const people = Array.isArray(ppl) ? ppl : [ppl];
-                            if(people.includes(profile.name)) list.push({...s, role: role, origin: 'Servidor'});
-                        });
-                    });
-                    return list.filter(x => new Date(x.date) >= new Date().setHours(0,0,0,0)).sort((a,b)=>new Date(a.date)-new Date(b.date));
-                }, [worship, servers, profile]);
+                const nextEvent = useMemo(() => {
+                    const all = [...worship, ...youth, ...ebd].filter(e => new Date(e.date) >= new Date().setHours(0,0,0,0));
+                    return all.sort((a,b) => new Date(a.date) - new Date(b.date))[0];
+                }, [worship, youth, ebd]);
 
-                const pendingTasks = tasks.filter(t => t.assignedTo === profile.name && t.status === 'Pendiente');
+                const myPendingTasks = tasks.filter(t => t.assignedTo === profile.name && t.status === 'Pendiente').length;
                 const unreadMsgs = messages.filter(m => (m.to === 'all' || m.to === profile.id) && !m.readBy?.includes(profile.id)).length;
 
                 return (
-                    <div className="space-y-8 fade-in pb-10">
-                        <header className="flex flex-col md:flex-row justify-between items-end pb-6 border-b border-slate-200">
-                            <div>
-                                <h1 className="text-3xl font-extrabold text-slate-800">Hola, {profile.name.split(' ')[0]}</h1>
-                                <p className="text-slate-500 font-medium mt-1">Bienvenido a tu panel de control.</p>
-                            </div>
-                            <div className="flex gap-4 mt-4 md:mt-0">
-                                {unreadMsgs > 0 && <span className="bg-brand-100 text-brand-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 cursor-pointer" onClick={()=>setActiveTab('messages')}><div className="w-2 h-2 bg-brand-500 rounded-full animate-ping"></div> {unreadMsgs} mensajes nuevos</span>}
-                            </div>
-                        </header>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-2 space-y-8">
-                                <section>
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-bold text-lg text-slate-700 flex items-center gap-2"><Icon name="Clipboard" className="text-brand-500"/> Mis Responsabilidades</h3>
+                    <div className="space-y-8 animate-enter">
+                        {/* Hero Section */}
+                        <div className="bg-gradient-to-r from-brand-900 to-brand-700 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-12 opacity-10 transform rotate-12"><Icon name="Home" size={120} /></div>
+                            <h2 className="text-3xl font-extrabold mb-2">Hola, {profile.name.split(' ')[0]} 👋</h2>
+                            <p className="text-brand-100 font-medium max-w-lg mb-6">Bienvenido al panel de {profile.ministry}. Tienes <strong className="text-white">{myPendingTasks} tareas</strong> y <strong className="text-white">{unreadMsgs} mensajes</strong> nuevos.</p>
+                            
+                            {nextEvent && (
+                                <div className="inline-flex items-center gap-4 bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20">
+                                    <div className="text-center px-2">
+                                        <div className="text-xs uppercase text-brand-200 font-bold">Próximo</div>
+                                        <div className="text-2xl font-bold">{new Date(nextEvent.date).getDate()}</div>
                                     </div>
-                                    {myServices.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {myServices.map((item, i) => (
-                                                <div key={i} onClick={()=>handleUnifiedClick(item)} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md cursor-pointer transition-all hover:border-brand-200 group">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${item.origin==='Alabanza'?'bg-purple-50 text-purple-600':'bg-blue-50 text-blue-600'}`}>{item.origin}</span>
-                                                        <span className="text-xs font-bold text-slate-400 group-hover:text-brand-500 transition-colors">Ver Detalles →</span>
-                                                    </div>
-                                                    <h4 className="font-bold text-slate-800 text-lg leading-tight">{item.theme || item.type}</h4>
-                                                    <p className="text-sm text-slate-500 mt-1">{formatFullDate(item.date)}</p>
-                                                    <div className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700 bg-slate-50 p-2 rounded-lg">
-                                                        <div className="w-1 h-4 bg-brand-500 rounded-full"></div> Rol: {item.role}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                    <div className="h-8 w-px bg-white/20"></div>
+                                    <div>
+                                        <div className="font-bold text-lg leading-none">{nextEvent.theme || nextEvent.title}</div>
+                                        <div className="text-xs text-brand-200 mt-1 flex items-center gap-2">
+                                            <Icon name="Calendar" size={12}/> {formatDate(nextEvent.date)} a las {nextEvent.time}
                                         </div>
-                                    ) : (
-                                        <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200">
-                                            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300"><Icon name="Smile" size={30}/></div>
-                                            <p className="text-slate-500 font-medium">Estás libre de servicios por ahora.</p>
-                                        </div>
-                                    )}
-                                </section>
-
-                                <section>
-                                    <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2"><Icon name="Calendar"/> Calendario Global</h3>
-                                    <CalendarWidget onEventClick={handleUnifiedClick} events={[...worship, ...servers, ...ebd, ...youth]} />
-                                </section>
-                            </div>
-
-                            <div className="space-y-6">
-                                {/* Quick Actions */}
-                                {profile.role === 'Pastor' && (
-                                    <Card className="bg-slate-800 text-white border-none shadow-xl">
-                                        <h3 className="font-bold mb-4 flex items-center gap-2"><Icon name="Plus"/> Acciones Rápidas</h3>
-                                        <div className="grid grid-cols-1 gap-2">
-                                            <button onClick={()=>setActiveTab('worship')} className="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition flex items-center justify-between">Planificar Alabanza <Icon name="ChevronRight" size={16}/></button>
-                                            <button onClick={()=>setActiveTab('servers')} className="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition flex items-center justify-between">Organizar Servidores <Icon name="ChevronRight" size={16}/></button>
-                                            <button onClick={()=>setActiveTab('finances')} className="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition flex items-center justify-between">Registrar Finanzas <Icon name="ChevronRight" size={16}/></button>
-                                        </div>
-                                    </Card>
-                                )}
-
-                                {/* Tareas Pendientes */}
-                                <Card>
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-bold text-slate-700">Tareas Pendientes</h3>
-                                        <span className="text-xs bg-brand-100 text-brand-700 font-bold px-2 py-1 rounded-full">{pendingTasks.length}</span>
                                     </div>
-                                    <div className="space-y-3">
-                                        {pendingTasks.map(t => (
-                                            <div key={t.id} onClick={()=>handleUnifiedClick({...t, isTask:true})} className="p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition">
-                                                <p className="font-semibold text-sm text-slate-800 line-clamp-2">{t.description}</p>
-                                                <div className="flex justify-between mt-2 text-xs">
-                                                    <span className="text-red-500 font-bold">{formatDate(t.dueDate)}</span>
-                                                    <span className="text-slate-400">Ver contexto</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {pendingTasks.length === 0 && <p className="text-sm text-slate-400 text-center py-4">¡Todo al día!</p>}
-                                    </div>
-                                    <Button variant="secondary" className="w-full mt-4 text-xs" onClick={()=>setActiveTab('messages')}>Ir a Centro de Tareas</Button>
-                                </Card>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            // 2. CALENDAR WIDGET
-            const CalendarWidget = ({ events, onEventClick }) => {
-                const [date, setDate] = useState(new Date());
-                
-                const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-                const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-                
-                const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-                const blanks = Array.from({ length: firstDay }, (_, i) => i);
-
-                const getEventsForDay = (day) => {
-                    const checkDate = new Date(date.getFullYear(), date.getMonth(), day).toISOString().split('T')[0];
-                    // Filtrar duplicados por fecha para no llenar el calendario de puntitos repetidos si hay muchas colecciones
-                    const uniqueEvents = [];
-                    events.forEach(e => {
-                         if(e.date === checkDate && !uniqueEvents.find(u => u.date === checkDate)) uniqueEvents.push(e);
-                    });
-                    return uniqueEvents;
-                };
-
-                return (
-                    <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-                        <MonthNavigator currentDate={date} onMonthChange={setDate} />
-                        <div className="grid grid-cols-7 gap-2 mt-6 text-center">
-                            {['D','L','M','M','J','V','S'].map(d => <div key={d} className="text-xs font-bold text-slate-400 mb-2">{d}</div>)}
-                            {blanks.map(b => <div key={`b-${b}`}></div>)}
-                            {days.map(day => {
-                                const dayEvents = getEventsForDay(day);
-                                const isToday = new Date().getDate() === day && new Date().getMonth() === date.getMonth();
-                                return (
-                                    <div key={day} 
-                                        onClick={() => dayEvents.length > 0 && onEventClick(dayEvents[0])}
-                                        className={`h-12 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-slate-50 relative ${isToday ? 'bg-brand-50 text-brand-600 font-bold border border-brand-200' : 'text-slate-700'}`}>
-                                        <span className="text-sm">{day}</span>
-                                        {dayEvents.length > 0 && (
-                                            <div className="flex gap-1 mt-1">
-                                                {dayEvents.map((ev, i) => (
-                                                    <div key={i} className={`w-1.5 h-1.5 rounded-full ${ev.team ? 'bg-purple-400' : (ev.assignments ? 'bg-blue-400' : 'bg-green-400')}`}></div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
-            };
-
-            // 3. MESSAGE CENTER (Expandable)
-            const MessageCenter = () => {
-                const [expandedId, setExpandedId] = useState(null);
-                const [filter, setFilter] = useState('inbox'); // inbox, tasks
-                
-                // Procesar datos
-                const myMsgs = messages.filter(m => m.to === 'all' || m.to === profile.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
-                const myTasks = tasks.filter(t => t.assignedTo === profile.name).sort((a,b)=>new Date(t.dueDate)-new Date(a.dueDate));
-
-                const toggleExpand = (id, isMsg) => {
-                    if (expandedId === id) setExpandedId(null);
-                    else {
-                        setExpandedId(id);
-                        if(isMsg) {
-                            // Marcar como leído
-                            const msg = myMsgs.find(m => m.id === id);
-                            if (msg && !msg.readBy?.includes(profile.id)) {
-                                db.collection('messages').doc(id).update({ readBy: [...(msg.readBy||[]), profile.id] });
-                            }
-                        }
-                    }
-                };
-
-                return (
-                    <div className="max-w-4xl mx-auto space-y-6 fade-in">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-slate-800">Centro de Comunicación</h2>
-                            <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                                <button onClick={()=>setFilter('inbox')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${filter==='inbox'?'bg-brand-100 text-brand-700':'text-slate-500 hover:bg-slate-50'}`}>Mensajes</button>
-                                <button onClick={()=>setFilter('tasks')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${filter==='tasks'?'bg-brand-100 text-brand-700':'text-slate-500 hover:bg-slate-50'}`}>Tareas</button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            {filter === 'inbox' ? (
-                                myMsgs.length > 0 ? myMsgs.map(m => (
-                                    <div key={m.id} className={`bg-white rounded-2xl border transition-all overflow-hidden ${expandedId === m.id ? 'shadow-lg border-brand-200' : 'shadow-sm border-slate-100 hover:border-brand-200'}`}>
-                                        <div onClick={()=>toggleExpand(m.id, true)} className={`p-4 cursor-pointer flex justify-between items-center ${!m.readBy?.includes(profile.id) ? 'bg-slate-50' : ''}`}>
-                                            <div className="flex items-center gap-4">
-                                                <Avatar name={m.fromName} size="sm" />
-                                                <div>
-                                                    <p className={`text-sm ${!m.readBy?.includes(profile.id) ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>{m.fromName}</p>
-                                                    <p className="text-xs text-slate-400">{formatFullDate(m.date)}</p>
-                                                </div>
-                                            </div>
-                                            <Icon name={expandedId === m.id ? "ChevronUp" : "ChevronDown"} size={16} className="text-slate-400"/>
-                                        </div>
-                                        {expandedId === m.id && (
-                                            <div className="p-6 border-t border-slate-100 bg-white slide-in">
-                                                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{m.content}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )) : <div className="text-center py-12 text-slate-400">No hay mensajes.</div>
-                            ) : (
-                                myTasks.length > 0 ? myTasks.map(t => (
-                                    <div key={t.id} className={`bg-white rounded-2xl border transition-all overflow-hidden ${expandedId === t.id ? 'shadow-lg border-brand-200' : 'shadow-sm border-slate-100'}`}>
-                                        <div onClick={()=>toggleExpand(t.id, false)} className="p-4 cursor-pointer flex justify-between items-center">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-2 h-10 rounded-full ${t.status==='Pendiente'?'bg-amber-400':'bg-emerald-400'}`}></div>
-                                                <div>
-                                                    <p className="font-bold text-slate-800">{t.description}</p>
-                                                    <p className="text-xs text-slate-500">Vence: {formatDate(t.dueDate)}</p>
-                                                </div>
-                                            </div>
-                                            <Icon name="ChevronDown" size={16} className="text-slate-400"/>
-                                        </div>
-                                        {expandedId === t.id && (
-                                            <div className="p-6 border-t border-slate-100 bg-amber-50/50 slide-in">
-                                                <p className="text-sm font-bold text-slate-500 uppercase mb-2">Instrucciones</p>
-                                                <p className="text-slate-700 mb-4">{t.details || "Sin detalles adicionales. Revisa el evento general."}</p>
-                                                <div className="flex gap-3">
-                                                    <Button variant="secondary" onClick={()=>handleUnifiedClick({...t, date: t.dueDate, isTask: true})} icon="Calendar">Ver Contexto General</Button>
-                                                    {t.status === 'Pendiente' && <Button icon="Check" onClick={()=>db.collection('tasks').doc(t.id).update({status: 'Completada'})}>Marcar Lista</Button>}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )) : <div className="text-center py-12 text-slate-400">No tienes tareas asignadas.</div>
+                                </div>
                             )}
                         </div>
-                    </div>
-                );
-            };
 
-            // 4. WORSHIP (Multi-select + Monthly View)
-            const WorshipManager = () => {
-                const [currentMonth, setCurrentMonth] = useState(new Date());
-                const [isModalOpen, setIsModalOpen] = useState(false);
-                const [form, setForm] = useState({ date: '', time: '', theme: '', preacher: '', type: 'Culto', team: {}, songList: [] });
-                const [songQuery, setSongQuery] = useState('');
-
-                // Filter by month
-                const filteredEvents = worship.filter(w => {
-                    const d = new Date(w.date);
-                    return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
-                }).sort((a,b)=>new Date(a.date)-new Date(b.date));
-
-                const instruments = ['Vocal', 'Guitarra A.', 'Guitarra E.', 'Bajo', 'Batería', 'Teclado', 'Sonido'];
-                const musicians = members.filter(m => m.ministry === 'Alabanza' || m.ministry === 'Pastoral');
-
-                // Toggle logic for multi-select
-                const toggleMusician = (inst, name) => {
-                    const currentList = form.team[inst] || [];
-                    let newList;
-                    if (currentList.includes(name)) newList = currentList.filter(n => n !== name);
-                    else newList = [...currentList, name];
-                    setForm({ ...form, team: { ...form.team, [inst]: newList } });
-                };
-
-                const save = () => {
-                    if (form.id) db.collection('worship').doc(form.id).update(form);
-                    else db.collection('worship').add(form);
-                    setIsModalOpen(false);
-                };
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                            <MonthNavigator currentDate={currentMonth} onMonthChange={setCurrentMonth} />
-                            <Button icon="Plus" onClick={()=>{setForm({date:'', time:'', theme:'', preacher:'', type:'Culto', team:{}, songList:[]}); setIsModalOpen(true);}}>Planificar Evento</Button>
-                        </div>
-
-                        {/* Table View */}
-                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
-                                    <tr>
-                                        <th className="p-4">Día</th>
-                                        <th className="p-4">Evento / Tema</th>
-                                        <th className="p-4">Predicador</th>
-                                        <th className="p-4">Equipo</th>
-                                        <th className="p-4 text-right">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {filteredEvents.map(ev => (
-                                        <tr key={ev.id} className="hover:bg-slate-50 transition">
-                                            <td className="p-4 font-bold text-slate-700 whitespace-nowrap">
-                                                <div className="text-lg">{new Date(ev.date).getDate()}</div>
-                                                <div className="text-xs text-slate-400 uppercase">{new Date(ev.date).toLocaleDateString('es-AR',{weekday:'short'})}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="font-bold text-brand-600">{ev.type}</div>
-                                                <div className="text-slate-800">{ev.theme || 'Tema a definir'}</div>
-                                            </td>
-                                            <td className="p-4 text-slate-600">{ev.preacher || '--'}</td>
-                                            <td className="p-4">
-                                                <div className="flex flex-wrap gap-1">
-                                                    {Object.values(ev.team || {}).flat().slice(0, 3).map((p,i) => <span key={i} className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">{p}</span>)}
-                                                    {Object.values(ev.team || {}).flat().length > 3 && <span className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-400">+</span>}
-                                                </div>
-                                            </td>
-                                            <td className="p-4 text-right">
-                                                <button onClick={()=>{setForm(ev); setIsModalOpen(true);}} className="text-brand-500 hover:text-brand-700 font-bold text-xs">Editar</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {filteredEvents.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-slate-400">Sin planificación este mes.</td></tr>}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Planificar Servicio">
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="label-glass">Fecha</label><input type="date" className="input-glass" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/></div>
-                                    <div><label className="label-glass">Hora</label><input type="time" className="input-glass" value={form.time} onChange={e=>setForm({...form, time:e.target.value})}/></div>
-                                </div>
-                                <div><label className="label-glass">Tema</label><input className="input-glass" placeholder="Ej: La Fe" value={form.theme} onChange={e=>setForm({...form, theme:e.target.value})}/></div>
-                                <div><label className="label-glass">Predicador</label><input className="input-glass" placeholder="Quién predica" value={form.preacher} onChange={e=>setForm({...form, preacher:e.target.value})}/></div>
-                                
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                    <h4 className="font-bold text-sm text-slate-600 mb-3 uppercase">Equipo (Multiselección)</h4>
-                                    <div className="space-y-3 h-48 overflow-y-auto hide-scroll">
-                                        {instruments.map(inst => (
-                                            <div key={inst} className="flex flex-col">
-                                                <span className="text-xs font-bold text-brand-500 mb-1">{inst}</span>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {musicians.map(m => {
-                                                        const isSelected = (form.team[inst] || []).includes(m.name);
-                                                        return (
-                                                            <button key={m.id} onClick={()=>toggleMusician(inst, m.name)} 
-                                                                className={`text-[10px] px-2 py-1 rounded-full border transition-all ${isSelected ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-slate-200 text-slate-600 hover:border-brand-300'}`}>
-                                                                {m.name}
-                                                            </button>
-                                                        )
-                                                    })}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <Button className="w-full" onClick={save}>Guardar Planificación</Button>
+                        {/* Stats / Quick Metrics */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-200 transition-colors" onClick={() => setActiveTab('notifications')}>
+                                <div className="bg-orange-100 text-orange-600 p-3 rounded-full"><Icon name="Bell" /></div>
+                                <span className="font-bold text-slate-700">{unreadMsgs} Mensajes</span>
                             </div>
-                        </Modal>
-                    </div>
-                );
-            };
-
-            // 5. SERVERS & METRICS
-            const ServersManager = () => {
-                const [currentMonth, setCurrentMonth] = useState(new Date());
-                const [view, setView] = useState('planning'); // planning, metrics
-                const [isModalOpen, setIsModalOpen] = useState(false);
-                const [form, setForm] = useState({ date: '', time: '', type: 'Culto', assignments: {} });
-
-                const filtered = servers.filter(s => {
-                    const d = new Date(s.date);
-                    return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
-                }).sort((a,b)=>new Date(a.date)-new Date(b.date));
-
-                const roles = ['Recepción', 'Baños', 'Altar', 'Ofrenda', 'Seguridad', 'Limpieza'];
-                const allServers = members.filter(m => m.ministry === 'Servidores' || m.ministry === 'General' || m.role === 'Líder');
-
-                // Metrics Calculation
-                const metrics = useMemo(() => {
-                    const counts = {};
-                    servers.forEach(s => {
-                        Object.values(s.assignments || {}).flat().forEach(name => {
-                            counts[name] = (counts[name] || 0) + 1;
-                        });
-                    });
-                    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a,b)=>b.count - a.count);
-                }, [servers]);
-
-                const toggleAssign = (role, name) => {
-                    const current = form.assignments[role] || [];
-                    const updated = current.includes(name) ? current.filter(x=>x!==name) : [...current, name];
-                    setForm({ ...form, assignments: { ...form.assignments, [role]: updated } });
-                };
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex justify-between items-center">
-                             <div className="flex bg-white p-1 rounded-xl border border-slate-200">
-                                <button onClick={()=>setView('planning')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${view==='planning'?'bg-slate-800 text-white':'text-slate-500'}`}>Planificación</button>
-                                <button onClick={()=>setView('metrics')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${view==='metrics'?'bg-slate-800 text-white':'text-slate-500'}`}>Métricas / Rotación</button>
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-200 transition-colors" onClick={() => setActiveTab('notifications')}>
+                                <div className="bg-blue-100 text-blue-600 p-3 rounded-full"><Icon name="Briefcase" /></div>
+                                <span className="font-bold text-slate-700">{myPendingTasks} Tareas</span>
                             </div>
-                            <Button icon="Plus" onClick={()=>{setForm({ date: '', time: '', type: 'Culto', assignments: {} }); setIsModalOpen(true);}}>Organizar</Button>
+                             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-200 transition-colors" onClick={() => setActiveTab('calendar')}>
+                                <div className="bg-purple-100 text-purple-600 p-3 rounded-full"><Icon name="Calendar" /></div>
+                                <span className="font-bold text-slate-700">Agenda</span>
+                            </div>
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-200 transition-colors" onClick={() => setActiveTab('directory')}>
+                                <div className="bg-emerald-100 text-emerald-600 p-3 rounded-full"><Icon name="Users" /></div>
+                                <span className="font-bold text-slate-700">Directorio</span>
+                            </div>
                         </div>
 
-                        {view === 'planning' ? (
-                            <>
-                                <MonthNavigator currentDate={currentMonth} onMonthChange={setCurrentMonth} />
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                                    {filtered.map(s => (
-                                        <Card key={s.id} onClick={()=>handleUnifiedClick(s)}>
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div>
-                                                    <p className="text-xs font-bold text-brand-600 uppercase">{s.type}</p>
-                                                    <h3 className="font-bold text-lg text-slate-800">{formatDate(s.date)}</h3>
-                                                </div>
-                                                <button onClick={(e)=>{e.stopPropagation(); db.collection('servers').doc(s.id).delete()}} className="text-slate-300 hover:text-red-500"><Icon name="Trash" size={16}/></button>
-                                            </div>
-                                            <div className="space-y-2">
-                                                {Object.entries(s.assignments || {}).slice(0,4).map(([r, ppl]) => (
-                                                    <div key={r} className="flex justify-between text-sm border-b border-slate-50 pb-1">
-                                                        <span className="text-slate-500 text-xs uppercase font-bold">{r}</span>
-                                                        <span className="font-medium text-slate-700 text-xs">{Array.isArray(ppl) ? ppl.length : 1} asignados</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <div className="mt-3 text-center text-xs text-brand-500 font-bold">Ver equipo completo</div>
-                                        </Card>
-                                    ))}
-                                </div>
-                            </>
-                        ) : (
-                            <Card>
-                                <h3 className="font-bold mb-6">Rotación de Servidores (Total Servicios)</h3>
+                        {/* Chart: Métricas de Servidores (Rotación Justa) */}
+                        {profile.role === 'Pastor' && (
+                            <Card className="overflow-hidden">
+                                <h3 className="font-bold text-lg mb-4 text-slate-800 flex items-center gap-2">
+                                    <Icon name="Info" size={18} className="text-brand-500"/> Balance de Carga (Servicios por persona)
+                                </h3>
                                 <div className="h-64 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={metrics}>
-                                            <XAxis dataKey="name" tick={{fontSize: 10}} interval={0} angle={-45} textAnchor="end" height={60}/>
-                                            <YAxis />
-                                            <Tooltip />
-                                            <Bar dataKey="count" fill="#f97316" radius={[4, 4, 0, 0]} />
+                                        <BarChart data={Object.entries(servers.reduce((acc, curr) => {
+                                            Object.values(curr.assignments || {}).flat().forEach(name => {
+                                                if(name) acc[name] = (acc[name] || 0) + 1;
+                                            });
+                                            return acc;
+                                        }, {})).map(([name, count]) => ({ name, count })).sort((a,b)=>b.count - a.count).slice(0, 10)}>
+                                            <XAxis dataKey="name" tick={{fontSize: 10}} interval={0} />
+                                            <YAxis allowDecimals={false} />
+                                            <RechartsTooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'}} />
+                                            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                                                {members.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#3b82f6' : '#60a5fa'} />
+                                                ))}
+                                            </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </Card>
                         )}
+                    </div>
+                );
+            };
 
-                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Asignar Servidores">
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input type="date" className="input-glass" onChange={e=>setForm({...form, date:e.target.value})}/>
-                                    <input type="time" className="input-glass" onChange={e=>setForm({...form, time:e.target.value})}/>
-                                </div>
-                                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
-                                    {roles.map(role => (
-                                        <div key={role} className="border-b border-slate-100 pb-3">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="font-bold text-sm text-slate-700">{role}</span>
-                                                <span className="text-xs text-slate-400">{(form.assignments[role]||[]).length} seleccionados</span>
+            // 2. NOTIFICACIONES & TAREAS (Expandible + Contexto)
+            const NotificationCenter = () => {
+                const [openId, setOpenId] = useState(null);
+                const [contextData, setContextData] = useState(null); // Para modal de contexto
+
+                const myTasks = tasks.filter(t => t.assignedTo === profile.name).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+                const myMsgs = messages.filter(m => m.to === 'all' || m.to === profile.id).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                const markRead = (msg) => {
+                    if(!msg.readBy?.includes(profile.id)) update('messages', msg.id, { readBy: [...(msg.readBy||[]), profile.id] });
+                };
+
+                const toggleTask = (id) => setOpenId(openId === id ? null : id);
+                
+                const showContext = (date) => {
+                    const ctx = getContextForDate(date);
+                    setContextData(ctx.length ? { date, events: ctx } : null);
+                };
+
+                return (
+                    <div className="max-w-3xl mx-auto space-y-8 animate-enter">
+                        {/* Section: Tareas */}
+                        <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-bold text-slate-800">Mis Asignaciones</h2>
+                                <span className="bg-brand-100 text-brand-700 text-xs font-bold px-3 py-1 rounded-full">{myTasks.filter(t=>t.status==='Pendiente').length} Pendientes</span>
+                            </div>
+                            <div className="space-y-3">
+                                {myTasks.length === 0 && <p className="text-slate-400 text-center py-8">No tienes tareas asignadas.</p>}
+                                {myTasks.map(task => (
+                                    <AccordionItem 
+                                        key={task.id} 
+                                        isOpen={openId === task.id} 
+                                        onToggle={() => toggleTask(task.id)}
+                                        title={task.description} 
+                                        subtitle={`Vence: ${formatDate(task.dueDate)}`} 
+                                        date={task.ministry}
+                                        status={task.status}
+                                        badgeColor={task.status === 'Pendiente' ? 'bg-amber-400' : 'bg-emerald-400'}
+                                    >
+                                        <div className="space-y-4">
+                                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-600">
+                                                <p className="font-bold mb-1 text-slate-800">Instrucciones:</p>
+                                                {task.details || "Cumplir con la tarea asignada antes de la fecha límite."}
                                             </div>
-                                            <select className="input-glass py-1 text-xs" onChange={(e)=>{ if(e.target.value) toggleAssign(role, e.target.value); }}>
-                                                <option value="">+ Agregar persona...</option>
-                                                {allServers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                                            </select>
-                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                {(form.assignments[role]||[]).map(p => (
-                                                    <span key={p} onClick={()=>toggleAssign(role,p)} className="px-2 py-1 bg-brand-100 text-brand-700 text-xs rounded-full cursor-pointer hover:bg-red-100 hover:text-red-600 flex items-center gap-1">
-                                                        {p} <Icon name="X" size={10}/>
-                                                    </span>
-                                                ))}
+                                            <div className="flex gap-3">
+                                                <Button variant="secondary" onClick={() => showContext(task.dueDate)} className="flex-1 text-xs">
+                                                    <Icon name="Info" size={14}/> Ver Contexto del Día
+                                                </Button>
+                                                {task.status === 'Pendiente' && (
+                                                    <Button onClick={() => update('tasks', task.id, {status: 'Completada'})} className="flex-1 text-xs">
+                                                        Marcar Completada
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </AccordionItem>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Section: Mensajes */}
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Buzón de Entrada</h2>
+                            <div className="space-y-3">
+                                {myMsgs.map(msg => {
+                                    const isRead = msg.readBy?.includes(profile.id);
+                                    return (
+                                        <AccordionItem
+                                            key={msg.id}
+                                            isOpen={openId === msg.id}
+                                            onToggle={() => { toggleTask(msg.id); markRead(msg); }}
+                                            title={msg.fromName}
+                                            subtitle={formatDate(msg.date)}
+                                            date={formatDate(msg.date)}
+                                            status={isRead ? 'Leído' : 'Nuevo'}
+                                            badgeColor={isRead ? 'bg-slate-200' : 'bg-brand-500'}
+                                        >
+                                            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                        </AccordionItem>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Modal de Contexto General */}
+                        <Modal isOpen={!!contextData} onClose={()=>setContextData(null)} title={`Contexto: ${formatDate(contextData?.date, 'long')}`}>
+                            {contextData?.events.length > 0 ? (
+                                <div className="space-y-4">
+                                    {contextData.events.map((evt, i) => (
+                                        <div key={i} className="border-l-4 border-brand-500 pl-4 py-1">
+                                            <h4 className="font-bold text-lg text-slate-800">{evt.theme || evt.title || evt.type}</h4>
+                                            <div className="flex gap-2 text-xs text-brand-600 font-bold uppercase mb-2">
+                                                <span>{evt.src}</span> • <span>{evt.time} hs</span>
+                                            </div>
+                                            <div className="text-sm text-slate-600 space-y-1">
+                                                {evt.preacher && <p>🎤 <strong>Predica:</strong> {evt.preacher}</p>}
+                                                {evt.team && <p>🎸 <strong>Equipo:</strong> {Object.values(evt.team).flat().length} músicos</p>}
+                                                {evt.assignments && <p>🤲 <strong>Servidores:</strong> {Object.values(evt.assignments).flat().join(', ')}</p>}
+                                                {evt.location && <p>📍 <strong>Lugar:</strong> {evt.location}</p>}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                                <Button className="w-full" onClick={()=>{db.collection('servers').add(form); setIsModalOpen(false);}}>Guardar Asignaciones</Button>
+                            ) : <p>No hay eventos registrados para esta fecha.</p>}
+                        </Modal>
+                    </div>
+                );
+            };
+
+            // 3. GESTOR UNIVERSAL MENSUAL (Alabanza, Servidores, etc.)
+            // Soporta: Navegación mensual, Chips de Mes, Multi-select, Historial
+            const MinistryManager = ({ ministryName, collection, data, fields = [] }) => {
+                const [currentDate, setCurrentDate] = useState(new Date());
+                const [viewMode, setViewMode] = useState('list'); // list | calendar
+                const [isModalOpen, setIsModalOpen] = useState(false);
+                const [editingItem, setEditingItem] = useState(null);
+                
+                // Form State Genérico
+                const [formData, setFormData] = useState({});
+
+                // Filtrar datos por mes actual
+                const filteredData = data.filter(item => item.date.startsWith(currentDate.toISOString().slice(0, 7)));
+
+                // Navegación Mes
+                const changeMonth = (delta) => {
+                    const newDate = new Date(currentDate);
+                    newDate.setMonth(newDate.getMonth() + delta);
+                    setCurrentDate(newDate);
+                };
+
+                // Manejo de Selección Múltiple
+                const toggleMultiSelect = (field, value) => {
+                    const list = formData[field] || [];
+                    if (list.includes(value)) setFormData({...formData, [field]: list.filter(x => x !== value)});
+                    else setFormData({...formData, [field]: [...list, value]});
+                };
+                
+                // Manejo de Selección Múltiple en Objeto (ej. team.guitarra)
+                const toggleNestedMultiSelect = (parentField, key, value) => {
+                    const parentObj = formData[parentField] || {};
+                    const list = parentObj[key] || [];
+                    const newList = list.includes(value) ? list.filter(x => x !== value) : [...list, value];
+                    setFormData({ ...formData, [parentField]: { ...parentObj, [key]: newList } });
+                };
+
+                const handleSave = () => {
+                    if (editingItem) update(collection, editingItem.id, formData);
+                    else add(collection, formData);
+                    setIsModalOpen(false);
+                };
+
+                const openEditor = (item = null) => {
+                    setEditingItem(item);
+                    // Default Data basado en colección
+                    const defaultData = collection === 'worship' 
+                        ? { date: '', time: '', type: 'Culto', theme: '', preacher: '', team: {}, songList: [] }
+                        : collection === 'servers'
+                            ? { date: '', time: '', type: 'Orden', assignments: {} }
+                            : { date: '', time: '', title: '', description: '', location: '' };
+                    
+                    setFormData(item || defaultData);
+                    setIsModalOpen(true);
+                };
+
+                return (
+                    <div className="fade-in space-y-6">
+                        {/* Header Navegación Mensual */}
+                        <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 gap-4">
+                            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <span className={`w-3 h-8 rounded-full ${collection==='worship'?'bg-purple-500':collection==='servers'?'bg-blue-500':'bg-emerald-500'}`}></span>
+                                {ministryName}
+                            </h2>
+                            <div className="flex items-center gap-4 bg-slate-50 rounded-xl p-1">
+                                <button onClick={()=>changeMonth(-1)} className="p-2 hover:bg-white hover:shadow rounded-lg transition-all"><Icon name="ChevronLeft"/></button>
+                                <span className="font-bold w-32 text-center text-slate-700">{formatDate(currentDate, 'month')}</span>
+                                <button onClick={()=>changeMonth(1)} className="p-2 hover:bg-white hover:shadow rounded-lg transition-all"><Icon name="ChevronRight"/></button>
+                            </div>
+                            <Button icon="Plus" onClick={()=>openEditor()}>Planificar</Button>
+                        </div>
+
+                        {/* Vista Tabla/Lista */}
+                        <div className="grid grid-cols-1 gap-4">
+                            {filteredData.length === 0 && <div className="text-center py-10 text-slate-400 italic bg-white rounded-2xl border border-dashed">No hay actividad planificada para este mes.</div>}
+                            
+                            {filteredData.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(item => (
+                                <Card key={item.id} className="relative group hover:border-brand-300 transition-colors">
+                                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={()=>openEditor(item)} className="p-2 bg-slate-100 text-brand-600 rounded-lg"><Icon name="Plus" size={16} className="rotate-45"/></button> {/* Usando Plus rotado como edit provisional o icono edit si existiera */}
+                                        <button onClick={()=>del(collection, item.id)} className="p-2 bg-red-50 text-red-600 rounded-lg"><Icon name="Trash" size={16}/></button>
+                                    </div>
+                                    
+                                    <div className="flex flex-col md:flex-row gap-6">
+                                        {/* Fecha Box */}
+                                        <div className="flex flex-row md:flex-col items-center justify-center bg-slate-50 rounded-xl p-4 min-w-[80px] border border-slate-100">
+                                            <span className="text-xs font-bold uppercase text-slate-400">{new Date(item.date).toLocaleDateString('es-AR',{weekday:'short'})}</span>
+                                            <span className="text-2xl font-black text-slate-800">{new Date(item.date).getDate()}</span>
+                                            <span className="text-xs font-bold text-brand-600">{item.time}</span>
+                                        </div>
+
+                                        {/* Contenido Dinámico según Colección */}
+                                        <div className="flex-1 space-y-3">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-xs font-bold bg-slate-800 text-white px-2 py-0.5 rounded">{item.type || 'Evento'}</span>
+                                                    {item.preacher && <span className="text-xs font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded">🎤 {item.preacher}</span>}
+                                                </div>
+                                                <h3 className="text-lg font-bold text-slate-800">{item.theme || item.title || 'Actividad General'}</h3>
+                                            </div>
+
+                                            {/* Renderizado Específico: Alabanza */}
+                                            {collection === 'worship' && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Equipo</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {Object.entries(item.team || {}).map(([inst, ppl]) => (
+                                                                ppl && ppl.length > 0 && <span key={inst} className="bg-white border px-2 py-1 rounded text-slate-600"><strong>{inst}:</strong> {ppl.join(', ')}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Canciones</p>
+                                                        <ul className="list-disc list-inside text-slate-600 space-y-1">
+                                                            {item.songList?.map((s,i) => <li key={i}>{s}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Renderizado Específico: Servidores */}
+                                            {collection === 'servers' && (
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                    {Object.entries(item.assignments || {}).map(([role, ppl]) => (
+                                                        <div key={role} className="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase">{role}</p>
+                                                            <p className="font-semibold text-slate-700 text-sm truncate">{Array.isArray(ppl) ? ppl.join(', ') : ppl}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        {/* Modal Editor Genérico */}
+                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Planificación">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="label-ui">Fecha</label><input type="date" className="input-ui" value={formData.date} onChange={e=>setFormData({...formData, date:e.target.value})}/></div>
+                                    <div><label className="label-ui">Hora</label><input type="time" className="input-ui" value={formData.time} onChange={e=>setFormData({...formData, time:e.target.value})}/></div>
+                                </div>
+                                {collection === 'worship' && (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div><label className="label-ui">Tipo</label><select className="input-ui" value={formData.type} onChange={e=>setFormData({...formData, type:e.target.value})}><option>Culto</option><option>Ensayo</option><option>Especial</option></select></div>
+                                            <div><label className="label-ui">Predicador</label><input className="input-ui" value={formData.preacher} onChange={e=>setFormData({...formData, preacher:e.target.value})} placeholder="Nombre predicador"/></div>
+                                        </div>
+                                        <div><label className="label-ui">Tema / Título</label><input className="input-ui" value={formData.theme} onChange={e=>setFormData({...formData, theme:e.target.value})}/></div>
+                                        
+                                        <div className="border-t pt-4">
+                                            <label className="label-ui mb-2">Armado de Equipo (Selección Múltiple)</label>
+                                            {['Vocal', 'Guitarra', 'Bajo', 'Batería', 'Teclado'].map(inst => (
+                                                <div key={inst} className="mb-3">
+                                                    <p className="text-xs font-bold text-brand-600 mb-1">{inst}</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {members.filter(m=>(m.ministry==='Alabanza' || m.role==='Pastor')).map(m => {
+                                                            const isSelected = (formData.team?.[inst] || []).includes(m.name);
+                                                            return (
+                                                                <button key={m.id} onClick={()=>toggleNestedMultiSelect('team', inst, m.name)} 
+                                                                    className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${isSelected ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+                                                                    {m.name}
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                                {collection === 'servers' && (
+                                    <>
+                                        <div><label className="label-ui">Tipo</label><select className="input-ui" value={formData.type} onChange={e=>setFormData({...formData, type:e.target.value})}><option>Orden de Culto</option><option>Limpieza</option></select></div>
+                                        <div className="border-t pt-4 space-y-3">
+                                            {['Recepción', 'Baños', 'Altar', 'Ofrenda', 'Seguridad'].map(role => (
+                                                <div key={role}>
+                                                    <label className="label-ui">{role}</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {members.map(m => {
+                                                            const isSelected = (formData.assignments?.[role] || []).includes(m.name);
+                                                            return (
+                                                                <button key={m.id} onClick={()=>toggleNestedMultiSelect('assignments', role, m.name)} 
+                                                                    className={`px-2 py-1 rounded-md text-xs border ${isSelected ? 'bg-blue-600 text-white' : 'bg-white'}`}>
+                                                                    {m.name}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                                <Button className="w-full mt-4" onClick={handleSave}>Guardar Actividad</Button>
                             </div>
                         </Modal>
                     </div>
                 );
             };
 
-            // 6. FINANCES (Detailed)
+            // 4. TESORERÍA AVANZADA
             const FinancesManager = () => {
-                const [currentMonth, setCurrentMonth] = useState(new Date());
+                const [currentDate, setCurrentDate] = useState(new Date());
                 const [isModalOpen, setIsModalOpen] = useState(false);
-                const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], type: 'Ingreso', category: 'Culto', amount: 0, tithes: 0, offerings: 0, notes: '' });
+                const [form, setForm] = useState({ type: 'Culto', date: '', tithes: 0, offerings: 0, cash: 0, notes: '' });
 
-                const filtered = finances.filter(f => {
-                    const d = new Date(f.date);
-                    return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
-                }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+                // Filtros
+                const monthData = finances.filter(f => f.date.startsWith(currentDate.toISOString().slice(0, 7)));
+                
+                const stats = useMemo(() => {
+                    return monthData.reduce((acc, curr) => {
+                        const total = (Number(curr.tithes)||0) + (Number(curr.offerings)||0) + (Number(curr.cash)||0);
+                        if(curr.type === 'Gasto') return { ...acc, gastos: acc.gastos + Math.abs(total) };
+                        return { 
+                            ...acc, 
+                            ingresos: acc.ingresos + total,
+                            tithes: acc.tithes + (Number(curr.tithes)||0),
+                            offerings: acc.offerings + (Number(curr.offerings)||0)
+                        };
+                    }, { ingresos: 0, gastos: 0, tithes: 0, offerings: 0 });
+                }, [monthData]);
 
-                const income = filtered.filter(f => f.type === 'Ingreso').reduce((a,b) => a + (b.amount || 0), 0);
-                const expense = filtered.filter(f => f.type === 'Gasto').reduce((a,b) => a + (b.amount || 0), 0);
-
-                const save = () => {
-                    // Auto-calculate total for Culto
-                    let finalAmount = Number(form.amount);
-                    if(form.category === 'Culto') finalAmount = Number(form.tithes) + Number(form.offerings);
-                    
-                    db.collection('finances').add({ ...form, amount: finalAmount, tithes: Number(form.tithes), offerings: Number(form.offerings) });
+                const handleSave = () => {
+                    let finalData = { ...form, date: form.date || new Date().toISOString().split('T')[0] };
+                    // Calcular total cash para registros simples
+                    if(form.type === 'Culto') {
+                        finalData.total = Number(form.tithes) + Number(form.offerings);
+                    } else if (form.type === 'Gasto') {
+                        finalData.total = -Math.abs(Number(form.cash));
+                    } else {
+                        finalData.total = Number(form.cash);
+                    }
+                    add('finances', finalData);
                     setIsModalOpen(false);
                 };
 
+                const changeMonth = (d) => { const n = new Date(currentDate); n.setMonth(n.getMonth()+d); setCurrentDate(n); };
+
                 return (
                     <div className="space-y-6 fade-in">
-                        <MonthNavigator currentDate={currentMonth} onMonthChange={setCurrentMonth} />
-                        
-                        <div className="grid grid-cols-3 gap-4">
-                            <Card className="bg-emerald-50 border-emerald-100">
-                                <p className="text-xs uppercase font-bold text-emerald-600">Ingresos (Mes)</p>
-                                <p className="text-2xl font-bold text-emerald-800">{formatCurrency(income)}</p>
-                            </Card>
-                            <Card className="bg-red-50 border-red-100">
-                                <p className="text-xs uppercase font-bold text-red-600">Gastos (Mes)</p>
-                                <p className="text-2xl font-bold text-red-800">{formatCurrency(expense)}</p>
-                            </Card>
-                            <Card className="bg-slate-800 text-white border-none cursor-pointer hover:bg-slate-700" onClick={()=>setIsModalOpen(true)}>
-                                <div className="h-full flex flex-col items-center justify-center">
-                                    <Icon name="Plus" size={32} className="mb-1"/>
-                                    <span className="text-xs font-bold uppercase">Nuevo Movimiento</span>
+                        <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <button onClick={()=>changeMonth(-1)} className="p-2 bg-slate-100 rounded-lg"><Icon name="ChevronLeft"/></button>
+                                <span className="font-bold text-lg w-32 text-center">{formatDate(currentDate, 'month')}</span>
+                                <button onClick={()=>changeMonth(1)} className="p-2 bg-slate-100 rounded-lg"><Icon name="ChevronRight"/></button>
+                            </div>
+                            <Button icon="Plus" onClick={()=>{setForm({type:'Culto', tithes:0, offerings:0, cash:0, date:''}); setIsModalOpen(true);}}>Registrar</Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card className="bg-emerald-50 border-emerald-100 text-emerald-800">
+                                <p className="text-xs font-bold uppercase opacity-70">Ingresos Totales</p>
+                                <p className="text-3xl font-bold mt-1">{formatMoney(stats.ingresos)}</p>
+                                <div className="mt-2 text-xs flex gap-2">
+                                    <span className="bg-emerald-200/50 px-2 py-1 rounded">Diezmos: {formatMoney(stats.tithes)}</span>
+                                    <span className="bg-emerald-200/50 px-2 py-1 rounded">Ofrendas: {formatMoney(stats.offerings)}</span>
                                 </div>
+                            </Card>
+                            <Card className="bg-red-50 border-red-100 text-red-800">
+                                <p className="text-xs font-bold uppercase opacity-70">Gastos del Mes</p>
+                                <p className="text-3xl font-bold mt-1">{formatMoney(stats.gastos)}</p>
+                            </Card>
+                            <Card className="bg-slate-800 text-white">
+                                <p className="text-xs font-bold uppercase opacity-70">Balance Neto</p>
+                                <p className="text-3xl font-bold mt-1">{formatMoney(stats.ingresos - stats.gastos)}</p>
                             </Card>
                         </div>
 
-                        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
-                                    <tr>
-                                        <th className="p-4">Fecha</th>
-                                        <th className="p-4">Categoría</th>
-                                        <th className="p-4">Detalle</th>
-                                        <th className="p-4 text-right">Monto</th>
-                                    </tr>
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50 text-slate-400 font-bold uppercase text-xs">
+                                    <tr><th className="p-4 text-left">Fecha</th><th className="p-4 text-left">Concepto</th><th className="p-4 text-right">Monto</th></tr>
                                 </thead>
                                 <tbody>
-                                    {filtered.map(f => (
-                                        <tr key={f.id} className="border-t border-slate-50">
-                                            <td className="p-4 text-slate-500 font-mono">{formatDate(f.date)}</td>
-                                            <td className="p-4 font-bold text-slate-700">{f.category}</td>
+                                    {monthData.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(f => (
+                                        <tr key={f.id} className="border-t border-slate-50 hover:bg-slate-50">
+                                            <td className="p-4 font-bold text-slate-700">{formatDate(f.date)}</td>
                                             <td className="p-4">
-                                                {f.category === 'Culto' ? (
-                                                    <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600">
-                                                        Diezmos: {formatCurrency(f.tithes)} | Ofrendas: {formatCurrency(f.offerings)}
-                                                    </span>
-                                                ) : f.notes}
+                                                <span className={`text-xs font-bold px-2 py-0.5 rounded mr-2 ${f.type==='Gasto'?'bg-red-100 text-red-700':'bg-emerald-100 text-emerald-700'}`}>{f.type}</span>
+                                                {f.notes}
                                             </td>
-                                            <td className={`p-4 text-right font-bold font-mono ${f.type==='Gasto'?'text-red-500':'text-emerald-500'}`}>
-                                                {f.type==='Gasto'?'-':'+'} {formatCurrency(f.amount)}
+                                            <td className={`p-4 text-right font-mono font-bold ${f.total < 0 ? 'text-red-500':'text-emerald-600'}`}>
+                                                {formatMoney(f.total || (f.tithes + f.offerings))}
                                             </td>
                                         </tr>
                                     ))}
@@ -947,116 +757,264 @@
 
                         <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Registrar Movimiento">
                             <div className="space-y-4">
-                                <div className="flex bg-slate-100 p-1 rounded-xl">
-                                    <button onClick={()=>setForm({...form, type:'Ingreso'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${form.type==='Ingreso'?'bg-white shadow text-emerald-600':'text-slate-500'}`}>Ingreso</button>
-                                    <button onClick={()=>setForm({...form, type:'Gasto'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${form.type==='Gasto'?'bg-white shadow text-red-600':'text-slate-500'}`}>Gasto</button>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="label-ui">Tipo</label><select className="input-ui" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}><option>Culto</option><option>Ingreso Varios</option><option>Gasto</option></select></div>
+                                    <div><label className="label-ui">Fecha</label><input type="date" className="input-ui" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/></div>
                                 </div>
                                 
-                                <input type="date" className="input-glass" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} />
-                                
-                                <label className="label-glass">Categoría</label>
-                                <select className="input-glass" value={form.category} onChange={e=>setForm({...form, category:e.target.value})}>
-                                    <option>Culto</option>
-                                    <option>Evento</option>
-                                    <option>Oficina</option>
-                                    <option>Mantenimiento</option>
-                                    <option>Ayuda Social</option>
-                                    <option>Otro</option>
-                                </select>
-
-                                {form.category === 'Culto' && form.type === 'Ingreso' ? (
-                                    <div className="grid grid-cols-2 gap-4 bg-brand-50 p-4 rounded-xl border border-brand-100">
-                                        <div><label className="label-glass text-brand-600">Diezmos</label><input type="number" className="input-glass" value={form.tithes} onChange={e=>setForm({...form, tithes:e.target.value})}/></div>
-                                        <div><label className="label-glass text-brand-600">Ofrendas</label><input type="number" className="input-glass" value={form.offerings} onChange={e=>setForm({...form, offerings:e.target.value})}/></div>
+                                {form.type === 'Culto' ? (
+                                    <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <div><label className="label-ui">Diezmos</label><input type="number" className="input-ui" value={form.tithes} onChange={e=>setForm({...form, tithes:e.target.value})}/></div>
+                                        <div><label className="label-ui">Ofrendas</label><input type="number" className="input-ui" value={form.offerings} onChange={e=>setForm({...form, offerings:e.target.value})}/></div>
                                     </div>
                                 ) : (
-                                    <div><label className="label-glass">Monto Total</label><input type="number" className="input-glass" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})}/></div>
+                                    <div><label className="label-ui">Monto</label><input type="number" className="input-ui" value={form.cash} onChange={e=>setForm({...form, cash:e.target.value})}/></div>
                                 )}
                                 
-                                <input className="input-glass" placeholder="Notas adicionales..." value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/>
-                                <Button className="w-full" onClick={save}>Registrar</Button>
+                                <div><label className="label-ui">Notas / Detalle</label><input className="input-ui" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/></div>
+                                <Button className="w-full mt-2" onClick={handleSave}>Guardar Registro</Button>
                             </div>
                         </Modal>
                     </div>
                 );
             };
 
-            // 7. DIRECTORY (Simplified for brevity but kept modern)
-            const Directory = () => {
-                const [term, setTerm] = useState('');
+            // 5. CALENDARIO GLOBAL (SUPER CALENDARIO)
+            const GlobalCalendar = () => {
+                const [date, setDate] = useState(new Date());
+                const [selectedDayEvents, setSelectedDayEvents] = useState(null);
+
+                const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+                const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+                const days = Array.from({ length: getDaysInMonth(date.getFullYear(), date.getMonth()) }, (_, i) => i + 1);
+                
+                // Generar grilla
+                const grid = [];
+                for(let i=0; i<firstDay; i++) grid.push(null);
+                days.forEach(d => grid.push(d));
+
+                const changeMonth = (d) => { const n = new Date(date); n.setMonth(n.getMonth()+d); setDate(n); };
+
+                const handleDayClick = (day) => {
+                    if(!day) return;
+                    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    const events = getContextForDate(dateStr);
+                    setSelectedDayEvents({ date: dateStr, events });
+                };
+
                 return (
-                    <div className="fade-in space-y-6">
-                        <input className="input-glass max-w-md" placeholder="Buscar miembro..." value={term} onChange={e=>setTerm(e.target.value)}/>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {members.filter(m=>m.name.toLowerCase().includes(term.toLowerCase())).map(m => (
-                                <div key={m.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                                    <Avatar url={m.photo} name={m.name} size="lg"/>
-                                    <div>
-                                        <p className="font-bold text-slate-800">{m.name}</p>
-                                        <p className="text-xs text-brand-600 font-bold uppercase">{m.role}</p>
-                                        <p className="text-xs text-slate-400">{m.ministry}</p>
-                                    </div>
-                                </div>
-                            ))}
+                    <div className="fade-in h-full flex flex-col">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-slate-800">Calendario Global</h2>
+                            <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl shadow-sm">
+                                <button onClick={()=>changeMonth(-1)}><Icon name="ChevronLeft"/></button>
+                                <span className="font-bold w-32 text-center">{formatDate(date, 'month')}</span>
+                                <button onClick={()=>changeMonth(1)}><Icon name="ChevronRight"/></button>
+                            </div>
                         </div>
+
+                        <div className="bg-white rounded-3xl shadow-soft p-6 flex-1 flex flex-col">
+                            <div className="grid grid-cols-7 mb-4">
+                                {['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].map(d => <div key={d} className="text-center text-xs font-bold text-slate-400 uppercase">{d}</div>)}
+                            </div>
+                            <div className="grid grid-cols-7 gap-2 flex-1 auto-rows-fr">
+                                {grid.map((day, i) => {
+                                    if(!day) return <div key={i}></div>;
+                                    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                                    const dayEvents = getContextForDate(dateStr);
+                                    const hasWorship = dayEvents.some(e=>e.src==='Alabanza');
+                                    const hasServer = dayEvents.some(e=>e.src==='Servidores');
+                                    
+                                    return (
+                                        <div key={i} onClick={()=>handleDayClick(day)} 
+                                            className="min-h-[80px] border border-slate-100 rounded-xl p-2 relative hover:bg-slate-50 transition-colors cursor-pointer group flex flex-col justify-between">
+                                            <span className={`text-sm font-bold ${new Date().toISOString().startsWith(dateStr) ? 'bg-brand-600 text-white w-6 h-6 rounded-full flex items-center justify-center' : 'text-slate-700'}`}>{day}</span>
+                                            <div className="flex gap-1 mt-1 flex-wrap">
+                                                {dayEvents.slice(0,3).map((e, idx) => (
+                                                    <div key={idx} className={`w-2 h-2 rounded-full ${e.src==='Alabanza'?'bg-purple-500':e.src==='Servidores'?'bg-blue-500':'bg-orange-400'}`}></div>
+                                                ))}
+                                                {dayEvents.length > 3 && <span className="text-[10px] text-slate-400">+</span>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <Modal isOpen={!!selectedDayEvents} onClose={()=>setSelectedDayEvents(null)} title={`Eventos: ${formatDate(selectedDayEvents?.date)}`}>
+                            {selectedDayEvents?.events.length > 0 ? (
+                                <div className="space-y-4">
+                                    {selectedDayEvents.events.map((evt, i) => (
+                                        <div key={i} className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="font-bold text-lg">{evt.theme || evt.title || evt.type}</h4>
+                                                <span className="text-xs font-bold px-2 py-1 bg-white border rounded text-slate-500">{evt.src}</span>
+                                            </div>
+                                            <p className="text-sm text-slate-500 mt-1 mb-3">{formatDate(evt.date)} - {evt.time}hs {evt.location ? `en ${evt.location}` : ''}</p>
+                                            
+                                            {/* Detalles Contextuales */}
+                                            <div className="text-sm space-y-2 border-t pt-2 border-slate-200">
+                                                {evt.preacher && <p>🎤 <strong>Predica:</strong> {evt.preacher}</p>}
+                                                {evt.assignments && (
+                                                    <div>
+                                                        <p className="font-bold text-slate-700 text-xs uppercase mb-1">Servidores:</p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {Object.entries(evt.assignments).map(([r, p]) => (
+                                                                <span key={r} className="text-xs bg-white px-2 py-1 border rounded">{r}: <strong>{Array.isArray(p)?p.join(', '):p}</strong></span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {evt.team && (
+                                                    <div>
+                                                        <p className="font-bold text-slate-700 text-xs uppercase mb-1">Alabanza:</p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {Object.entries(evt.team).map(([r, p]) => (
+                                                                <span key={r} className="text-xs bg-white px-2 py-1 border rounded">{r}: <strong>{Array.isArray(p)?p.join(', '):p}</strong></span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : <p className="text-center text-slate-500 py-8">No hay nada programado para este día.</p>}
+                            <div className="mt-4 flex justify-end">
+                                <Button onClick={()=>{ setQuickActionOpen(true); setSelectedDayEvents(null); }}>Planificar algo</Button>
+                            </div>
+                        </Modal>
                     </div>
                 );
             };
 
-            // --- LAYOUT ---
+            // --- RENDER PRINCIPAL ---
+            if (!user) return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-100">
+                    <div className="text-center space-y-4">
+                        <div className="bg-brand-600 w-20 h-20 rounded-3xl mx-auto flex items-center justify-center text-white shadow-glow"><Icon name="Home" size={40}/></div>
+                        <h1 className="text-3xl font-extrabold text-slate-800">Conquistadores App</h1>
+                        <Button onClick={login} className="w-full">Ingresar con Google</Button>
+                    </div>
+                </div>
+            );
+
+            if (!profile) return <div className="flex h-screen items-center justify-center text-slate-500">Cargando perfil...</div>;
+
             return (
-                <div className="flex h-screen overflow-hidden bg-slate-50">
-                    {/* Sidebar */}
-                    <aside className="w-20 lg:w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0 z-50 shadow-2xl">
-                        <div>
-                            <div className="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-800">
-                                <div className="bg-brand-600 p-2 rounded-xl shadow-glow"><Icon name="Home" className="text-white"/></div>
-                                <span className="hidden lg:block ml-3 font-bold text-lg tracking-tight">Conquistadores</span>
+                <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+                    {/* Sidebar Desktop */}
+                    <aside className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-100 transform transition-transform duration-300 md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-6 flex flex-col h-full">
+                            <div className="flex items-center gap-3 mb-10">
+                                <div className="bg-brand-600 text-white p-2 rounded-lg shadow-glow"><Icon name="Home" size={24}/></div>
+                                <span className="font-extrabold text-xl tracking-tight text-slate-900">Conquistadores</span>
                             </div>
-                            <nav className="p-4 space-y-2">
-                                {[
-                                    {id:'dashboard', label:'Inicio', icon:'Home'},
-                                    {id:'messages', label:'Mensajes', icon:'Mail'},
-                                    {id:'worship', label:'Alabanza', icon:'Music'},
-                                    {id:'servers', label:'Servidores', icon:'Hand'},
-                                    {id:'finances', label:'Finanzas', icon:'Wallet'},
-                                    {id:'directory', label:'Directorio', icon:'Users'},
-                                ].map(item => (
-                                    <button key={item.id} onClick={()=>setActiveTab(item.id)} 
-                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${activeTab===item.id ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                                        <Icon name={item.icon}/>
-                                        <span className="hidden lg:block font-medium text-sm">{item.label}</span>
-                                    </button>
-                                ))}
+
+                            <nav className="space-y-1 flex-1 overflow-y-auto hide-scroll">
+                                <button onClick={()=>setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='dashboard'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="Home"/> Inicio</button>
+                                <button onClick={()=>setActiveTab('notifications')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='notifications'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                                    <Icon name="Bell"/> Notificaciones
+                                    {(tasks.filter(t=>t.status==='Pendiente').length + messages.filter(m=>!m.readBy?.includes(profile.id)).length) > 0 && <span className="w-2 h-2 rounded-full bg-red-500 ml-auto"></span>}
+                                </button>
+                                <button onClick={()=>setActiveTab('calendar')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='calendar'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="Calendar"/> Calendario Global</button>
+                                
+                                <div className="mt-8 mb-2 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Ministerios</div>
+                                <button onClick={()=>setActiveTab('worship')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='worship'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="Music"/> Alabanza</button>
+                                <button onClick={()=>setActiveTab('servers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='servers'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="Briefcase"/> Servidores</button>
+                                <button onClick={()=>setActiveTab('ebd')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='ebd'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="BookOpen"/> Escuela Bíblica</button>
+                                <button onClick={()=>setActiveTab('youth')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='youth'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="Smile"/> Jóvenes</button>
+
+                                {profile.role === 'Pastor' && (
+                                    <>
+                                        <div className="mt-8 mb-2 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Administración</div>
+                                        <button onClick={()=>setActiveTab('finances')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='finances'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="DollarSign"/> Tesorería</button>
+                                        <button onClick={()=>setActiveTab('directory')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='directory'?'bg-brand-50 text-brand-600':'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}><Icon name="Users"/> Directorio</button>
+                                    </>
+                                )}
                             </nav>
-                        </div>
-                        <div className="p-4 border-t border-slate-800">
-                            <button onClick={()=>auth.signOut()} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all">
-                                <Icon name="LogOut"/>
-                                <span className="hidden lg:block font-medium text-sm">Salir</span>
-                            </button>
+
+                            <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <img src={profile.photo || `https://ui-avatars.com/api/?name=${profile.name}`} className="w-10 h-10 rounded-full bg-slate-200 object-cover"/>
+                                    <div className="leading-tight">
+                                        <p className="font-bold text-sm text-slate-800 truncate w-24">{profile.name}</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{profile.role}</p>
+                                    </div>
+                                </div>
+                                <button onClick={()=>auth.signOut()} className="text-slate-400 hover:text-red-500 transition-colors"><Icon name="LogOut"/></button>
+                            </div>
                         </div>
                     </aside>
 
                     {/* Main Content */}
-                    <main className="flex-1 overflow-y-auto relative scroll-smooth">
-                        <div className="max-w-7xl mx-auto p-6 md:p-10 pb-24">
-                            {activeTab === 'dashboard' && <Dashboard />}
-                            {activeTab === 'worship' && <WorshipManager />}
-                            {activeTab === 'servers' && <ServersManager />}
-                            {activeTab === 'finances' && <FinancesManager />}
-                            {activeTab === 'messages' && <MessageCenter />}
-                            {activeTab === 'directory' && <Directory />}
+                    <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+                        {/* Mobile Header */}
+                        <header className="md:hidden bg-white/80 backdrop-blur p-4 flex justify-between items-center border-b border-slate-100 sticky top-0 z-20">
+                            <span className="font-bold text-lg text-slate-800">Conquistadores</span>
+                            <button onClick={()=>setSidebarOpen(true)}><Icon name="Menu"/></button>
+                        </header>
+
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24">
+                            <div className="max-w-6xl mx-auto h-full">
+                                {activeTab === 'dashboard' && <Dashboard />}
+                                {activeTab === 'notifications' && <NotificationCenter />}
+                                {activeTab === 'calendar' && <GlobalCalendar />}
+                                {activeTab === 'worship' && <MinistryManager ministryName="Alabanza" collection="worship" data={worship} />}
+                                {activeTab === 'servers' && <MinistryManager ministryName="Servidores" collection="servers" data={servers} />}
+                                {activeTab === 'ebd' && <MinistryManager ministryName="Escuela Bíblica" collection="ebd" data={ebd} />}
+                                {activeTab === 'youth' && <MinistryManager ministryName="Jóvenes" collection="youth" data={youth} />}
+                                {activeTab === 'finances' && <FinancesManager />}
+                                {/* Nota: Para brevedad, Directorio usa la lógica del ejemplo anterior pero envuelto en el nuevo layout si fuese necesario re-implementar */}
+                                {activeTab === 'directory' && (
+                                    <div className="bg-white p-8 rounded-3xl text-center border border-slate-100">
+                                        <Icon name="Users" size={48} className="mx-auto text-slate-300 mb-4"/>
+                                        <h2 className="text-xl font-bold text-slate-800">Directorio de Miembros</h2>
+                                        <p className="text-slate-500 mt-2">Usa esta sección para gestionar los permisos y roles de los miembros.</p>
+                                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {members.map(m => (
+                                                <div key={m.id} className="flex items-center gap-3 p-3 border rounded-xl bg-slate-50 text-left">
+                                                    <img src={m.photo} className="w-10 h-10 rounded-full"/>
+                                                    <div>
+                                                        <p className="font-bold text-sm">{m.name}</p>
+                                                        <p className="text-xs text-slate-500">{m.role} • {m.ministry}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Floating Action Button (Planificar Rápido) */}
+                        <div className="absolute bottom-8 right-8 z-30">
+                            <button onClick={()=>setQuickActionOpen(true)} className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl p-4 shadow-glow shadow-brand-500/50 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 font-bold">
+                                <Icon name="Plus"/> <span className="hidden md:inline">Planificar</span>
+                            </button>
                         </div>
                     </main>
 
-                    {/* Unified Modal (Global) */}
-                    <UnifiedEventModal 
-                        isOpen={unifiedModalOpen} 
-                        onClose={()=>setUnifiedModalOpen(false)} 
-                        eventData={selectedEventForModal}
-                        allData={{ worship, servers, ebd, youth }}
-                    />
+                    {/* Modal Quick Actions */}
+                    <Modal isOpen={quickActionOpen} onClose={()=>setQuickActionOpen(false)} title="¿Qué deseas planificar?">
+                        <div className="grid grid-cols-2 gap-4">
+                            <button onClick={()=>{setActiveTab('worship'); setQuickActionOpen(false);}} className="p-4 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl font-bold flex flex-col items-center gap-2 transition-colors">
+                                <Icon name="Music"/> Alabanza
+                            </button>
+                            <button onClick={()=>{setActiveTab('servers'); setQuickActionOpen(false);}} className="p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-bold flex flex-col items-center gap-2 transition-colors">
+                                <Icon name="Briefcase"/> Servidores
+                            </button>
+                            <button onClick={()=>{setActiveTab('ebd'); setQuickActionOpen(false);}} className="p-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl font-bold flex flex-col items-center gap-2 transition-colors">
+                                <Icon name="BookOpen"/> Escuela Bíblica
+                            </button>
+                            <button onClick={()=>{setActiveTab('youth'); setQuickActionOpen(false);}} className="p-4 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-xl font-bold flex flex-col items-center gap-2 transition-colors">
+                                <Icon name="Smile"/> Jóvenes
+                            </button>
+                        </div>
+                    </Modal>
+
+                    {/* Overlay Sidebar Mobile */}
+                    {sidebarOpen && <div className="fixed inset-0 bg-slate-900/50 z-30 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>}
                 </div>
             );
         };
