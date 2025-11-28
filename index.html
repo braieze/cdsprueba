@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma Conquistadores v3.0</title>
+    <title>Plataforma Conquistadores v3.1</title>
     
-    <!-- Scripts Base -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Librería de Gráficos -->
     <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
     
-    <!-- Fuente Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
@@ -75,6 +72,11 @@
             </svg>
         );
 
+        // --- CONSTANTES DE ROLES Y MINISTERIOS ---
+        const ALL_ROLES = ['Pastor', 'Líder', 'Servidor General', 'Miembro'];
+        const ALL_MINISTRIES = ['Pastoral', 'Alabanza', 'EBD', 'Jóvenes', 'General', 'Adolescentes'];
+
+
         // --- HELPER FUNCTIONS ---
         const formatDate = (dateStr) => {
             const date = new Date(dateStr + 'T00:00:00');
@@ -92,7 +94,7 @@
                 { id: 4, name: 'Javier K.', role: 'Líder', ministry: 'Jóvenes', phone: '11-5555-0004', photo: 'https://ui-avatars.com/api/?name=Javier+K&background=7c3aed&color=fff', status: 'Activo', birth: '2000-12-01', visitHistory: [] },
                 { id: 5, name: 'Maria Gomez', role: 'Miembro', ministry: 'General', phone: '11-5555-0005', photo: 'https://ui-avatars.com/api/?name=Maria+G&background=64748b&color=fff', status: 'Activo', birth: '1985-02-14', visitHistory: [{date: '2023-10-15', note: 'Visita pastoral rutinaria', rating: 'Regular'}] },
                 { id: 6, name: 'Tomas Joven', role: 'Miembro', ministry: 'Jóvenes', phone: '11-5555-0006', photo: 'https://ui-avatars.com/api/?name=Tomas+J&background=random', status: 'Activo', birth: '2005-06-20', visitHistory: [] },
-                { id: 7, name: 'Pedro Server', role: 'Servidor', ministry: 'Jóvenes', phone: '11-5555-0007', photo: 'https://ui-avatars.com/api/?name=Pedro+S&background=random', status: 'Activo', birth: '2002-01-10', visitHistory: [] },
+                { id: 7, name: 'Pedro Server', role: 'Servidor General', ministry: 'Jóvenes', phone: '11-5555-0007', photo: 'https://ui-avatars.com/api/?name=Pedro+S&background=random', status: 'Activo', birth: '2002-01-10', visitHistory: [] },
             ],
             finances: [
                 { id: 1, date: '2023-11-26', type: 'Culto', cash: 45000, transfer: 32000, tithesCount: 15, notes: 'Culto Dominical' },
@@ -149,7 +151,8 @@
                 warning: "bg-amber-100 text-amber-700",
                 danger: "bg-red-100 text-red-700",
                 brand: "bg-brand-100 text-brand-700",
-                blue: "bg-blue-100 text-blue-700"
+                blue: "bg-blue-100 text-blue-700",
+                purple: "bg-purple-100 text-purple-700"
             };
             return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${styles[type] || styles.default}`}>{children}</span>;
         };
@@ -167,8 +170,6 @@
                 </button>
             );
         };
-
-        // --- MODULES ---
 
         // 1. DASHBOARD
         const Dashboard = ({ user, data }) => {
@@ -335,10 +336,21 @@
         // 3. DIRECTORIO & GESTIÓN DE MIEMBROS
         const Directory = ({ data, setData, user }) => {
             const [selectedMember, setSelectedMember] = useState(null);
+            const [memberToEdit, setMemberToEdit] = useState(null); // Nuevo estado para la edición
             const [searchTerm, setSearchTerm] = useState("");
             const [isAdding, setIsAdding] = useState(false);
             const [newMember, setNewMember] = useState({});
             const [newVisit, setNewVisit] = useState({ date: new Date().toISOString().split('T')[0], rating: 'Buena', note: '' });
+
+            // Al abrir el modal, inicializar memberToEdit
+            useEffect(() => {
+                if (selectedMember) {
+                    setMemberToEdit(selectedMember);
+                } else {
+                    setMemberToEdit(null);
+                }
+            }, [selectedMember]);
+
 
             // Filtrado de miembros según rol
             const filteredMembers = useMemo(() => {
@@ -363,14 +375,30 @@
                 if(!selectedMember) return;
                 const updatedMembers = data.members.map(m => {
                     if(m.id === selectedMember.id) {
-                        return { ...m, visitHistory: [newVisit, ...m.visitHistory] };
+                        const updatedM = { ...m, visitHistory: [newVisit, ...m.visitHistory] };
+                        setSelectedMember(updatedM); // Update local state for modal
+                        setMemberToEdit(updatedM); // Update local edit state
+                        return updatedM;
                     }
                     return m;
                 });
                 setData(prev => ({ ...prev, members: updatedMembers }));
-                setSelectedMember(prev => ({ ...prev, visitHistory: [newVisit, ...prev.visitHistory] })); // Update local state for modal
                 setNewVisit({ date: new Date().toISOString().split('T')[0], rating: 'Buena', note: '' });
             };
+
+            // Función para actualizar Rol/Ministerio
+            const handleUpdateDetails = () => {
+                const updatedMembers = data.members.map(m => {
+                    if (m.id === memberToEdit.id) {
+                        return memberToEdit; // Usa el miembro editado del estado local
+                    }
+                    return m;
+                });
+                setData(prev => ({ ...prev, members: updatedMembers }));
+                setSelectedMember(memberToEdit); // Actualizar la vista del modal
+                alert('¡Datos de miembro actualizados con éxito!');
+            }
+
 
             return (
                 <div className="space-y-6 fade-in">
@@ -412,22 +440,51 @@
 
                     {/* Ficha Técnica Detallada */}
                     <Modal isOpen={!!selectedMember} onClose={() => setSelectedMember(null)} title="Ficha Técnica">
-                        {selectedMember && (
+                        {memberToEdit && (
                             <div className="space-y-6">
                                 <div className="flex gap-6 items-start">
-                                    <img src={selectedMember.photo} className="w-24 h-24 rounded-2xl bg-slate-100 object-cover" />
+                                    <img src={memberToEdit.photo} className="w-24 h-24 rounded-2xl bg-slate-100 object-cover" />
                                     <div className="flex-1">
                                         <div className="flex justify-between">
-                                            <h2 className="text-2xl font-bold text-slate-800">{selectedMember.name}</h2>
-                                            <Badge type="brand">{selectedMember.role}</Badge>
+                                            <h2 className="text-2xl font-bold text-slate-800">{memberToEdit.name}</h2>
+                                            <Badge type="brand">{memberToEdit.role}</Badge>
                                         </div>
-                                        <p className="text-slate-500 mb-2">{selectedMember.ministry}</p>
+                                        <p className="text-slate-500 mb-2">{memberToEdit.ministry}</p>
                                         <div className="grid grid-cols-2 gap-2 text-sm">
-                                            <div className="bg-slate-50 p-2 rounded">🎂 {new Date().getFullYear() - new Date(selectedMember.birth).getFullYear()} años</div>
-                                            <div className="bg-slate-50 p-2 rounded">📞 {selectedMember.phone}</div>
+                                            <div className="bg-slate-50 p-2 rounded">🎂 {new Date().getFullYear() - new Date(memberToEdit.birth).getFullYear()} años</div>
+                                            <div className="bg-slate-50 p-2 rounded">📞 {memberToEdit.phone}</div>
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* SECCIÓN PARA ASIGNAR ROLES Y MINISTERIOS (SOLO PASTOR) */}
+                                {user.role === 'Pastor' && (
+                                    <div className="border-t border-slate-100 pt-4 bg-red-50 p-4 rounded-xl">
+                                        <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><Icon name="Edit"/> Gestión de Rol y Ministerio</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs font-bold uppercase text-slate-600">Rol</label>
+                                                <select 
+                                                    className="w-full border p-2 rounded-lg bg-white" 
+                                                    value={memberToEdit.role} 
+                                                    onChange={e => setMemberToEdit({...memberToEdit, role: e.target.value})}>
+                                                    {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold uppercase text-slate-600">Ministerio</label>
+                                                <select 
+                                                    className="w-full border p-2 rounded-lg bg-white" 
+                                                    value={memberToEdit.ministry} 
+                                                    onChange={e => setMemberToEdit({...memberToEdit, ministry: e.target.value})}>
+                                                    {ALL_MINISTRIES.map(m => <option key={m} value={m}>{m}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <Button onClick={handleUpdateDetails} className="mt-4 w-full text-sm py-2">Guardar Rol y Ministerio</Button>
+                                    </div>
+                                )}
+
 
                                 {/* Sección Visitas Mejorada */}
                                 <div className="border-t border-slate-100 pt-4">
@@ -447,7 +504,7 @@
                                     </div>
 
                                     <div className="space-y-3 max-h-48 overflow-y-auto hide-scroll">
-                                        {selectedMember.visitHistory.length > 0 ? selectedMember.visitHistory.map((v, i) => (
+                                        {memberToEdit.visitHistory.length > 0 ? memberToEdit.visitHistory.map((v, i) => (
                                             <div key={i} className="bg-white border border-slate-100 p-3 rounded-lg shadow-sm">
                                                 <div className="flex justify-between items-center mb-1">
                                                     <span className="text-xs font-bold text-slate-500">{formatDate(v.date)}</span>
@@ -476,10 +533,10 @@
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <select className="p-3 border rounded-lg bg-white" onChange={e => setNewMember({...newMember, role: e.target.value})}>
-                                    <option>Miembro</option><option>Líder</option><option>Pastor</option><option>Servidor</option>
+                                    {ALL_ROLES.map(r => <option key={r}>{r}</option>)}
                                 </select>
                                 <select className="p-3 border rounded-lg bg-white" onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
-                                    <option>General</option><option>Alabanza</option><option>EBD</option><option>Jóvenes</option>
+                                    {ALL_MINISTRIES.map(m => <option key={m}>{m}</option>)}
                                 </select>
                             </div>
                             <Button onClick={handleAddMember} className="w-full">Guardar Ficha</Button>
@@ -492,9 +549,9 @@
         // 4. MINISTERIO DE ALABANZA
         const Worship = ({ data, setData }) => {
             const [isPlanning, setIsPlanning] = useState(false);
-            const [newService, setNewService] = useState({ date: '', type: 'Culto', theme: '', songs: [], team: { Vocal: [], Guitarra: [], Bateria: [], Bajo: [] } });
+            const [newService, setNewService] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', theme: '', songs: [], team: { Vocal: [], Guitarra: [], Bateria: [], Bajo: [] } });
             
-            const musicians = data.members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor');
+            const musicians = data.members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor' || m.role === 'Líder');
             
             const handleAddSong = () => {
                 const song = prompt("Nombre de la canción:");
@@ -562,7 +619,7 @@
                                         <option>Culto</option><option>Ensayo</option>
                                     </select>
                                 </div>
-                                <div className="col-span-2"><label className="text-xs font-bold uppercase text-slate-500">Fecha</label><input type="date" className="w-full border p-2 rounded" onChange={e => setNewService({...newService, date: e.target.value})}/></div>
+                                <div className="col-span-2"><label className="text-xs font-bold uppercase text-slate-500">Fecha</label><input type="date" className="w-full border p-2 rounded" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})}/></div>
                             </div>
                             <div><label className="text-xs font-bold uppercase text-slate-500">Tema / Objetivo</label><input type="text" className="w-full border p-2 rounded" placeholder="Ej: Domingo de Gracia" onChange={e => setNewService({...newService, theme: e.target.value})}/></div>
                             
@@ -603,15 +660,15 @@
         const Finances = ({ data, setData }) => {
             const [isClosing, setIsClosing] = useState(false);
             const [moveType, setMoveType] = useState('Culto'); // Culto, Ingreso, Gasto
-            const [movement, setMovement] = useState({ date: '', cash: 0, transfer: 0, tithesCount: 0, notes: '' });
+            const [movement, setMovement] = useState({ date: new Date().toISOString().split('T')[0], cash: 0, transfer: 0, tithesCount: 0, notes: '' });
 
             const handleSave = () => {
                 // Si es gasto, los valores son negativos
                 let finalCash = movement.cash;
                 let finalTransfer = movement.transfer;
                 if(moveType === 'Gasto') {
-                    finalCash = -Math.abs(finalCash);
-                    finalTransfer = -Math.abs(finalTransfer);
+                    finalCash = -Math.abs(movement.cash);
+                    finalTransfer = -Math.abs(movement.transfer);
                 }
 
                 setData(prev => ({ ...prev, finances: [{ ...movement, cash: finalCash, transfer: finalTransfer, id: Date.now(), type: moveType }, ...prev.finances] }));
@@ -850,7 +907,7 @@
                                 <div className="bg-brand-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg shadow-brand-500/40">
                                     <Icon name="Home" size={32}/>
                                 </div>
-                                <h1 className="text-2xl font-bold text-slate-800">Conquistadores v3.0</h1>
+                                <h1 className="text-2xl font-bold text-slate-800">Conquistadores v3.1</h1>
                                 <p className="text-slate-500">Selecciona tu Rol</p>
                             </div>
                             <div className="space-y-3">
