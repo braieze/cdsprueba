@@ -84,7 +84,10 @@
 
         // --- 2. UTILS & HOOKS ---
         const { useState, useEffect, useMemo } = React;
-        const { BarChart, Bar, XAxis, YAxis, Tooltip: RechartsTooltip, ResponsiveContainer, Cell } = window.Recharts;
+        
+        // CORRECCIÓN DE ERROR: Inicialización segura de Recharts
+        const RechartsObj = window.Recharts || {};
+        const { BarChart, Bar, XAxis, YAxis, Tooltip: RechartsTooltip, ResponsiveContainer, Cell } = RechartsObj;
 
         // Icon System (Feather Icons)
         const Icon = ({ name, size = 20, className = "", fill="none" }) => {
@@ -322,7 +325,7 @@
                         </div>
 
                         {/* Chart: Métricas de Servidores (Rotación Justa) */}
-                        {profile.role === 'Pastor' && (
+                        {profile.role === 'Pastor' && BarChart && (
                             <Card className="overflow-hidden">
                                 <h3 className="font-bold text-lg mb-4 text-slate-800 flex items-center gap-2">
                                     <Icon name="Info" size={18} className="text-brand-500"/> Balance de Carga (Servicios por persona)
