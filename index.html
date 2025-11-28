@@ -18,42 +18,58 @@
     <!-- Recharts (Gráficos) -->
     <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
     
-    <!-- FIREBASE SDKs (Compatibles con CDN) -->
+    <!-- FIREBASE SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <!-- Configuración de Fuentes y Colores -->
+    <!-- Fuentes e Iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50:'#fff7ed', 100:'#ffedd5', 500:'#f97316', 600:'#ea580c', 700:'#c2410c', 900:'#7c2d12' }
+                        brand: { 50:'#fff7ed', 100:'#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500:'#f97316', 600:'#ea580c', 700:'#c2410c', 800: '#9a3412', 900:'#7c2d12', 950: '#431407' },
+                        dark: { 800: '#1e293b', 900: '#0f172a' }
                     },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(249, 115, 22, 0.3)'
+                    }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #334155; }
         
-        /* Estilos modernos para inputs */
-        .input-modern { @apply w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all; }
-        .label-modern { @apply block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5; }
+        /* Animaciones */
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide-in { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        
+        /* Scrollbar Oculto pero funcional */
+        .hide-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+        .hide-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .hide-scroll::-webkit-scrollbar-track { background: transparent; }
+
+        /* Estilos Inputs Modernos */
+        .input-glass { @apply w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all px-4 py-3 shadow-sm; }
+        .label-glass { @apply block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1; }
+        
+        /* Utilidades */
+        .card-hover { @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-white border border-slate-100 rounded-2xl; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- INICIALIZACIÓN DE FIREBASE ---
+        // --- FIREBASE INIT ---
         const firebaseConfig = {
             apiKey: "AIzaSyDXK_EcXsFGhRmXfkKG8SMdsM69c4PNfHw",
             authDomain: "conquistadoresapp.firebaseapp.com",
@@ -62,21 +78,18 @@
             messagingSenderId: "518647225464",
             appId: "1:518647225464:web:b3344ca5172498187e218d"
         };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // --- REACT & UTILS ---
+        // --- LIBRARIES ---
         const { useState, useEffect, useMemo } = React;
-        const RechartsObj = window.Recharts || {};
-        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = RechartsObj;
+        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } = window.Recharts;
 
-        // --- ICONOS ---
-        const Icon = ({ name, size = 20, className = "" }) => {
+        // --- ICONS (LUCIDE STYLE - FIXED) ---
+        // Se agregaron React.Fragment para envolver múltiples paths
+        const Icon = ({ name, size = 20, className = "", strokeWidth = 2 }) => {
             const icons = {
                 Home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>,
                 Users: <React.Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></React.Fragment>,
@@ -94,43 +107,192 @@
                 Edit: <React.Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></React.Fragment>,
                 Hand: <React.Fragment><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></React.Fragment>,
                 Mail: <React.Fragment><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></React.Fragment>,
-                Clipboard: <React.Fragment><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></React.Fragment>
+                Clipboard: <React.Fragment><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></React.Fragment>,
+                ChevronLeft: <polyline points="15 18 9 12 15 6"/>,
+                ChevronRight: <polyline points="9 18 15 12 9 6"/>,
+                ChevronUp: <polyline points="18 15 12 9 6 15"/>,
+                ChevronDown: <polyline points="6 9 12 15 18 9"/>,
+                Check: <polyline points="20 6 9 17 4 12"/>,
+                Mic: <React.Fragment><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></React.Fragment>
             };
             return (
-                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
                     {icons[name] || <circle cx="12" cy="12" r="10"/>}
                 </svg>
             );
         };
 
+        // --- UTILS ---
         const formatDate = (d) => {
             if(!d) return '';
             const date = new Date(d);
-            // Ajuste zona horaria manual simple
             if(d.length === 10) date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
             return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
         };
-        const formatTime = (t) => t ? t : '--:--';
+        const formatFullDate = (d) => {
+            const date = new Date(d);
+            if(d.length === 10) date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+            return date.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        };
         const formatCurrency = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(val);
+        const getMonthName = (date) => date.toLocaleString('es-AR', { month: 'long' });
 
-        // --- COMPONENTES UI ---
-        const Card = ({ children, className = "" }) => <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 ${className}`}>{children}</div>;
-        const Badge = ({ children, type = 'default' }) => {
-            const styles = { default: "bg-slate-100 text-slate-600", success: "bg-emerald-100 text-emerald-700", warning: "bg-amber-100 text-amber-700", danger: "bg-red-100 text-red-700", brand: "bg-brand-100 text-brand-700", blue: "bg-blue-100 text-blue-700" };
-            return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${styles[type] || styles.default}`}>{children}</span>;
+        // --- COMPONENTS ---
+        
+        // 1. Unified Event Modal (The "Super Div")
+        const UnifiedEventModal = ({ isOpen, onClose, eventData, allData }) => {
+            if (!isOpen || !eventData) return null;
+
+            // Extraer info de todas las colecciones que coincidan con la fecha
+            const dateKey = eventData.date;
+            
+            const linkedWorship = allData.worship.find(w => w.date === dateKey);
+            const linkedServers = allData.servers.find(s => s.date === dateKey);
+            const linkedEbd = allData.ebd.find(e => e.date === dateKey);
+            const linkedYouth = allData.youth.find(y => y.date === dateKey);
+            
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                        {/* Header con gradiente */}
+                        <div className="bg-gradient-to-r from-brand-600 to-brand-500 p-8 text-white relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10"><Icon name="Calendar" size={120}/></div>
+                            <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition"><Icon name="X" size={20}/></button>
+                            
+                            <div className="relative z-10">
+                                <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-sm">Visión General</span>
+                                <h2 className="text-3xl font-extrabold mt-3">{eventData.title || eventData.theme || 'Actividad General'}</h2>
+                                <p className="opacity-90 mt-1 flex items-center gap-2 text-lg"><Icon name="Calendar" size={18}/> {formatFullDate(dateKey)}</p>
+                                <p className="opacity-80 flex items-center gap-2"><Icon name="Bell" size={18}/> {eventData.time || 'Horario a confirmar'}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-8">
+                            {/* Predicador (Si existe en Worship) */}
+                            {linkedWorship?.preacher && (
+                                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                    <div className="bg-blue-100 p-3 rounded-full text-blue-600"><Icon name="Mic" size={24}/></div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-blue-500 uppercase tracking-wide">Predicador / Orador</h4>
+                                        <p className="text-xl font-bold text-slate-800">{linkedWorship.preacher}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Columna Izquierda: Alabanza y Orden */}
+                                <div className="space-y-6">
+                                    <div className="border border-slate-100 rounded-2xl p-5 shadow-sm">
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 border-b pb-2"><Icon name="Music" className="text-brand-500"/> Alabanza</h3>
+                                        {linkedWorship ? (
+                                            <div className="space-y-3">
+                                                {Object.entries(linkedWorship.team || {}).map(([inst, ppl]) => (
+                                                    <div key={inst} className="text-sm">
+                                                        <span className="font-semibold text-slate-500 block text-xs uppercase">{inst}</span>
+                                                        <span className="text-slate-700 font-medium">{Array.isArray(ppl) ? ppl.join(', ') : ppl}</span>
+                                                    </div>
+                                                ))}
+                                                {linkedWorship.songList?.length > 0 && (
+                                                    <div className="mt-4 bg-slate-50 p-3 rounded-xl">
+                                                        <p className="text-xs font-bold text-slate-400 mb-2">SETLIST</p>
+                                                        <ul className="list-disc list-inside text-sm space-y-1 text-slate-600">
+                                                            {linkedWorship.songList.map((s,i)=><li key={i}>{s}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : <p className="text-sm text-slate-400 italic">No hay datos de alabanza.</p>}
+                                    </div>
+                                </div>
+
+                                {/* Columna Derecha: Servidores y Ministerios */}
+                                <div className="space-y-6">
+                                    <div className="border border-slate-100 rounded-2xl p-5 shadow-sm">
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 border-b pb-2"><Icon name="Hand" className="text-brand-500"/> Servidores</h3>
+                                        {linkedServers ? (
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {Object.entries(linkedServers.assignments || {}).map(([role, ppl]) => (
+                                                    <div key={role} className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg">
+                                                        <span className="text-xs font-bold text-slate-500 uppercase">{role}</span>
+                                                        <span className="text-sm font-bold text-slate-700">{Array.isArray(ppl) ? ppl.join(', ') : ppl}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : <p className="text-sm text-slate-400 italic">No hay cronograma de servidores.</p>}
+                                    </div>
+
+                                    {(linkedEbd || linkedYouth) && (
+                                        <div className="border border-slate-100 rounded-2xl p-5 shadow-sm">
+                                            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 border-b pb-2"><Icon name="Users" className="text-brand-500"/> Actividades Específicas</h3>
+                                            {linkedEbd && <div className="mb-2"><span className="badge-blue">EBD</span> <span className="text-sm font-medium ml-2">{linkedEbd.title || linkedEbd.topic}</span></div>}
+                                            {linkedYouth && <div><span className="badge-purple">Jóvenes</span> <span className="text-sm font-medium ml-2">{linkedYouth.title || linkedYouth.topic}</span></div>}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Tarea Específica (si se abrió desde una tarea) */}
+                            {eventData.isTask && (
+                                <div className="mt-6 bg-amber-50 border border-amber-100 p-4 rounded-xl">
+                                    <h4 className="font-bold text-amber-800 flex items-center gap-2"><Icon name="Clipboard"/> Tu Misión Específica</h4>
+                                    <p className="text-amber-700 mt-1">{eventData.description}</p>
+                                    <p className="text-xs text-amber-600 mt-2 font-semibold">Vence: {formatDate(eventData.dueDate)}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
         };
+
+        const Card = ({ children, className = "", onClick }) => (
+            <div onClick={onClick} className={`card-hover p-6 ${className} ${onClick ? 'cursor-pointer' : ''}`}>
+                {children}
+            </div>
+        );
+
         const Button = ({ children, onClick, variant = 'primary', icon, className = "", disabled=false }) => {
-            const styles = { primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-500/30", secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50", danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100" };
-            return <button disabled={disabled} onClick={onClick} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${styles[variant]} ${className}`}>{icon && <Icon name={icon} size={18} />}{children}</button>;
+            const styles = { 
+                primary: "bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:shadow-glow hover:translate-y-[-1px]", 
+                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50", 
+                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
+                ghost: "bg-transparent text-slate-500 hover:text-brand-600 hover:bg-brand-50 border-transparent" 
+            };
+            return (
+                <button disabled={disabled} onClick={onClick} className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all text-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${styles[variant]} ${className}`}>
+                    {icon && <Icon name={icon} size={18} />}{children}
+                </button>
+            );
         };
+
+        const MonthNavigator = ({ currentDate, onMonthChange }) => {
+            const nextMonth = () => {
+                const d = new Date(currentDate);
+                d.setMonth(d.getMonth() + 1);
+                onMonthChange(d);
+            };
+            const prevMonth = () => {
+                const d = new Date(currentDate);
+                d.setMonth(d.getMonth() - 1);
+                onMonthChange(d);
+            };
+            return (
+                <div className="flex items-center justify-between bg-white rounded-xl p-1 border border-slate-200 shadow-sm w-full md:w-64">
+                    <button onClick={prevMonth} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-brand-600 transition"><Icon name="ChevronLeft" size={20}/></button>
+                    <span className="font-bold text-slate-800 capitalize select-none">{getMonthName(currentDate)} {currentDate.getFullYear()}</span>
+                    <button onClick={nextMonth} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-brand-600 transition"><Icon name="ChevronRight" size={20}/></button>
+                </div>
+            );
+        };
+
         const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all scale-100">
+                        <div className="p-5 border-b border-slate-50 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
                             <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Icon name="X" /></button>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-red-500"><Icon name="X" /></button>
                         </div>
                         <div className="p-6">{children}</div>
                     </div>
@@ -138,866 +300,763 @@
             );
         };
 
-        // --- PANTALLA DE LOGIN ---
-        const LoginScreen = ({ onLogin, loading, error }) => (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-                <Card className="max-w-md w-full text-center space-y-8 py-12">
-                    <div className="bg-brand-100 w-20 h-20 rounded-3xl mx-auto flex items-center justify-center text-brand-600 mb-6"><Icon name="Home" size={40}/></div>
-                    <div>
-                        <h1 className="text-3xl font-extrabold text-slate-800">Conquistadores App</h1>
-                        <p className="text-slate-500 mt-2">Plataforma de Gestión Integral</p>
-                    </div>
-                    {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
-                    <Button onClick={onLogin} className="w-full justify-center py-4 text-lg" disabled={loading}>
-                        {loading ? 'Conectando...' : 'Iniciar Sesión con Google'}
-                    </Button>
-                </Card>
-            </div>
-        );
+        const Avatar = ({ url, name, size="md" }) => {
+            const sizes = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-16 h-16 text-lg" };
+            return (
+                <div className={`${sizes[size]} rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold border-2 border-white shadow-sm overflow-hidden`}>
+                    {url ? <img src={url} alt={name} className="w-full h-full object-cover"/> : name.charAt(0)}
+                </div>
+            );
+        };
 
-        // --- COMPONENTE PRINCIPAL ---
+        // --- APP LOGIC ---
         const App = () => {
-            const [currentUser, setCurrentUser] = useState(null);
-            const [userProfile, setUserProfile] = useState(null);
-            const [loadingAuth, setLoadingAuth] = useState(true);
-            const [authError, setAuthError] = useState(null);
-            
+            const [user, setUser] = useState(null);
+            const [profile, setProfile] = useState(null);
+            const [loading, setLoading] = useState(true);
             const [activeTab, setActiveTab] = useState('dashboard');
-            const [sidebarOpen, setSidebarOpen] = useState(false);
-
-            // Colecciones de Datos
+            
+            // Data Collections
             const [members, setMembers] = useState([]);
-            const [finances, setFinances] = useState([]);
             const [worship, setWorship] = useState([]);
-            const [songs, setSongs] = useState([]); // Nueva colección
+            const [servers, setServers] = useState([]);
+            const [finances, setFinances] = useState([]);
+            const [tasks, setTasks] = useState([]);
+            const [messages, setMessages] = useState([]);
             const [ebd, setEbd] = useState([]);
             const [youth, setYouth] = useState([]);
-            const [tasks, setTasks] = useState([]); // Nueva colección para tareas globales
-            const [servers, setServers] = useState([]); // Nueva colección Servidores
-            const [messages, setMessages] = useState([]);
+            const [songs, setSongs] = useState([]);
 
-            // --- LISTENERS DE FIREBASE ---
+            // Unified Modal State
+            const [unifiedModalOpen, setUnifiedModalOpen] = useState(false);
+            const [selectedEventForModal, setSelectedEventForModal] = useState(null);
+
+            // Auth & Data Fetching
             useEffect(() => {
-                const unsubscribe = auth.onAuthStateChanged(async (user) => {
-                    if (user) {
-                        setCurrentUser(user);
-                        const q = db.collection('members').where('email', '==', user.email);
-                        const snapshot = await q.get();
-                        
-                        if (!snapshot.empty) {
-                            const profileData = snapshot.docs[0].data();
-                            setUserProfile({ ...profileData, id: snapshot.docs[0].id });
+                const unsubAuth = auth.onAuthStateChanged(async (u) => {
+                    if (u) {
+                        setUser(u);
+                        const snap = await db.collection('members').where('email', '==', u.email).get();
+                        if (!snap.empty) {
+                            setProfile({ id: snap.docs[0].id, ...snap.docs[0].data() });
                         } else {
-                            const checkEmpty = await db.collection('members').get();
-                            if(checkEmpty.empty) {
-                                const newAdmin = {
-                                    name: user.displayName || 'Pastor Principal',
-                                    email: user.email,
-                                    role: 'Pastor',
-                                    ministry: 'Pastoral',
-                                    photo: user.photoURL,
-                                    status: 'Activo',
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                                };
-                                await db.collection('members').add(newAdmin);
-                                setUserProfile(newAdmin);
-                            } else {
-                                setUserProfile(null); 
-                                setAuthError("Tu email no está registrado. Contacta al Pastor.");
+                            const all = await db.collection('members').get();
+                            if (all.empty) {
+                                const newAdmin = { name: u.displayName, email: u.email, role: 'Pastor', ministry: 'Pastoral', photo: u.photoURL, createdAt: new Date().toISOString() };
+                                const ref = await db.collection('members').add(newAdmin);
+                                setProfile({ id: ref.id, ...newAdmin });
                             }
                         }
-                    } else {
-                        setCurrentUser(null);
-                        setUserProfile(null);
                     }
-                    setLoadingAuth(false);
+                    setLoading(false);
                 });
-                return () => unsubscribe();
+                return () => unsubAuth();
             }, []);
 
             useEffect(() => {
-                if (!userProfile) return;
-                const unsubs = [];
-                const sub = (col, setter) => unsubs.push(db.collection(col).onSnapshot(snap => setter(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))));
-                
-                sub('members', setMembers);
-                sub('finances', setFinances);
-                sub('worship', setWorship);
-                sub('songs', setSongs);
-                sub('ebd', setEbd);
-                sub('youth', setYouth);
-                sub('tasks', setTasks);
-                sub('servers', setServers);
-                sub('messages', setMessages);
+                if (!profile) return;
+                const subs = [
+                    db.collection('members').onSnapshot(s => setMembers(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('worship').onSnapshot(s => setWorship(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('servers').onSnapshot(s => setServers(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('finances').onSnapshot(s => setFinances(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('tasks').onSnapshot(s => setTasks(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('messages').onSnapshot(s => setMessages(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('ebd').onSnapshot(s => setEbd(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('youth').onSnapshot(s => setYouth(s.docs.map(d => ({id:d.id, ...d.data()})))),
+                    db.collection('songs').onSnapshot(s => setSongs(s.docs.map(d => ({id:d.id, ...d.data()}))))
+                ];
+                return () => subs.forEach(unsub => unsub());
+            }, [profile]);
 
-                return () => unsubs.forEach(u => u());
-            }, [userProfile]);
+            const handleUnifiedClick = (eventItem) => {
+                setSelectedEventForModal(eventItem);
+                setUnifiedModalOpen(true);
+            };
 
-            // --- HELPERS CRUD ---
-            const handleLogin = async () => { try { await auth.signInWithPopup(googleProvider); } catch(e) { setAuthError("Error Google"); } };
-            const handleLogout = () => auth.signOut();
-            const addData = (col, data) => db.collection(col).add(data);
-            const updateData = (col, id, data) => db.collection(col).doc(id).update(data);
-            const deleteData = (col, id) => { if(window.confirm("¿Seguro?")) db.collection(col).doc(id).delete(); };
+            const Login = () => (
+                <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
+                    <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-brand-100 rounded-full blur-3xl opacity-50"></div>
+                    <Card className="w-full max-w-md text-center py-16 px-8 relative z-10 shadow-2xl border-0">
+                        <div className="inline-flex p-4 bg-brand-50 rounded-3xl mb-6 text-brand-600 shadow-sm"><Icon name="Home" size={48}/></div>
+                        <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Conquistadores</h1>
+                        <p className="text-slate-500 mb-8 font-medium">Plataforma de Gestión Integral</p>
+                        <Button onClick={()=>auth.signInWithPopup(googleProvider)} className="w-full py-4 text-lg justify-center shadow-brand-500/30 shadow-lg">Entrar con Google</Button>
+                    </Card>
+                </div>
+            );
 
-            if (loadingAuth) return <div className="min-h-screen flex items-center justify-center text-slate-500">Cargando sistema...</div>;
-            if (!currentUser || (currentUser && !userProfile && authError)) return <LoginScreen onLogin={handleLogin} error={authError} />;
-            if (!userProfile) return <LoginScreen onLogin={handleLogin} error="Esperando perfil..." />;
+            if (loading) return <div className="h-screen flex items-center justify-center text-brand-600 font-bold animate-pulse">Cargando ecosistema...</div>;
+            if (!user || !profile) return <Login />;
 
-            // --- VISTAS ESPECÍFICAS ---
+            // --- SUB-COMPONENTS ---
 
-            // 1. DASHBOARD & MIS SERVICIOS
+            // 1. DASHBOARD
             const Dashboard = () => {
-                // Cálculo de "Mis Servicios" (Alabanza, Servidores, Tareas)
+                // Combine upcoming events for "My Agenda"
                 const myServices = useMemo(() => {
-                    const services = [];
-                    const myName = userProfile.name;
-                    
-                    // Alabanza
+                    const list = [];
+                    // Worship
                     worship.forEach(w => {
-                        Object.entries(w.team || {}).forEach(([inst, list]) => {
-                            if(list.includes(myName)) services.push({ ...w, role: inst, category: 'Alabanza', color: 'bg-purple-100 text-purple-700' });
+                        Object.entries(w.team || {}).forEach(([inst, ppl]) => {
+                            const people = Array.isArray(ppl) ? ppl : [ppl];
+                            if(people.includes(profile.name)) list.push({...w, role: inst, origin: 'Alabanza'});
                         });
                     });
-                    // Servidores
+                    // Servers
                     servers.forEach(s => {
-                        Object.entries(s.assignments || {}).forEach(([role, person]) => {
-                            if(person === myName) services.push({ ...s, role: role, category: 'Servidor', color: 'bg-blue-100 text-blue-700' });
+                        Object.entries(s.assignments || {}).forEach(([role, ppl]) => {
+                            const people = Array.isArray(ppl) ? ppl : [ppl];
+                            if(people.includes(profile.name)) list.push({...s, role: role, origin: 'Servidor'});
                         });
                     });
-                    // Tareas
-                    tasks.filter(t => t.assignedTo === myName && t.status === 'Pendiente').forEach(t => {
-                        services.push({ ...t, title: t.description, category: 'Tarea', date: t.dueDate, color: 'bg-amber-100 text-amber-700', isTask:true });
-                    });
+                    return list.filter(x => new Date(x.date) >= new Date().setHours(0,0,0,0)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+                }, [worship, servers, profile]);
 
-                    return services.sort((a,b) => new Date(a.date) - new Date(b.date));
-                }, [worship, servers, tasks, userProfile]);
-
-                // Próximos Eventos General
-                const upcomingEvents = [...worship, ...youth, ...ebd, ...servers]
-                    .filter(e => new Date(e.date) >= new Date().setHours(0,0,0,0))
-                    .sort((a,b) => new Date(a.date) - new Date(b.date))
-                    .slice(0, 6);
-
-                // Mis Mensajes No Leídos
-                const myMessages = messages.filter(m => (m.to === 'all' || m.to === userProfile.id) && !m.readBy?.includes(userProfile.id));
-
-                const markAsRead = (msg) => {
-                    const readBy = msg.readBy || [];
-                    updateData('messages', msg.id, { readBy: [...readBy, userProfile.id] });
-                };
+                const pendingTasks = tasks.filter(t => t.assignedTo === profile.name && t.status === 'Pendiente');
+                const unreadMsgs = messages.filter(m => (m.to === 'all' || m.to === profile.id) && !m.readBy?.includes(profile.id)).length;
 
                 return (
-                    <div className="space-y-8 fade-in">
-                        {/* Header */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="space-y-8 fade-in pb-10">
+                        <header className="flex flex-col md:flex-row justify-between items-end pb-6 border-b border-slate-200">
                             <div>
-                                <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Hola, {userProfile.name.split(' ')[0]}</h2>
-                                <p className="text-slate-500 font-medium">Panel de control de {userProfile.ministry}</p>
+                                <h1 className="text-3xl font-extrabold text-slate-800">Hola, {profile.name.split(' ')[0]}</h1>
+                                <p className="text-slate-500 font-medium mt-1">Bienvenido a tu panel de control.</p>
                             </div>
-                            {myMessages.length > 0 && (
-                                <div className="bg-brand-600 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg shadow-brand-500/40 animate-pulse cursor-pointer" onClick={()=>setActiveTab('messages')}>
-                                    <Icon name="Mail" size={16}/> {myMessages.length} Mensajes nuevos
-                                </div>
-                            )}
-                        </div>
+                            <div className="flex gap-4 mt-4 md:mt-0">
+                                {unreadMsgs > 0 && <span className="bg-brand-100 text-brand-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 cursor-pointer" onClick={()=>setActiveTab('messages')}><div className="w-2 h-2 bg-brand-500 rounded-full animate-ping"></div> {unreadMsgs} mensajes nuevos</span>}
+                            </div>
+                        </header>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Mis Servicios (Columna Izquierda) */}
-                            <div className="lg:col-span-2 space-y-6">
-                                <Card className="border-l-4 border-l-brand-500">
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-800">
-                                        <Icon name="Clipboard" className="text-brand-600"/> Mis Servicios & Tareas
-                                    </h3>
+                            <div className="lg:col-span-2 space-y-8">
+                                <section>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold text-lg text-slate-700 flex items-center gap-2"><Icon name="Clipboard" className="text-brand-500"/> Mis Responsabilidades</h3>
+                                    </div>
                                     {myServices.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {myServices.map((s, i) => (
-                                                <div key={i} className="flex flex-col bg-slate-50 p-4 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
+                                            {myServices.map((item, i) => (
+                                                <div key={i} onClick={()=>handleUnifiedClick(item)} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md cursor-pointer transition-all hover:border-brand-200 group">
                                                     <div className="flex justify-between items-start mb-2">
-                                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${s.color}`}>{s.category}</span>
-                                                        <div className="text-right">
-                                                            <span className="block text-xs font-bold text-slate-700">{formatDate(s.date)}</span>
-                                                            <span className="text-[10px] text-slate-400">{formatTime(s.time)}</span>
-                                                        </div>
+                                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${item.origin==='Alabanza'?'bg-purple-50 text-purple-600':'bg-blue-50 text-blue-600'}`}>{item.origin}</span>
+                                                        <span className="text-xs font-bold text-slate-400 group-hover:text-brand-500 transition-colors">Ver Detalles →</span>
                                                     </div>
-                                                    <p className="font-bold text-slate-800 leading-tight mb-1">{s.theme || s.title || 'Servicio General'}</p>
-                                                    <p className="text-sm text-slate-500">{s.isTask ? 'Tarea asignada' : `Rol: ${s.role}`}</p>
-                                                    {s.isTask && <Button variant="secondary" className="mt-3 text-xs py-1 h-8" onClick={()=>updateData('tasks', s.id, {status: 'Completada'})}>Marcar Lista</Button>}
+                                                    <h4 className="font-bold text-slate-800 text-lg leading-tight">{item.theme || item.type}</h4>
+                                                    <p className="text-sm text-slate-500 mt-1">{formatFullDate(item.date)}</p>
+                                                    <div className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700 bg-slate-50 p-2 rounded-lg">
+                                                        <div className="w-1 h-4 bg-brand-500 rounded-full"></div> Rol: {item.role}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                            <p className="text-slate-400 text-sm">No tienes responsabilidades asignadas próximamente.</p>
+                                        <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200">
+                                            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300"><Icon name="Smile" size={30}/></div>
+                                            <p className="text-slate-500 font-medium">Estás libre de servicios por ahora.</p>
                                         </div>
                                     )}
-                                </Card>
+                                </section>
 
-                                <Card>
-                                    <h3 className="font-bold text-lg mb-4 text-slate-800">Próximos Eventos Generales</h3>
-                                    <div className="space-y-4">
-                                        {upcomingEvents.map((e,i) => (
-                                            <div key={i} className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors group">
-                                                <div className="bg-slate-100 text-slate-600 w-12 h-12 rounded-xl flex flex-col items-center justify-center border border-slate-200 group-hover:bg-white group-hover:border-brand-200 group-hover:text-brand-600 transition-colors">
-                                                    <span className="text-xs font-bold uppercase">{new Date(e.date).toLocaleDateString('es-AR',{month:'short'})}</span>
-                                                    <span className="text-lg font-bold leading-none">{new Date(e.date).getDate()}</span>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h4 className="font-bold text-slate-800">{e.theme || e.title || e.topic || 'Reunión'}</h4>
-                                                    <p className="text-xs text-slate-500 flex gap-2">
-                                                        <span>{formatTime(e.time)} hs</span> • <span>{e.team ? 'Alabanza' : (e.teachers ? 'EBD' : (e.assignments ? 'Servidores' : 'Jóvenes'))}</span>
-                                                    </p>
-                                                </div>
-                                                <Icon name="Calendar" className="text-slate-300"/>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Card>
+                                <section>
+                                    <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2"><Icon name="Calendar"/> Calendario Global</h3>
+                                    <CalendarWidget onEventClick={handleUnifiedClick} events={[...worship, ...servers, ...ebd, ...youth]} />
+                                </section>
                             </div>
 
-                            {/* Lateral (Accesos y Mensajes) */}
                             <div className="space-y-6">
-                                <Card className="bg-slate-900 text-white">
-                                    <h3 className="font-bold mb-4 flex items-center gap-2"><Icon name="Bell"/> Notificaciones</h3>
-                                    <div className="space-y-3 max-h-[300px] overflow-y-auto hide-scroll">
-                                        {myMessages.length > 0 ? myMessages.map(m => (
-                                            <div key={m.id} className="bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors" onClick={()=>markAsRead(m)}>
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className="text-xs font-bold text-brand-400">{m.fromName}</span>
-                                                    <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span>
-                                                </div>
-                                                <p className="text-sm text-slate-200 line-clamp-2">{m.content}</p>
-                                                <div className="mt-2 text-[10px] text-blue-300 font-bold uppercase tracking-wider">Marcar como leído</div>
-                                            </div>
-                                        )) : <p className="text-slate-500 text-sm text-center italic py-4">Estás al día.</p>}
-                                    </div>
-                                </Card>
-                                
-                                {userProfile.role === 'Pastor' && (
-                                    <Card>
-                                        <h3 className="font-bold text-sm text-slate-500 uppercase mb-3">Accesos Rápidos</h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Button variant="secondary" className="text-xs" onClick={()=>setActiveTab('worship')}>Planificar</Button>
-                                            <Button variant="secondary" className="text-xs" onClick={()=>setActiveTab('finances')}>Caja</Button>
+                                {/* Quick Actions */}
+                                {profile.role === 'Pastor' && (
+                                    <Card className="bg-slate-800 text-white border-none shadow-xl">
+                                        <h3 className="font-bold mb-4 flex items-center gap-2"><Icon name="Plus"/> Acciones Rápidas</h3>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            <button onClick={()=>setActiveTab('worship')} className="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition flex items-center justify-between">Planificar Alabanza <Icon name="ChevronRight" size={16}/></button>
+                                            <button onClick={()=>setActiveTab('servers')} className="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition flex items-center justify-between">Organizar Servidores <Icon name="ChevronRight" size={16}/></button>
+                                            <button onClick={()=>setActiveTab('finances')} className="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition flex items-center justify-between">Registrar Finanzas <Icon name="ChevronRight" size={16}/></button>
                                         </div>
                                     </Card>
                                 )}
+
+                                {/* Tareas Pendientes */}
+                                <Card>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold text-slate-700">Tareas Pendientes</h3>
+                                        <span className="text-xs bg-brand-100 text-brand-700 font-bold px-2 py-1 rounded-full">{pendingTasks.length}</span>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {pendingTasks.map(t => (
+                                            <div key={t.id} onClick={()=>handleUnifiedClick({...t, isTask:true})} className="p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition">
+                                                <p className="font-semibold text-sm text-slate-800 line-clamp-2">{t.description}</p>
+                                                <div className="flex justify-between mt-2 text-xs">
+                                                    <span className="text-red-500 font-bold">{formatDate(t.dueDate)}</span>
+                                                    <span className="text-slate-400">Ver contexto</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {pendingTasks.length === 0 && <p className="text-sm text-slate-400 text-center py-4">¡Todo al día!</p>}
+                                    </div>
+                                    <Button variant="secondary" className="w-full mt-4 text-xs" onClick={()=>setActiveTab('messages')}>Ir a Centro de Tareas</Button>
+                                </Card>
                             </div>
                         </div>
                     </div>
                 );
             };
 
-            // 2. DIRECTORIO COMPLETO
-            const Directory = () => {
-                const [editing, setEditing] = useState(null); // Si es null es nuevo, si es obj es edit
-                const [isOpen, setIsOpen] = useState(false);
-                const [searchTerm, setSearchTerm] = useState('');
-                const [formData, setFormData] = useState({});
+            // 2. CALENDAR WIDGET
+            const CalendarWidget = ({ events, onEventClick }) => {
+                const [date, setDate] = useState(new Date());
+                
+                const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+                const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+                
+                const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+                const blanks = Array.from({ length: firstDay }, (_, i) => i);
 
-                const openModal = (member = null) => {
-                    setEditing(member);
-                    setFormData(member || { name: '', role: 'Miembro', ministry: 'General', email: '', phone: '', age: '', location: '', gender: 'M' });
-                    setIsOpen(true);
+                const getEventsForDay = (day) => {
+                    const checkDate = new Date(date.getFullYear(), date.getMonth(), day).toISOString().split('T')[0];
+                    // Filtrar duplicados por fecha para no llenar el calendario de puntitos repetidos si hay muchas colecciones
+                    const uniqueEvents = [];
+                    events.forEach(e => {
+                         if(e.date === checkDate && !uniqueEvents.find(u => u.date === checkDate)) uniqueEvents.push(e);
+                    });
+                    return uniqueEvents;
                 };
 
-                const handleSave = () => {
-                    const dataToSave = {
-                        ...formData,
-                        photo: formData.photo || `https://ui-avatars.com/api/?name=${formData.name}&background=random`,
-                    };
-                    
-                    if (editing) {
-                        updateData('members', editing.id, dataToSave);
-                    } else {
-                        addData('members', { ...dataToSave, status: 'Activo', visitHistory: [] });
+                return (
+                    <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                        <MonthNavigator currentDate={date} onMonthChange={setDate} />
+                        <div className="grid grid-cols-7 gap-2 mt-6 text-center">
+                            {['D','L','M','M','J','V','S'].map(d => <div key={d} className="text-xs font-bold text-slate-400 mb-2">{d}</div>)}
+                            {blanks.map(b => <div key={`b-${b}`}></div>)}
+                            {days.map(day => {
+                                const dayEvents = getEventsForDay(day);
+                                const isToday = new Date().getDate() === day && new Date().getMonth() === date.getMonth();
+                                return (
+                                    <div key={day} 
+                                        onClick={() => dayEvents.length > 0 && onEventClick(dayEvents[0])}
+                                        className={`h-12 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-slate-50 relative ${isToday ? 'bg-brand-50 text-brand-600 font-bold border border-brand-200' : 'text-slate-700'}`}>
+                                        <span className="text-sm">{day}</span>
+                                        {dayEvents.length > 0 && (
+                                            <div className="flex gap-1 mt-1">
+                                                {dayEvents.map((ev, i) => (
+                                                    <div key={i} className={`w-1.5 h-1.5 rounded-full ${ev.team ? 'bg-purple-400' : (ev.assignments ? 'bg-blue-400' : 'bg-green-400')}`}></div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            };
+
+            // 3. MESSAGE CENTER (Expandable)
+            const MessageCenter = () => {
+                const [expandedId, setExpandedId] = useState(null);
+                const [filter, setFilter] = useState('inbox'); // inbox, tasks
+                
+                // Procesar datos
+                const myMsgs = messages.filter(m => m.to === 'all' || m.to === profile.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+                const myTasks = tasks.filter(t => t.assignedTo === profile.name).sort((a,b)=>new Date(t.dueDate)-new Date(a.dueDate));
+
+                const toggleExpand = (id, isMsg) => {
+                    if (expandedId === id) setExpandedId(null);
+                    else {
+                        setExpandedId(id);
+                        if(isMsg) {
+                            // Marcar como leído
+                            const msg = myMsgs.find(m => m.id === id);
+                            if (msg && !msg.readBy?.includes(profile.id)) {
+                                db.collection('messages').doc(id).update({ readBy: [...(msg.readBy||[]), profile.id] });
+                            }
+                        }
                     }
-                    setIsOpen(false);
                 };
 
-                const filtered = members.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                return (
+                    <div className="max-w-4xl mx-auto space-y-6 fade-in">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-slate-800">Centro de Comunicación</h2>
+                            <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                                <button onClick={()=>setFilter('inbox')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${filter==='inbox'?'bg-brand-100 text-brand-700':'text-slate-500 hover:bg-slate-50'}`}>Mensajes</button>
+                                <button onClick={()=>setFilter('tasks')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${filter==='tasks'?'bg-brand-100 text-brand-700':'text-slate-500 hover:bg-slate-50'}`}>Tareas</button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {filter === 'inbox' ? (
+                                myMsgs.length > 0 ? myMsgs.map(m => (
+                                    <div key={m.id} className={`bg-white rounded-2xl border transition-all overflow-hidden ${expandedId === m.id ? 'shadow-lg border-brand-200' : 'shadow-sm border-slate-100 hover:border-brand-200'}`}>
+                                        <div onClick={()=>toggleExpand(m.id, true)} className={`p-4 cursor-pointer flex justify-between items-center ${!m.readBy?.includes(profile.id) ? 'bg-slate-50' : ''}`}>
+                                            <div className="flex items-center gap-4">
+                                                <Avatar name={m.fromName} size="sm" />
+                                                <div>
+                                                    <p className={`text-sm ${!m.readBy?.includes(profile.id) ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>{m.fromName}</p>
+                                                    <p className="text-xs text-slate-400">{formatFullDate(m.date)}</p>
+                                                </div>
+                                            </div>
+                                            <Icon name={expandedId === m.id ? "ChevronUp" : "ChevronDown"} size={16} className="text-slate-400"/>
+                                        </div>
+                                        {expandedId === m.id && (
+                                            <div className="p-6 border-t border-slate-100 bg-white slide-in">
+                                                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )) : <div className="text-center py-12 text-slate-400">No hay mensajes.</div>
+                            ) : (
+                                myTasks.length > 0 ? myTasks.map(t => (
+                                    <div key={t.id} className={`bg-white rounded-2xl border transition-all overflow-hidden ${expandedId === t.id ? 'shadow-lg border-brand-200' : 'shadow-sm border-slate-100'}`}>
+                                        <div onClick={()=>toggleExpand(t.id, false)} className="p-4 cursor-pointer flex justify-between items-center">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-2 h-10 rounded-full ${t.status==='Pendiente'?'bg-amber-400':'bg-emerald-400'}`}></div>
+                                                <div>
+                                                    <p className="font-bold text-slate-800">{t.description}</p>
+                                                    <p className="text-xs text-slate-500">Vence: {formatDate(t.dueDate)}</p>
+                                                </div>
+                                            </div>
+                                            <Icon name="ChevronDown" size={16} className="text-slate-400"/>
+                                        </div>
+                                        {expandedId === t.id && (
+                                            <div className="p-6 border-t border-slate-100 bg-amber-50/50 slide-in">
+                                                <p className="text-sm font-bold text-slate-500 uppercase mb-2">Instrucciones</p>
+                                                <p className="text-slate-700 mb-4">{t.details || "Sin detalles adicionales. Revisa el evento general."}</p>
+                                                <div className="flex gap-3">
+                                                    <Button variant="secondary" onClick={()=>handleUnifiedClick({...t, date: t.dueDate, isTask: true})} icon="Calendar">Ver Contexto General</Button>
+                                                    {t.status === 'Pendiente' && <Button icon="Check" onClick={()=>db.collection('tasks').doc(t.id).update({status: 'Completada'})}>Marcar Lista</Button>}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )) : <div className="text-center py-12 text-slate-400">No tienes tareas asignadas.</div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            // 4. WORSHIP (Multi-select + Monthly View)
+            const WorshipManager = () => {
+                const [currentMonth, setCurrentMonth] = useState(new Date());
+                const [isModalOpen, setIsModalOpen] = useState(false);
+                const [form, setForm] = useState({ date: '', time: '', theme: '', preacher: '', type: 'Culto', team: {}, songList: [] });
+                const [songQuery, setSongQuery] = useState('');
+
+                // Filter by month
+                const filteredEvents = worship.filter(w => {
+                    const d = new Date(w.date);
+                    return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
+                }).sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+                const instruments = ['Vocal', 'Guitarra A.', 'Guitarra E.', 'Bajo', 'Batería', 'Teclado', 'Sonido'];
+                const musicians = members.filter(m => m.ministry === 'Alabanza' || m.ministry === 'Pastoral');
+
+                // Toggle logic for multi-select
+                const toggleMusician = (inst, name) => {
+                    const currentList = form.team[inst] || [];
+                    let newList;
+                    if (currentList.includes(name)) newList = currentList.filter(n => n !== name);
+                    else newList = [...currentList, name];
+                    setForm({ ...form, team: { ...form.team, [inst]: newList } });
+                };
+
+                const save = () => {
+                    if (form.id) db.collection('worship').doc(form.id).update(form);
+                    else db.collection('worship').add(form);
+                    setIsModalOpen(false);
+                };
+
+                return (
+                    <div className="space-y-6 fade-in">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <MonthNavigator currentDate={currentMonth} onMonthChange={setCurrentMonth} />
+                            <Button icon="Plus" onClick={()=>{setForm({date:'', time:'', theme:'', preacher:'', type:'Culto', team:{}, songList:[]}); setIsModalOpen(true);}}>Planificar Evento</Button>
+                        </div>
+
+                        {/* Table View */}
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
+                                    <tr>
+                                        <th className="p-4">Día</th>
+                                        <th className="p-4">Evento / Tema</th>
+                                        <th className="p-4">Predicador</th>
+                                        <th className="p-4">Equipo</th>
+                                        <th className="p-4 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredEvents.map(ev => (
+                                        <tr key={ev.id} className="hover:bg-slate-50 transition">
+                                            <td className="p-4 font-bold text-slate-700 whitespace-nowrap">
+                                                <div className="text-lg">{new Date(ev.date).getDate()}</div>
+                                                <div className="text-xs text-slate-400 uppercase">{new Date(ev.date).toLocaleDateString('es-AR',{weekday:'short'})}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="font-bold text-brand-600">{ev.type}</div>
+                                                <div className="text-slate-800">{ev.theme || 'Tema a definir'}</div>
+                                            </td>
+                                            <td className="p-4 text-slate-600">{ev.preacher || '--'}</td>
+                                            <td className="p-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {Object.values(ev.team || {}).flat().slice(0, 3).map((p,i) => <span key={i} className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">{p}</span>)}
+                                                    {Object.values(ev.team || {}).flat().length > 3 && <span className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-400">+</span>}
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <button onClick={()=>{setForm(ev); setIsModalOpen(true);}} className="text-brand-500 hover:text-brand-700 font-bold text-xs">Editar</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredEvents.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-slate-400">Sin planificación este mes.</td></tr>}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Planificar Servicio">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="label-glass">Fecha</label><input type="date" className="input-glass" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/></div>
+                                    <div><label className="label-glass">Hora</label><input type="time" className="input-glass" value={form.time} onChange={e=>setForm({...form, time:e.target.value})}/></div>
+                                </div>
+                                <div><label className="label-glass">Tema</label><input className="input-glass" placeholder="Ej: La Fe" value={form.theme} onChange={e=>setForm({...form, theme:e.target.value})}/></div>
+                                <div><label className="label-glass">Predicador</label><input className="input-glass" placeholder="Quién predica" value={form.preacher} onChange={e=>setForm({...form, preacher:e.target.value})}/></div>
+                                
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                    <h4 className="font-bold text-sm text-slate-600 mb-3 uppercase">Equipo (Multiselección)</h4>
+                                    <div className="space-y-3 h-48 overflow-y-auto hide-scroll">
+                                        {instruments.map(inst => (
+                                            <div key={inst} className="flex flex-col">
+                                                <span className="text-xs font-bold text-brand-500 mb-1">{inst}</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {musicians.map(m => {
+                                                        const isSelected = (form.team[inst] || []).includes(m.name);
+                                                        return (
+                                                            <button key={m.id} onClick={()=>toggleMusician(inst, m.name)} 
+                                                                className={`text-[10px] px-2 py-1 rounded-full border transition-all ${isSelected ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-slate-200 text-slate-600 hover:border-brand-300'}`}>
+                                                                {m.name}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Button className="w-full" onClick={save}>Guardar Planificación</Button>
+                            </div>
+                        </Modal>
+                    </div>
+                );
+            };
+
+            // 5. SERVERS & METRICS
+            const ServersManager = () => {
+                const [currentMonth, setCurrentMonth] = useState(new Date());
+                const [view, setView] = useState('planning'); // planning, metrics
+                const [isModalOpen, setIsModalOpen] = useState(false);
+                const [form, setForm] = useState({ date: '', time: '', type: 'Culto', assignments: {} });
+
+                const filtered = servers.filter(s => {
+                    const d = new Date(s.date);
+                    return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
+                }).sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+                const roles = ['Recepción', 'Baños', 'Altar', 'Ofrenda', 'Seguridad', 'Limpieza'];
+                const allServers = members.filter(m => m.ministry === 'Servidores' || m.ministry === 'General' || m.role === 'Líder');
+
+                // Metrics Calculation
+                const metrics = useMemo(() => {
+                    const counts = {};
+                    servers.forEach(s => {
+                        Object.values(s.assignments || {}).flat().forEach(name => {
+                            counts[name] = (counts[name] || 0) + 1;
+                        });
+                    });
+                    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a,b)=>b.count - a.count);
+                }, [servers]);
+
+                const toggleAssign = (role, name) => {
+                    const current = form.assignments[role] || [];
+                    const updated = current.includes(name) ? current.filter(x=>x!==name) : [...current, name];
+                    setForm({ ...form, assignments: { ...form.assignments, [role]: updated } });
+                };
 
                 return (
                     <div className="space-y-6 fade-in">
                         <div className="flex justify-between items-center">
-                            <input className="input-modern max-w-xs" placeholder="Buscar miembro..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} />
-                            <Button icon="Plus" onClick={()=>openModal()}>Nuevo Miembro</Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {filtered.map(m => (
-                                <div key={m.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all relative group">
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={()=>openModal(m)} className="p-1 bg-slate-100 rounded text-slate-600 hover:text-brand-600"><Icon name="Edit" size={14}/></button>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <img src={m.photo} className="w-14 h-14 rounded-full object-cover bg-slate-100"/>
-                                        <div>
-                                            <h3 className="font-bold text-slate-800">{m.name}</h3>
-                                            <p className="text-xs text-brand-600 font-bold">{m.role} • {m.ministry}</p>
-                                            <p className="text-xs text-slate-400 mt-1">{m.phone || 'Sin cel'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="mt-3 pt-3 border-t border-slate-50 grid grid-cols-2 text-xs text-slate-500 gap-y-1">
-                                        <span>🎂 {m.age || '--'} años</span>
-                                        <span>📍 {m.location || '--'}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        
-                        <Modal isOpen={isOpen} onClose={()=>setIsOpen(false)} title={editing ? "Editar Miembro" : "Nuevo Miembro"}>
-                            <div className="space-y-4">
-                                <div><label className="label-modern">Nombre Completo</label><input className="input-modern" value={formData.name} onChange={e=>setFormData({...formData, name:e.target.value})} /></div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="label-modern">Rol</label>
-                                    <select className="input-modern" value={formData.role} onChange={e=>setFormData({...formData, role:e.target.value})}>
-                                        {['Pastor','Líder','Servidor General','Miembro'].map(r=><option key={r}>{r}</option>)}
-                                    </select></div>
-                                    <div><label className="label-modern">Ministerio</label>
-                                    <select className="input-modern" value={formData.ministry} onChange={e=>setFormData({...formData, ministry:e.target.value})}>
-                                        {['Pastoral','Alabanza','EBD','Jóvenes','General','Adolescentes','Servidores'].map(m=><option key={m}>{m}</option>)}
-                                    </select></div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="label-modern">Edad</label><input type="number" className="input-modern" value={formData.age} onChange={e=>setFormData({...formData, age:e.target.value})} /></div>
-                                    <div><label className="label-modern">Sexo</label>
-                                    <select className="input-modern" value={formData.gender} onChange={e=>setFormData({...formData, gender:e.target.value})}>
-                                        <option value="M">Masculino</option><option value="F">Femenino</option>
-                                    </select></div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="label-modern">Teléfono</label><input className="input-modern" value={formData.phone} onChange={e=>setFormData({...formData, phone:e.target.value})} /></div>
-                                    <div><label className="label-modern">Localidad</label><input className="input-modern" value={formData.location} onChange={e=>setFormData({...formData, location:e.target.value})} /></div>
-                                </div>
-                                <div>
-                                    <label className="label-modern">Email (Para acceso al sistema)</label>
-                                    <input type="email" className="input-modern" value={formData.email} onChange={e=>setFormData({...formData, email:e.target.value})} />
-                                </div>
-                                <Button className="w-full mt-4" onClick={handleSave}>Guardar Cambios</Button>
+                             <div className="flex bg-white p-1 rounded-xl border border-slate-200">
+                                <button onClick={()=>setView('planning')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${view==='planning'?'bg-slate-800 text-white':'text-slate-500'}`}>Planificación</button>
+                                <button onClick={()=>setView('metrics')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${view==='metrics'?'bg-slate-800 text-white':'text-slate-500'}`}>Métricas / Rotación</button>
                             </div>
-                        </Modal>
-                    </div>
-                );
-            };
-
-            // 3. ALABANZA AVANZADO (Biblioteca + Edición + Instrumentos)
-            const Worship = () => {
-                const [view, setView] = useState('list'); // list, songs
-                const [editing, setEditing] = useState(null); // obj para editar servicio
-                const [isModalOpen, setIsModalOpen] = useState(false);
-                
-                // Formulario Servicio
-                const [srvForm, setSrvForm] = useState({ date: '', time: '', theme: '', type: 'Culto', team: {}, songList: [] });
-                const [songSearch, setSongSearch] = useState('');
-
-                // Músicos (filtrar solo ministerio Alabanza)
-                const musicians = members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor');
-                const instruments = ['Vocal', 'Guitarra A.', 'Guitarra E.', 'Bajo', 'Batería', 'Teclado'];
-
-                // Biblioteca Canciones
-                const [newSong, setNewSong] = useState({ title: '', artist: '' });
-
-                const openServiceModal = (srv = null) => {
-                    setEditing(srv);
-                    setSrvForm(srv || { date: '', time: '', theme: '', type: 'Culto', team: {}, songList: [] });
-                    setIsModalOpen(true);
-                };
-
-                const toggleMusician = (inst, name) => {
-                    const current = srvForm.team[inst] || [];
-                    const updated = current.includes(name) ? current.filter(n => n !== name) : [...current, name];
-                    setSrvForm({ ...srvForm, team: { ...srvForm.team, [inst]: updated } });
-                };
-
-                const addSongToService = (songTitle) => {
-                    if(!srvForm.songList.includes(songTitle)) {
-                        setSrvForm({ ...srvForm, songList: [...srvForm.songList, songTitle] });
-                    }
-                    setSongSearch('');
-                };
-
-                const saveService = () => {
-                    if(editing) updateData('worship', editing.id, srvForm);
-                    else addData('worship', srvForm);
-                    setIsModalOpen(false);
-                };
-
-                const saveSongLibrary = () => {
-                    if(newSong.title) { addData('songs', newSong); setNewSong({title:'', artist:''}); }
-                };
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex gap-2 border-b border-slate-200 pb-2">
-                            <button onClick={()=>setView('list')} className={`px-4 py-2 text-sm font-bold rounded-lg ${view==='list'?'bg-brand-100 text-brand-700':'text-slate-500'}`}>Eventos</button>
-                            <button onClick={()=>setView('songs')} className={`px-4 py-2 text-sm font-bold rounded-lg ${view==='songs'?'bg-brand-100 text-brand-700':'text-slate-500'}`}>Biblioteca de Canciones</button>
+                            <Button icon="Plus" onClick={()=>{setForm({ date: '', time: '', type: 'Culto', assignments: {} }); setIsModalOpen(true);}}>Organizar</Button>
                         </div>
 
-                        {view === 'list' && (
+                        {view === 'planning' ? (
                             <>
-                                <div className="flex justify-end"><Button icon="Plus" onClick={()=>openServiceModal()}>Nuevo Evento</Button></div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {worship.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(w => (
-                                        <Card key={w.id} className="relative group">
-                                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={()=>openServiceModal(w)} className="p-1 bg-blue-50 text-blue-600 rounded"><Icon name="Edit" size={16}/></button>
-                                                <button onClick={()=>deleteData('worship', w.id)} className="p-1 bg-red-50 text-red-600 rounded"><Icon name="Trash" size={16}/></button>
+                                <MonthNavigator currentDate={currentMonth} onMonthChange={setCurrentMonth} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                                    {filtered.map(s => (
+                                        <Card key={s.id} onClick={()=>handleUnifiedClick(s)}>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <p className="text-xs font-bold text-brand-600 uppercase">{s.type}</p>
+                                                    <h3 className="font-bold text-lg text-slate-800">{formatDate(s.date)}</h3>
+                                                </div>
+                                                <button onClick={(e)=>{e.stopPropagation(); db.collection('servers').doc(s.id).delete()}} className="text-slate-300 hover:text-red-500"><Icon name="Trash" size={16}/></button>
                                             </div>
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <Badge type={w.type === 'Ensayo' ? 'default' : 'brand'}>{w.type}</Badge>
-                                                <span className="text-sm font-bold text-slate-500">{formatDate(w.date)} • {formatTime(w.time)}</span>
-                                            </div>
-                                            <h3 className="font-bold text-xl text-slate-800 mb-2">{w.theme || 'Sin Tema'}</h3>
-                                            
-                                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
-                                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Setlist</p>
-                                                <ul className="list-disc list-inside text-sm text-slate-700">
-                                                    {w.songList?.map((s,i) => <li key={i}>{s}</li>)}
-                                                </ul>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {Object.entries(w.team || {}).map(([inst, ppl]) => ppl.length > 0 && (
-                                                    <div key={inst} className="text-xs bg-white border px-2 py-1 rounded">
-                                                        <span className="font-bold text-slate-500">{inst}:</span> {ppl.join(', ')}
+                                            <div className="space-y-2">
+                                                {Object.entries(s.assignments || {}).slice(0,4).map(([r, ppl]) => (
+                                                    <div key={r} className="flex justify-between text-sm border-b border-slate-50 pb-1">
+                                                        <span className="text-slate-500 text-xs uppercase font-bold">{r}</span>
+                                                        <span className="font-medium text-slate-700 text-xs">{Array.isArray(ppl) ? ppl.length : 1} asignados</span>
                                                     </div>
                                                 ))}
                                             </div>
+                                            <div className="mt-3 text-center text-xs text-brand-500 font-bold">Ver equipo completo</div>
                                         </Card>
                                     ))}
                                 </div>
                             </>
+                        ) : (
+                            <Card>
+                                <h3 className="font-bold mb-6">Rotación de Servidores (Total Servicios)</h3>
+                                <div className="h-64 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={metrics}>
+                                            <XAxis dataKey="name" tick={{fontSize: 10}} interval={0} angle={-45} textAnchor="end" height={60}/>
+                                            <YAxis />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#f97316" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
                         )}
 
-                        {view === 'songs' && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <Card className="h-fit">
-                                    <h3 className="font-bold mb-4">Agregar Canción</h3>
-                                    <input className="input-modern mb-2" placeholder="Título" value={newSong.title} onChange={e=>setNewSong({...newSong, title:e.target.value})}/>
-                                    <input className="input-modern mb-4" placeholder="Artista / Tonalidad" value={newSong.artist} onChange={e=>setNewSong({...newSong, artist:e.target.value})}/>
-                                    <Button className="w-full" onClick={saveSongLibrary}>Guardar en Biblioteca</Button>
-                                </Card>
-                                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {songs.map(s => (
-                                        <div key={s.id} className="bg-white p-3 rounded-lg border flex justify-between items-center">
-                                            <div>
-                                                <p className="font-bold">{s.title}</p>
-                                                <p className="text-xs text-slate-500">{s.artist}</p>
-                                            </div>
-                                            <button onClick={()=>deleteData('songs',s.id)} className="text-red-400 hover:text-red-600"><Icon name="Trash" size={16}/></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Planificar Alabanza">
+                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Asignar Servidores">
                             <div className="space-y-4">
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div className="col-span-1"><label className="label-modern">Tipo</label><select className="input-modern" value={srvForm.type} onChange={e=>setSrvForm({...srvForm, type:e.target.value})}><option>Culto</option><option>Ensayo</option></select></div>
-                                    <div className="col-span-1"><label className="label-modern">Fecha</label><input type="date" className="input-modern" value={srvForm.date} onChange={e=>setSrvForm({...srvForm, date:e.target.value})}/></div>
-                                    <div className="col-span-1"><label className="label-modern">Hora</label><input type="time" className="input-modern" value={srvForm.time} onChange={e=>setSrvForm({...srvForm, time:e.target.value})}/></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <input type="date" className="input-glass" onChange={e=>setForm({...form, date:e.target.value})}/>
+                                    <input type="time" className="input-glass" onChange={e=>setForm({...form, time:e.target.value})}/>
                                 </div>
-                                <div><label className="label-modern">Tema / Título</label><input className="input-modern" value={srvForm.theme} onChange={e=>setSrvForm({...srvForm, theme:e.target.value})}/></div>
-                                
-                                {/* Selector de Canciones */}
-                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                    <label className="label-modern">Canciones</label>
-                                    <div className="flex gap-2 mb-2">
-                                        <input className="input-modern" placeholder="Buscar en biblioteca o escribir..." value={songSearch} onChange={e=>setSongSearch(e.target.value)} />
-                                        <Button variant="secondary" onClick={()=>addSongToService(songSearch)}>Agg</Button>
-                                    </div>
-                                    {songSearch && (
-                                        <div className="flex flex-wrap gap-2 mb-2">
-                                            {songs.filter(s => s.title.toLowerCase().includes(songSearch.toLowerCase())).slice(0,3).map(s => (
-                                                <button key={s.id} onClick={()=>addSongToService(s.title)} className="text-xs bg-brand-100 text-brand-700 px-2 py-1 rounded-full hover:bg-brand-200">+ {s.title}</button>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div className="flex flex-wrap gap-2">
-                                        {srvForm.songList.map((s,i) => (
-                                            <span key={i} className="bg-white border px-2 py-1 rounded text-sm flex items-center gap-2">
-                                                {s} <button onClick={()=>setSrvForm({...srvForm, songList: srvForm.songList.filter(x=>x!==s)})} className="text-red-500 font-bold">×</button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Selección de Equipo */}
-                                <div>
-                                    <label className="label-modern">Equipo de Activación</label>
-                                    <div className="space-y-3">
-                                        {instruments.map(inst => (
-                                            <div key={inst} className="flex items-start gap-2 border-b border-slate-100 pb-2">
-                                                <div className="w-24 text-xs font-bold text-slate-500 mt-1">{inst}</div>
-                                                <div className="flex-1 flex flex-wrap gap-1">
-                                                    {musicians.map(m => (
-                                                        <button key={m.id} onClick={()=>toggleMusician(inst, m.name)} 
-                                                            className={`text-xs px-2 py-1 border rounded-full transition-all ${(srvForm.team[inst]||[]).includes(m.name) ? 'bg-brand-600 text-white border-brand-600' : 'bg-white hover:bg-slate-50'}`}>
-                                                            {m.name}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <Button className="w-full" onClick={saveService}>Guardar Evento</Button>
-                            </div>
-                        </Modal>
-                    </div>
-                );
-            };
-
-            // 4. NUEVO MINISTERIO: SERVIDORES (Limpieza y Culto)
-            const ServersMinistry = () => {
-                const [isModalOpen, setIsModalOpen] = useState(false);
-                const [form, setForm] = useState({ date: '', time: '', type: 'Orden de Culto', assignments: {} });
-                
-                // Roles fijos
-                const roles = ['Baños', 'Altar', 'Ofrenda', 'Autos', 'Recepción', 'Limpieza General'];
-                // Miembros disponibles (Todos o filtro servidores)
-                const available = members.filter(m => m.ministry === 'Servidores' || m.ministry === 'General' || m.role === 'Pastor');
-
-                const handleAssign = (role, name) => {
-                    setForm(prev => ({ ...prev, assignments: { ...prev.assignments, [role]: name } }));
-                };
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex justify-between">
-                            <h2 className="text-2xl font-bold">Servidores & Orden</h2>
-                            <Button icon="Plus" onClick={()=>{setForm({ date: '', time: '', type: 'Orden de Culto', assignments: {} }); setIsModalOpen(true);}}>Crear Cronograma</Button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {servers.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(s => (
-                                <Card key={s.id}>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <Badge type="blue">{s.type}</Badge>
-                                            <h3 className="font-bold text-lg mt-1">{formatDate(s.date)} <span className="text-slate-400 text-sm font-normal">at {formatTime(s.time)}</span></h3>
-                                        </div>
-                                        <button onClick={()=>deleteData('servers', s.id)} className="text-red-300 hover:text-red-500"><Icon name="Trash"/></button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {Object.entries(s.assignments || {}).map(([role, person]) => (
-                                            <div key={role} className="bg-slate-50 p-2 rounded border border-slate-100">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase">{role}</p>
-                                                <p className="text-sm font-semibold text-slate-700">{person}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-
-                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Organización">
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div><label className="label-modern">Tipo</label><select className="input-modern" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}><option>Orden de Culto</option><option>Limpieza</option><option>Evento Especial</option></select></div>
-                                    <div><label className="label-modern">Fecha</label><input type="date" className="input-modern" onChange={e=>setForm({...form, date:e.target.value})}/></div>
-                                    <div><label className="label-modern">Hora</label><input type="time" className="input-modern" onChange={e=>setForm({...form, time:e.target.value})}/></div>
-                                </div>
-                                <div className="space-y-3 pt-2">
-                                    <p className="font-bold text-slate-800">Asignar Roles</p>
+                                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
                                     {roles.map(role => (
-                                        <div key={role} className="flex items-center gap-2">
-                                            <span className="w-1/3 text-sm text-slate-600">{role}</span>
-                                            <select className="input-modern" value={form.assignments[role] || ''} onChange={e=>handleAssign(role, e.target.value)}>
-                                                <option value="">-- Seleccionar --</option>
-                                                {available.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                                        <div key={role} className="border-b border-slate-100 pb-3">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="font-bold text-sm text-slate-700">{role}</span>
+                                                <span className="text-xs text-slate-400">{(form.assignments[role]||[]).length} seleccionados</span>
+                                            </div>
+                                            <select className="input-glass py-1 text-xs" onChange={(e)=>{ if(e.target.value) toggleAssign(role, e.target.value); }}>
+                                                <option value="">+ Agregar persona...</option>
+                                                {allServers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                                             </select>
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {(form.assignments[role]||[]).map(p => (
+                                                    <span key={p} onClick={()=>toggleAssign(role,p)} className="px-2 py-1 bg-brand-100 text-brand-700 text-xs rounded-full cursor-pointer hover:bg-red-100 hover:text-red-600 flex items-center gap-1">
+                                                        {p} <Icon name="X" size={10}/>
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                                <Button className="w-full" onClick={()=>{addData('servers', form); setIsModalOpen(false);}}>Guardar Cronograma</Button>
+                                <Button className="w-full" onClick={()=>{db.collection('servers').add(form); setIsModalOpen(false);}}>Guardar Asignaciones</Button>
                             </div>
                         </Modal>
                     </div>
                 );
             };
 
-            // 5. TESORERÍA (Diezmantes)
-            const Finances = () => {
-                const [isAdding, setIsAdding] = useState(false);
-                const [type, setType] = useState('Culto');
-                const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], cash: 0, transfer: 0, notes: '', tithersCount: 0 });
+            // 6. FINANCES (Detailed)
+            const FinancesManager = () => {
+                const [currentMonth, setCurrentMonth] = useState(new Date());
+                const [isModalOpen, setIsModalOpen] = useState(false);
+                const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], type: 'Ingreso', category: 'Culto', amount: 0, tithes: 0, offerings: 0, notes: '' });
 
-                const handleSave = () => {
-                    let finalData = { ...form, type, cash: Number(form.cash), transfer: Number(form.transfer), tithersCount: Number(form.tithersCount || 0) };
-                    if(type === 'Gasto') { finalData.cash *= -1; finalData.transfer *= -1; }
-                    addData('finances', finalData);
-                    setIsAdding(false);
-                    setForm({ date: new Date().toISOString().split('T')[0], cash: 0, transfer: 0, notes: '', tithersCount: 0 });
+                const filtered = finances.filter(f => {
+                    const d = new Date(f.date);
+                    return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
+                }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+                const income = filtered.filter(f => f.type === 'Ingreso').reduce((a,b) => a + (b.amount || 0), 0);
+                const expense = filtered.filter(f => f.type === 'Gasto').reduce((a,b) => a + (b.amount || 0), 0);
+
+                const save = () => {
+                    // Auto-calculate total for Culto
+                    let finalAmount = Number(form.amount);
+                    if(form.category === 'Culto') finalAmount = Number(form.tithes) + Number(form.offerings);
+                    
+                    db.collection('finances').add({ ...form, amount: finalAmount, tithes: Number(form.tithes), offerings: Number(form.offerings) });
+                    setIsModalOpen(false);
                 };
-
-                const total = finances.reduce((acc, f) => acc + (f.cash || 0) + (f.transfer || 0), 0);
-                const totalTithers = finances.reduce((acc, f) => acc + (f.tithersCount || 0), 0);
 
                 return (
                     <div className="space-y-6 fade-in">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <Card className="bg-emerald-50 border-emerald-200 text-emerald-800">
-                                <p className="text-xs uppercase font-bold">Caja Actual</p>
-                                <p className="text-2xl font-bold">{formatCurrency(total)}</p>
-                            </Card>
-                            <Card className="bg-blue-50 border-blue-200 text-blue-800">
-                                <p className="text-xs uppercase font-bold">Diezmantes (Mes)</p>
-                                <p className="text-2xl font-bold">{totalTithers}</p>
-                            </Card>
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                            <Button variant="danger" onClick={()=>{setType('Gasto'); setIsAdding(true);}}>Gasto</Button>
-                            <Button onClick={()=>{setType('Ingreso'); setIsAdding(true);}}>Ingreso</Button>
-                            <Button onClick={()=>{setType('Culto'); setIsAdding(true);}}>Cierre Culto</Button>
-                        </div>
+                        <MonthNavigator currentDate={currentMonth} onMonthChange={setCurrentMonth} />
                         
-                        <div className="bg-white rounded-xl shadow border overflow-hidden">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
-                                    <tr><th className="p-3">Fecha</th><th className="p-3">Detalle</th><th className="p-3 text-right">Monto</th></tr>
+                        <div className="grid grid-cols-3 gap-4">
+                            <Card className="bg-emerald-50 border-emerald-100">
+                                <p className="text-xs uppercase font-bold text-emerald-600">Ingresos (Mes)</p>
+                                <p className="text-2xl font-bold text-emerald-800">{formatCurrency(income)}</p>
+                            </Card>
+                            <Card className="bg-red-50 border-red-100">
+                                <p className="text-xs uppercase font-bold text-red-600">Gastos (Mes)</p>
+                                <p className="text-2xl font-bold text-red-800">{formatCurrency(expense)}</p>
+                            </Card>
+                            <Card className="bg-slate-800 text-white border-none cursor-pointer hover:bg-slate-700" onClick={()=>setIsModalOpen(true)}>
+                                <div className="h-full flex flex-col items-center justify-center">
+                                    <Icon name="Plus" size={32} className="mb-1"/>
+                                    <span className="text-xs font-bold uppercase">Nuevo Movimiento</span>
+                                </div>
+                            </Card>
+                        </div>
+
+                        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
+                                    <tr>
+                                        <th className="p-4">Fecha</th>
+                                        <th className="p-4">Categoría</th>
+                                        <th className="p-4">Detalle</th>
+                                        <th className="p-4 text-right">Monto</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                    {finances.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(f => (
-                                        <tr key={f.id} className="border-t border-slate-100">
-                                            <td className="p-3">{formatDate(f.date)}</td>
-                                            <td className="p-3">
-                                                <Badge type={f.type === 'Gasto' ? 'danger' : 'success'}>{f.type}</Badge> 
-                                                <span className="ml-2">{f.notes}</span>
-                                                {f.tithersCount > 0 && <span className="ml-2 text-xs text-slate-400">({f.tithersCount} diezmantes)</span>}
+                                    {filtered.map(f => (
+                                        <tr key={f.id} className="border-t border-slate-50">
+                                            <td className="p-4 text-slate-500 font-mono">{formatDate(f.date)}</td>
+                                            <td className="p-4 font-bold text-slate-700">{f.category}</td>
+                                            <td className="p-4">
+                                                {f.category === 'Culto' ? (
+                                                    <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600">
+                                                        Diezmos: {formatCurrency(f.tithes)} | Ofrendas: {formatCurrency(f.offerings)}
+                                                    </span>
+                                                ) : f.notes}
                                             </td>
-                                            <td className={`p-3 text-right font-mono font-bold ${(f.cash+f.transfer) < 0 ? 'text-red-500' : 'text-slate-700'}`}>{formatCurrency(f.cash + f.transfer)}</td>
+                                            <td className={`p-4 text-right font-bold font-mono ${f.type==='Gasto'?'text-red-500':'text-emerald-500'}`}>
+                                                {f.type==='Gasto'?'-':'+'} {formatCurrency(f.amount)}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
 
-                        <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title={`Registrar ${type}`}>
+                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Registrar Movimiento">
                             <div className="space-y-4">
-                                <input type="date" className="input-modern" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/>
-                                <input className="input-modern" placeholder="Detalle / Notas" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/>
-                                {type === 'Culto' && (
-                                    <div>
-                                        <label className="label-modern text-brand-600">Cantidad de Diezmantes</label>
-                                        <input type="number" className="input-modern bg-brand-50 border-brand-200" value={form.tithersCount} onChange={e=>setForm({...form, tithersCount:e.target.value})}/>
-                                    </div>
-                                )}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="label-modern">Efectivo</label><input type="number" className="input-modern" value={form.cash} onChange={e=>setForm({...form, cash:e.target.value})}/></div>
-                                    <div><label className="label-modern">Transferencia</label><input type="number" className="input-modern" value={form.transfer} onChange={e=>setForm({...form, transfer:e.target.value})}/></div>
+                                <div className="flex bg-slate-100 p-1 rounded-xl">
+                                    <button onClick={()=>setForm({...form, type:'Ingreso'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${form.type==='Ingreso'?'bg-white shadow text-emerald-600':'text-slate-500'}`}>Ingreso</button>
+                                    <button onClick={()=>setForm({...form, type:'Gasto'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${form.type==='Gasto'?'bg-white shadow text-red-600':'text-slate-500'}`}>Gasto</button>
                                 </div>
-                                <Button className="w-full" onClick={handleSave}>Guardar</Button>
+                                
+                                <input type="date" className="input-glass" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} />
+                                
+                                <label className="label-glass">Categoría</label>
+                                <select className="input-glass" value={form.category} onChange={e=>setForm({...form, category:e.target.value})}>
+                                    <option>Culto</option>
+                                    <option>Evento</option>
+                                    <option>Oficina</option>
+                                    <option>Mantenimiento</option>
+                                    <option>Ayuda Social</option>
+                                    <option>Otro</option>
+                                </select>
+
+                                {form.category === 'Culto' && form.type === 'Ingreso' ? (
+                                    <div className="grid grid-cols-2 gap-4 bg-brand-50 p-4 rounded-xl border border-brand-100">
+                                        <div><label className="label-glass text-brand-600">Diezmos</label><input type="number" className="input-glass" value={form.tithes} onChange={e=>setForm({...form, tithes:e.target.value})}/></div>
+                                        <div><label className="label-glass text-brand-600">Ofrendas</label><input type="number" className="input-glass" value={form.offerings} onChange={e=>setForm({...form, offerings:e.target.value})}/></div>
+                                    </div>
+                                ) : (
+                                    <div><label className="label-glass">Monto Total</label><input type="number" className="input-glass" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})}/></div>
+                                )}
+                                
+                                <input className="input-glass" placeholder="Notas adicionales..." value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/>
+                                <Button className="w-full" onClick={save}>Registrar</Button>
                             </div>
                         </Modal>
                     </div>
                 );
             };
 
-            // 6. MINISTERIOS CON TAREAS (Jóvenes / EBD)
-            const MinistryWithTasks = ({ title, col, filterMinistry }) => {
-                const [isAdding, setIsAdding] = useState(false);
-                const [tab, setTab] = useState('events'); // events, tasks
-                const [evtForm, setEvtForm] = useState({ date: '', time: '', title: '', location: '' });
-                const [taskForm, setTaskForm] = useState({ description: '', assignedTo: '', dueDate: '', status: 'Pendiente' });
-                
-                const eventsList = col === 'youth' ? youth : ebd;
-                const ministryTasks = tasks.filter(t => t.ministry === col);
-                const availableMembers = members.filter(m => m.ministry === filterMinistry || m.role === 'Líder');
-
+            // 7. DIRECTORY (Simplified for brevity but kept modern)
+            const Directory = () => {
+                const [term, setTerm] = useState('');
                 return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">{title}</h2>
-                            <div className="flex gap-2">
-                                <button onClick={()=>setTab('events')} className={`px-3 py-1 text-xs font-bold rounded ${tab==='events'?'bg-slate-800 text-white':'bg-slate-200'}`}>Eventos</button>
-                                <button onClick={()=>setTab('tasks')} className={`px-3 py-1 text-xs font-bold rounded ${tab==='tasks'?'bg-slate-800 text-white':'bg-slate-200'}`}>Tareas</button>
-                            </div>
-                        </div>
-
-                        {tab === 'events' ? (
-                            <>
-                                <Button className="w-full md:w-auto" icon="Plus" onClick={()=>{setEvtForm({ date: '', time: '', title: '', location: '' }); setIsAdding(true);}}>Nuevo Evento</Button>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                    {eventsList.map(e => (
-                                        <Card key={e.id}>
-                                            <h3 className="font-bold">{e.title || e.topic}</h3>
-                                            <p className="text-sm text-slate-500">{formatDate(e.date)} - {formatTime(e.time)}</p>
-                                            <p className="text-xs mt-1 text-slate-400">{e.location}</p>
-                                            <button onClick={()=>deleteData(col, e.id)} className="text-red-400 text-xs mt-2 hover:underline">Eliminar</button>
-                                        </Card>
-                                    ))}
-                                </div>
-                                <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title="Evento">
-                                    <div className="space-y-4">
-                                        <input className="input-modern" placeholder="Título/Tema" onChange={e=>setEvtForm({...evtForm, title:e.target.value})} />
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <input type="date" className="input-modern" onChange={e=>setEvtForm({...evtForm, date:e.target.value})}/>
-                                            <input type="time" className="input-modern" onChange={e=>setEvtForm({...evtForm, time:e.target.value})}/>
-                                        </div>
-                                        <input className="input-modern" placeholder="Lugar" onChange={e=>setEvtForm({...evtForm, location:e.target.value})} />
-                                        <Button className="w-full" onClick={()=>{addData(col, evtForm); setIsAdding(false);}}>Guardar</Button>
-                                    </div>
-                                </Modal>
-                            </>
-                        ) : (
-                            <>
-                                <Button className="w-full md:w-auto" icon="Clipboard" onClick={()=>setIsAdding(true)}>Asignar Tarea</Button>
-                                <div className="space-y-2 mt-4">
-                                    {ministryTasks.map(t => (
-                                        <div key={t.id} className="bg-white p-3 rounded-lg border flex justify-between items-center">
-                                            <div>
-                                                <p className="font-bold text-sm">{t.description}</p>
-                                                <p className="text-xs text-slate-500">Resp: <span className="text-brand-600 font-bold">{t.assignedTo}</span> • Vence: {formatDate(t.dueDate)}</p>
-                                            </div>
-                                            <Badge type={t.status === 'Pendiente' ? 'warning' : 'success'}>{t.status}</Badge>
-                                        </div>
-                                    ))}
-                                </div>
-                                <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title="Nueva Tarea">
-                                    <div className="space-y-4">
-                                        <input className="input-modern" placeholder="Descripción de la tarea" onChange={e=>setTaskForm({...taskForm, description:e.target.value})}/>
-                                        <div>
-                                            <label className="label-modern">Responsable</label>
-                                            <select className="input-modern" onChange={e=>setTaskForm({...taskForm, assignedTo:e.target.value})}>
-                                                <option value="">Seleccionar...</option>
-                                                {availableMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                                            </select>
-                                        </div>
-                                        <div><label className="label-modern">Fecha Límite</label><input type="date" className="input-modern" onChange={e=>setTaskForm({...taskForm, dueDate:e.target.value})}/></div>
-                                        <Button className="w-full" onClick={()=>{addData('tasks', { ...taskForm, ministry: col }); setIsAdding(false);}}>Asignar</Button>
-                                    </div>
-                                </Modal>
-                            </>
-                        )}
-                    </div>
-                );
-            };
-
-            // 7. MENSAJERÍA COMPLETA
-            const Messaging = () => {
-                const [compose, setCompose] = useState({ to: '', content: '' });
-                const myInbox = messages.filter(m => (m.to === 'all' || m.to === userProfile.id));
-
-                const handleSend = () => {
-                    if(!compose.content) return;
-                    const msg = {
-                        from: userProfile.id,
-                        fromName: userProfile.name,
-                        to: compose.to, // 'all' o userId
-                        content: compose.content,
-                        date: new Date().toISOString(),
-                        readBy: []
-                    };
-                    addData('messages', msg);
-                    setCompose({ to: '', content: '' });
-                    alert("Mensaje enviado");
-                };
-
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in">
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-bold">Mis Mensajes</h2>
-                            <div className="space-y-3">
-                                {myInbox.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m => (
-                                    <Card key={m.id} className={`border-l-4 ${m.to==='all'?'border-l-blue-400':'border-l-brand-500'}`}>
-                                        <div className="flex justify-between mb-2">
-                                            <span className="font-bold text-sm text-slate-700">{m.fromName}</span>
-                                            <span className="text-xs text-slate-400">{formatDate(m.date)}</span>
-                                        </div>
-                                        <p className="text-slate-600 text-sm">{m.content}</p>
-                                        {m.to === 'all' && <span className="text-[10px] bg-blue-100 text-blue-700 px-1 rounded mt-2 inline-block">Difusión</span>}
-                                    </Card>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <Card className="sticky top-6">
-                                <h3 className="font-bold mb-4">Redactar Nuevo</h3>
-                                <div className="space-y-4">
+                    <div className="fade-in space-y-6">
+                        <input className="input-glass max-w-md" placeholder="Buscar miembro..." value={term} onChange={e=>setTerm(e.target.value)}/>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {members.filter(m=>m.name.toLowerCase().includes(term.toLowerCase())).map(m => (
+                                <div key={m.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                                    <Avatar url={m.photo} name={m.name} size="lg"/>
                                     <div>
-                                        <label className="label-modern">Destinatario</label>
-                                        <select className="input-modern" value={compose.to} onChange={e=>setCompose({...compose, to:e.target.value})}>
-                                            <option value="">Seleccionar...</option>
-                                            <option value="all">📢 TODOS (Difusión)</option>
-                                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                        </select>
+                                        <p className="font-bold text-slate-800">{m.name}</p>
+                                        <p className="text-xs text-brand-600 font-bold uppercase">{m.role}</p>
+                                        <p className="text-xs text-slate-400">{m.ministry}</p>
                                     </div>
-                                    <div>
-                                        <label className="label-modern">Mensaje</label>
-                                        <textarea className="input-modern h-32" value={compose.content} onChange={e=>setCompose({...compose, content:e.target.value})}></textarea>
-                                    </div>
-                                    <Button icon="Mail" className="w-full" onClick={handleSend}>Enviar Mensaje</Button>
                                 </div>
-                            </Card>
+                            ))}
                         </div>
                     </div>
                 );
             };
 
-            // --- NAVEGACIÓN ---
-            const NavItem = ({ id, label, icon }) => (
-                <button onClick={() => { setActiveTab(id); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all mb-1 ${activeTab === id ? 'bg-brand-600 text-white shadow-lg' : 'text-brand-100/70 hover:bg-brand-800 hover:text-white'}`}>
-                    <Icon name={icon} /> {label}
-                </button>
-            );
-
+            // --- LAYOUT ---
             return (
-                <div className="flex h-screen overflow-hidden">
-                    <aside className={`fixed md:relative z-40 w-72 bg-brand-900 text-white h-full flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                        <div className="p-6">
-                            <div className="flex items-center gap-3 mb-8"><div className="bg-white/10 p-2 rounded-lg"><Icon name="Home" /></div><span className="font-bold text-lg">Conquistadores</span></div>
-                            <nav className="space-y-1">
-                                <NavItem id="dashboard" icon="Home" label="Inicio" />
-                                <NavItem id="directory" icon="Users" label="Directorio" />
-                                <NavItem id="calendar" icon="Calendar" label="Calendario" />
-                                
-                                <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Ministerios</div>
-                                {(userProfile.role === 'Pastor' || userProfile.ministry === 'Alabanza') && <NavItem id="worship" icon="Music" label="Alabanza" />}
-                                {(userProfile.role === 'Pastor' || userProfile.ministry === 'Servidores' || userProfile.ministry === 'General') && <NavItem id="servers" icon="Hand" label="Servidores" />}
-                                {(userProfile.role === 'Pastor' || userProfile.ministry === 'EBD') && <NavItem id="ebd" icon="Book" label="Escuela Bíblica" />}
-                                {(userProfile.role === 'Pastor' || userProfile.ministry === 'Jóvenes') && <NavItem id="youth" icon="Smile" label="Jóvenes" />}
-                                
-                                <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Gestión</div>
-                                {userProfile.role === 'Pastor' && <NavItem id="finances" icon="Wallet" label="Tesorería" />}
-                                <NavItem id="messages" icon="Mail" label="Mensajería" />
+                <div className="flex h-screen overflow-hidden bg-slate-50">
+                    {/* Sidebar */}
+                    <aside className="w-20 lg:w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0 z-50 shadow-2xl">
+                        <div>
+                            <div className="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-800">
+                                <div className="bg-brand-600 p-2 rounded-xl shadow-glow"><Icon name="Home" className="text-white"/></div>
+                                <span className="hidden lg:block ml-3 font-bold text-lg tracking-tight">Conquistadores</span>
+                            </div>
+                            <nav className="p-4 space-y-2">
+                                {[
+                                    {id:'dashboard', label:'Inicio', icon:'Home'},
+                                    {id:'messages', label:'Mensajes', icon:'Mail'},
+                                    {id:'worship', label:'Alabanza', icon:'Music'},
+                                    {id:'servers', label:'Servidores', icon:'Hand'},
+                                    {id:'finances', label:'Finanzas', icon:'Wallet'},
+                                    {id:'directory', label:'Directorio', icon:'Users'},
+                                ].map(item => (
+                                    <button key={item.id} onClick={()=>setActiveTab(item.id)} 
+                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${activeTab===item.id ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                                        <Icon name={item.icon}/>
+                                        <span className="hidden lg:block font-medium text-sm">{item.label}</span>
+                                    </button>
+                                ))}
                             </nav>
                         </div>
-                        <div className="mt-auto p-6 bg-brand-950 flex items-center justify-between">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                                {userProfile.photo && <img src={userProfile.photo} className="w-8 h-8 rounded-full"/>}
-                                <div className="truncate"><p className="font-bold text-sm truncate">{userProfile.name}</p><p className="text-[10px] text-brand-400 uppercase">{userProfile.role}</p></div>
-                            </div>
-                            <button onClick={handleLogout}><Icon name="LogOut" className="text-brand-400 hover:text-white"/></button>
+                        <div className="p-4 border-t border-slate-800">
+                            <button onClick={()=>auth.signOut()} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all">
+                                <Icon name="LogOut"/>
+                                <span className="hidden lg:block font-medium text-sm">Salir</span>
+                            </button>
                         </div>
                     </aside>
 
-                    <main className="flex-1 overflow-y-auto bg-slate-50 w-full relative">
-                        <header className="md:hidden bg-white p-4 sticky top-0 z-30 shadow-sm flex justify-between items-center">
-                            <span className="font-bold text-brand-900">App</span>
-                            <button onClick={() => setSidebarOpen(true)} className="text-slate-600"><Icon name="Menu" /></button>
-                        </header>
-                        <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24 h-full">
+                    {/* Main Content */}
+                    <main className="flex-1 overflow-y-auto relative scroll-smooth">
+                        <div className="max-w-7xl mx-auto p-6 md:p-10 pb-24">
                             {activeTab === 'dashboard' && <Dashboard />}
+                            {activeTab === 'worship' && <WorshipManager />}
+                            {activeTab === 'servers' && <ServersManager />}
+                            {activeTab === 'finances' && <FinancesManager />}
+                            {activeTab === 'messages' && <MessageCenter />}
                             {activeTab === 'directory' && <Directory />}
-                            {activeTab === 'worship' && <Worship />}
-                            {activeTab === 'servers' && <ServersMinistry />}
-                            {activeTab === 'finances' && <Finances />}
-                            {activeTab === 'messages' && <Messaging />}
-                            {activeTab === 'ebd' && <MinistryWithTasks title="Escuela Bíblica" col="ebd" filterMinistry="EBD" />}
-                            {activeTab === 'youth' && <MinistryWithTasks title="Jóvenes" col="youth" filterMinistry="Jóvenes" />}
-                            {activeTab === 'calendar' && (
-                                <div className="fade-in">
-                                    <h2 className="text-2xl font-bold mb-4">Calendario Global</h2>
-                                    <Card className="bg-white">
-                                        <p className="text-center text-slate-500 py-12">Vista de calendario completa (integrada en Dashboard)</p>
-                                    </Card>
-                                </div>
-                            )}
                         </div>
                     </main>
-                    {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+
+                    {/* Unified Modal (Global) */}
+                    <UnifiedEventModal 
+                        isOpen={unifiedModalOpen} 
+                        onClose={()=>setUnifiedModalOpen(false)} 
+                        eventData={selectedEventForModal}
+                        allData={{ worship, servers, ebd, youth }}
+                    />
                 </div>
             );
         };
