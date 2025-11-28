@@ -30,6 +30,7 @@
         }
     </script>
     <style>
+        /* Estilos base y animaciones */
         body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
@@ -44,8 +45,8 @@
         const { useState, useMemo, useEffect } = React;
         const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } = Recharts;
 
-        // --- SISTEMA DE ICONOS (CORREGIDO) ---
-        // Usamos React.Fragment para agrupar múltiples paths y evitar el error de sintaxis.
+        // --- SISTEMA DE ICONOS (CORREGIDO Y REFORZADO) ---
+        // Se usa React.Fragment para agrupar múltiples paths y cumplir con la sintaxis de JSX.
         const Icons = {
             Users: <React.Fragment><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></React.Fragment>,
             Wallet: <React.Fragment><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></React.Fragment>,
@@ -108,6 +109,25 @@
             return <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${colors[color] || colors.slate}`}>{children}</span>;
         };
 
+        // Alerta de mensaje reemplaza el 'alert()' nativo
+        const CustomAlert = ({ message, type = 'info', onClose }) => {
+            const colors = { info: 'bg-blue-100 border-blue-400 text-blue-700', success: 'bg-emerald-100 border-emerald-400 text-emerald-700', error: 'bg-red-100 border-red-400 text-red-700' };
+            useEffect(() => {
+                if(message) {
+                    const timer = setTimeout(onClose, 3000); // Se oculta automáticamente
+                    return () => clearTimeout(timer);
+                }
+            }, [message, onClose]);
+            
+            if (!message) return null;
+
+            return (
+                <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl border-l-4 shadow-lg ${colors[type]} animate-fade-in`}>
+                    <p className="font-semibold text-sm">{message}</p>
+                </div>
+            );
+        };
+
         const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
             return (
@@ -115,7 +135,7 @@
                     <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full"><Icon name="Plus" className="rotate-45"/></button>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-800"><Icon name="Plus" className="rotate-45"/></button>
                         </div>
                         {children}
                     </div>
@@ -133,10 +153,10 @@
         // --- DATOS INICIALES (MOCK) ---
         const INITIAL_DATA = {
             members: [
-                { id: 1, name: 'Carlos Gomez', birthDate: '1995-05-15', ministry: 'Alabanza', role: 'Líder', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Carlos+Gomez&background=random', visits: 15, lastVisit: '2023-11-20', followUp: 'Llamar por nueva guitarra' },
-                { id: 2, name: 'Ana Perez', birthDate: '1980-03-10', ministry: 'Pastoral', role: 'Pastor', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Ana+Perez&background=random', visits: 48, lastVisit: '2023-11-26', followUp: 'Planificación 2024' },
-                { id: 3, name: 'Lucas Torres', birthDate: '2008-07-22', ministry: 'Jóvenes', role: 'Miembro', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Lucas+Torres&background=random', visits: 20, lastVisit: '2023-11-26', followUp: 'Confirmar campamento' },
-                { id: 4, name: 'Marta Ríos', birthDate: '1990-11-05', ministry: 'EBD', role: 'Maestra', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Marta+Rios&background=random', visits: 40, lastVisit: '2023-11-20', followUp: 'Reunión de maestros' },
+                { id: 1, name: 'Carlos Gomez', birthDate: '1995-05-15', ministry: 'Alabanza', role: 'Líder', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Carlos+Gomez&background=random', visits: 15, lastVisit: '2023-11-20', followUp: 'Llamar por nueva guitarra', phone: '1155551234' },
+                { id: 2, name: 'Ana Perez', birthDate: '1980-03-10', ministry: 'Pastoral', role: 'Pastor', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Ana+Perez&background=random', visits: 48, lastVisit: '2023-11-26', followUp: 'Planificación 2024', phone: '1155555678' },
+                { id: 3, name: 'Lucas Torres', birthDate: '2008-07-22', ministry: 'Jóvenes', role: 'Miembro', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Lucas+Torres&background=random', visits: 20, lastVisit: '2023-11-26', followUp: 'Confirmar campamento', phone: '1155559012' },
+                { id: 4, name: 'Marta Ríos', birthDate: '1990-11-05', ministry: 'EBD', role: 'Maestra', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Marta+Rios&background=random', visits: 40, lastVisit: '2023-11-20', followUp: 'Reunión de maestros', phone: '1155553456' },
             ],
             finances: [
                 { id: 1, date: '2023-11-05', type: 'Culto', cash: 25000, transfer: 40000, tithes: 12, notes: 'Ofrenda dominical' },
@@ -166,16 +186,21 @@
             const balance = data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
             
             // Lógica "Tus Servicios"
-            const myServices = [
-                ...data.worship.filter(s => {
-                    const myName = user.name.split(' ')[0];
-                    return Object.values(s.roster).flat().some(n => user.name.includes(n)) || user.ministry === 'Alabanza';
-                }).map(s => ({...s, area: 'Alabanza', title: s.theme})),
-                ...data.ebd.filter(c => user.ministry === 'EBD').map(c => ({...c, area: 'EBD', title: c.topic})),
-                ...data.youth.filter(e => user.ministry === 'Jóvenes').map(e => ({...e, area: 'Jóvenes', title: e.title}))
-            ].sort((a,b) => new Date(a.date) - new Date(b.date)).filter(s => new Date(s.date) >= new Date());
+            const myServices = useMemo(() => {
+                return [
+                    ...data.worship.filter(s => {
+                        const myName = user.name.split(' ')[0];
+                        return Object.values(s.roster).flat().some(n => user.name.includes(n)) || user.ministry === 'Alabanza';
+                    }).map(s => ({...s, area: 'Alabanza', title: s.theme})),
+                    ...data.ebd.filter(c => user.ministry === 'EBD').map(c => ({...c, area: 'EBD', title: c.topic})),
+                    ...data.youth.filter(e => user.ministry === 'Jóvenes').map(e => ({...e, area: 'Jóvenes', title: e.title}))
+                ].sort((a,b) => new Date(a.date) - new Date(b.date)).filter(s => new Date(s.date) >= new Date());
+            }, [data, user]);
 
-            const chartData = data.finances.filter(f => f.type === 'Culto').map(f => ({ name: formatDate(f.date), total: f.cash + f.transfer }));
+            const chartData = useMemo(() => {
+                return data.finances.filter(f => f.type === 'Culto').map(f => ({ name: formatDate(f.date), total: f.cash + f.transfer }));
+            }, [data.finances]);
+
 
             return (
                 <div className="space-y-6 animate-fade-in">
@@ -274,21 +299,29 @@
         };
 
         // 2. DIRECTORIO DE MIEMBROS
-        const MembersModule = ({ user, data, updateData }) => {
+        const MembersModule = ({ user, data, updateData, setAppMessage }) => {
             const [selectedMember, setSelectedMember] = useState(null);
             const [isAddOpen, setAddOpen] = useState(false);
-            const [newMember, setNewMember] = useState({ name: '', ministry: 'General', birthDate: '', photo: '' });
+            const [newMember, setNewMember] = useState({ name: '', ministry: 'General', birthDate: '', role: 'Miembro', status: 'Activo', photo: '', visits: 0, lastVisit: '', followUp: '', phone: '' });
 
             const handleDelete = (id) => {
-                if(confirm("¿Eliminar miembro?")) {
+                if(window.confirm("¿Estás seguro de que quieres eliminar a este miembro? Esta acción es irreversible.")) {
                     updateData('members', prev => prev.filter(m => m.id !== id));
                     setSelectedMember(null);
+                    setAppMessage({text: `Miembro eliminado con éxito.`, type: 'success'});
                 }
             };
             
             const handleAdd = () => {
-                updateData('members', prev => [...prev, { ...newMember, id: Date.now(), visits: 0, status: 'Activo', photo: `https://ui-avatars.com/api/?name=${newMember.name}` }]);
+                updateData('members', prev => [...prev, { 
+                    ...newMember, 
+                    id: Date.now(), 
+                    photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(newMember.name)}&background=random`,
+                    visits: 0, status: 'Activo', lastVisit: new Date().toISOString().split('T')[0] 
+                }]);
                 setAddOpen(false);
+                setNewMember({ name: '', ministry: 'General', birthDate: '', role: 'Miembro', status: 'Activo', photo: '', visits: 0, lastVisit: '', followUp: '', phone: '' });
+                setAppMessage({text: `Miembro ${newMember.name.split(' ')[0]} agregado.`, type: 'success'});
             };
 
             return (
@@ -297,7 +330,7 @@
                         <h2 className="text-2xl font-bold text-slate-800">Directorio de Miembros</h2>
                         <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Miembro</Button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {data.members.map(m => (
                             <div key={m.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col gap-4">
                                 <div className="flex gap-4 items-center">
@@ -319,22 +352,24 @@
                         ))}
                     </div>
 
-                    <Modal isOpen={!!selectedMember} onClose={() => setSelectedMember(null)} title="Ficha Técnica">
+                    <Modal isOpen={!!selectedMember} onClose={() => setSelectedMember(null)} title={`Ficha Técnica: ${selectedMember?.name || ''}`}>
                         {selectedMember && (
                             <div className="space-y-6">
                                 <div className="flex items-center gap-4 border-b pb-4">
                                     <img src={selectedMember.photo} className="w-20 h-20 rounded-full"/>
                                     <div>
                                         <h2 className="text-xl font-bold">{selectedMember.name}</h2>
-                                        <Badge>{selectedMember.status}</Badge>
+                                        <Badge color={selectedMember.status === 'Activo' ? 'green' : 'red'}>{selectedMember.status}</Badge>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Edad</p><p className="font-bold">{getAge(selectedMember.birthDate)} años</p></div>
                                     <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Ministerio</p><p className="font-bold">{selectedMember.ministry}</p></div>
+                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Rol</p><p className="font-bold">{selectedMember.role}</p></div>
+                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Teléfono</p><a href={`tel:${selectedMember.phone}`} className="font-bold text-blue-600 hover:underline">{selectedMember.phone}</a></div>
                                 </div>
                                 <div className="bg-amber-50 border border-amber-100 p-4 rounded-lg text-sm text-amber-900">
-                                    <p className="font-bold mb-1">Seguimiento / Notas:</p>
+                                    <p className="font-bold mb-1">Seguimiento / Notas (Última visita: {formatDate(selectedMember.lastVisit)}):</p>
                                     <p>{selectedMember.followUp}</p>
                                 </div>
                                 {user.role === 'Pastor' && (
@@ -344,18 +379,27 @@
                         )}
                     </Modal>
 
-                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Agregar Miembro">
+                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Agregar Nuevo Miembro">
                         <FormInput label="Nombre Completo" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-                        <FormInput label="Fecha Nacimiento" type="date" value={newMember.birthDate} onChange={e => setNewMember({...newMember, birthDate: e.target.value})} />
-                        <div className="mb-4">
-                            <label className="text-xs font-bold text-slate-500 uppercase">Ministerio</label>
-                            <select className="w-full mt-1 p-2 border rounded" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
-                                <option value="General">General</option><option value="Alabanza">Alabanza</option><option value="EBD">EBD</option><option value="Jóvenes">Jóvenes</option>
-                            </select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormInput label="Fecha Nacimiento" type="date" value={newMember.birthDate} onChange={e => setNewMember({...newMember, birthDate: e.target.value})} />
+                            <FormInput label="Teléfono" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} />
                         </div>
-                        <div className="flex justify-end gap-2 mt-4">
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div><label className="text-xs font-bold text-slate-500 uppercase">Ministerio</label>
+                            <select className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
+                                <option value="General">General</option><option value="Alabanza">Alabanza</option><option value="EBD">EBD</option><option value="Jóvenes">Jóvenes</option><option value="Pastoral">Pastoral</option>
+                            </select></div>
+                            <div><label className="text-xs font-bold text-slate-500 uppercase">Rol</label>
+                            <select className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg" value={newMember.role} onChange={e => setNewMember({...newMember, role: e.target.value})}>
+                                <option value="Miembro">Miembro</option><option value="Líder">Líder</option><option value="Pastor">Pastor</option><option value="Maestro">Maestro</option>
+                            </select></div>
+                        </div>
+                        <FormInput label="Seguimiento / Notas Iniciales" value={newMember.followUp} onChange={e => setNewMember({...newMember, followUp: e.target.value})} />
+                        
+                        <div className="flex justify-end gap-2 mt-6">
                             <Button variant="secondary" onClick={() => setAddOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd}>Guardar</Button>
+                            <Button onClick={handleAdd} icon="Plus">Guardar Miembro</Button>
                         </div>
                     </Modal>
                 </div>
@@ -363,16 +407,32 @@
         };
 
         // 3. FINANZAS
-        const FinanceModule = ({ data, updateData }) => {
+        const FinanceModule = ({ data, updateData, setAppMessage }) => {
             const [isAddOpen, setAddOpen] = useState(false);
-            const [newMove, setNewMove] = useState({ date: '', type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
+            const [newMove, setNewMove] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
 
             const handleAdd = () => {
                 const isExpense = newMove.type === 'Gasto';
-                const move = { ...newMove, id: Date.now(), cash: isExpense ? -Math.abs(newMove.cash) : Math.abs(newMove.cash), transfer: isExpense ? -Math.abs(newMove.transfer) : Math.abs(newMove.transfer) };
-                updateData('finances', prev => [...prev, move]);
+                const move = { 
+                    ...newMove, 
+                    id: Date.now(), 
+                    cash: isExpense ? -Math.abs(newMove.cash) : +newMove.cash, 
+                    transfer: isExpense ? -Math.abs(newMove.transfer) : +newMove.transfer
+                };
+                
+                // Validación simple
+                if (!newMove.date || (move.cash === 0 && move.transfer === 0)) {
+                    setAppMessage({text: 'Debe ingresar una fecha y al menos un monto.', type: 'error'});
+                    return;
+                }
+                
+                updateData('finances', prev => [move, ...prev]);
                 setAddOpen(false);
+                setNewMove({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
+                setAppMessage({text: `Movimiento de ${move.type} registrado.`, type: 'success'});
             };
+
+            const totalBalance = data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
 
             return (
                 <div className="space-y-6 animate-fade-in">
@@ -380,6 +440,12 @@
                         <h2 className="text-2xl font-bold text-slate-800">Tesorería</h2>
                         <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Movimiento</Button>
                     </div>
+                    
+                    <Card className="bg-brand-600 text-white">
+                        <p className="text-sm font-semibold opacity-80">Balance Total Actual</p>
+                        <p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
+                    </Card>
+
                     <Card>
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
@@ -388,7 +454,7 @@
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {data.finances.map(f => (
+                                {data.finances.sort((a,b) => new Date(b.date) - new Date(a.date)).map(f => (
                                     <tr key={f.id} className="hover:bg-slate-50">
                                         <td className="p-3 font-medium">{formatDate(f.date)}</td>
                                         <td className="p-3"><Badge color={f.type==='Gasto'?'red':'green'}>{f.type}</Badge> <span className="text-slate-500 ml-2">{f.notes}</span></td>
@@ -401,29 +467,31 @@
                         </table>
                     </Card>
                     <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Registrar Movimiento">
-                        <div className="mb-4"><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full border p-2 rounded" value={newMove.type} onChange={e => setNewMove({...newMove, type: e.target.value})}><option value="Culto">Cierre Culto</option><option value="Gasto">Gasto</option></select></div>
+                        <div className="mb-4"><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full border p-2 rounded bg-slate-50 border-slate-200" value={newMove.type} onChange={e => setNewMove({...newMove, type: e.target.value})}><option value="Culto">Cierre Culto</option><option value="Gasto">Gasto</option></select></div>
                         <FormInput label="Fecha" type="date" value={newMove.date} onChange={e => setNewMove({...newMove, date: e.target.value})} />
                         <div className="grid grid-cols-2 gap-4">
-                            <FormInput label="Efectivo" type="number" value={newMove.cash} onChange={e => setNewMove({...newMove, cash: +e.target.value})} />
-                            <FormInput label="Transferencia" type="number" value={newMove.transfer} onChange={e => setNewMove({...newMove, transfer: +e.target.value})} />
+                            <FormInput label="Monto Efectivo" type="number" value={newMove.cash} onChange={e => setNewMove({...newMove, cash: +e.target.value})} />
+                            <FormInput label="Monto Transferencia" type="number" value={newMove.transfer} onChange={e => setNewMove({...newMove, transfer: +e.target.value})} />
                         </div>
                         {newMove.type === 'Culto' && <FormInput label="Cant. Diezmantes" type="number" value={newMove.tithes} onChange={e => setNewMove({...newMove, tithes: +e.target.value})} />}
-                        <FormInput label="Notas" value={newMove.notes} onChange={e => setNewMove({...newMove, notes: e.target.value})} />
-                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Registrar</Button></div>
+                        <FormInput label="Notas / Detalle" value={newMove.notes} onChange={e => setNewMove({...newMove, notes: e.target.value})} />
+                        <div className="flex justify-end mt-4"><Button onClick={handleAdd} icon="Wallet">Registrar</Button></div>
                     </Modal>
                 </div>
             );
         };
 
         // 4. ALABANZA
-        const WorshipModule = ({ data, updateData }) => {
+        const WorshipModule = ({ data, updateData, setAppMessage }) => {
             const [isAddOpen, setAddOpen] = useState(false);
-            const [newService, setNewService] = useState({ date: '', type: 'Culto', theme: '', songs: '', roster: { Vocal: [], Bateria: [], Bajo: [], Guitarra: [] } });
+            const [newService, setNewService] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', theme: '', songs: '', roster: { Vocal: [], Bateria: [], Bajo: [], Guitarra: [] } });
 
             const handleAdd = () => {
-                const songsList = newService.songs.split(',').map(s=>s.trim());
-                updateData('worship', prev => [...prev, {...newService, id: Date.now(), songs: songsList}]);
+                const songsList = newService.songs.split(',').map(s=>s.trim()).filter(s => s.length > 0);
+                updateData('worship', prev => [{...newService, id: Date.now(), songs: songsList}, ...prev]);
                 setAddOpen(false);
+                setNewService({ date: new Date().toISOString().split('T')[0], type: 'Culto', theme: '', songs: '', roster: { Vocal: [], Bateria: [], Bajo: [], Guitarra: [] } });
+                setAppMessage({text: `Servicio de Alabanza planificado para ${formatDate(newService.date)}.`, type: 'success'});
             };
 
             const toggleMusician = (inst, name) => {
@@ -434,16 +502,20 @@
                 });
             };
 
-            const musicians = data.members.map(m => m.name.split(' ')[0]);
+            // Solo miembros del ministerio de Alabanza
+            const musicians = data.members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor').map(m => m.name.split(' ')[0]);
+            
+            // Roles para la planificación
+            const allRoles = ['Vocal', 'Bateria', 'Bajo', 'Guitarra', 'Teclado', 'Sonido'];
 
             return (
                 <div className="space-y-6 animate-fade-in">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-slate-800">Ministerio de Alabanza</h2>
-                        <Button onClick={() => setAddOpen(true)} icon="Plus">Planificar</Button>
+                        <Button onClick={() => setAddOpen(true)} icon="Plus">Planificar Servicio</Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {data.worship.map(s => (
+                        {data.worship.sort((a,b) => new Date(b.date) - new Date(a.date)).map(s => (
                             <Card key={s.id}>
                                 <div className="flex justify-between mb-2">
                                     <Badge color={s.type==='Ensayo'?'slate':'brand'}>{s.type}</Badge>
@@ -452,10 +524,10 @@
                                 <h3 className="font-bold text-lg mb-2">{s.theme}</h3>
                                 <div className="bg-slate-50 p-2 rounded mb-2">
                                     <p className="text-[10px] uppercase font-bold text-slate-400">Canciones</p>
-                                    <p className="text-sm">{s.songs.join(', ')}</p>
+                                    <p className="text-sm italic text-slate-600">{s.songs.length > 0 ? s.songs.join(' • ') : 'Pendiente de canciones'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Equipo</p>
+                                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Equipo Asignado</p>
                                     <div className="flex flex-wrap gap-2">
                                         {Object.entries(s.roster).map(([role, list]) => list.length>0 && (
                                             <Badge key={role} color="blue">{role}: {list.join(', ')}</Badge>
@@ -465,38 +537,56 @@
                             </Card>
                         ))}
                     </div>
-                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Planificar">
-                        <FormInput label="Fecha" type="date" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
-                        <FormInput label="Tema" value={newService.theme} onChange={e => setNewService({...newService, theme: e.target.value})} />
-                        <div className="mb-4"><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full border p-2 rounded" value={newService.type} onChange={e => setNewService({...newService, type: e.target.value})}><option value="Culto">Culto</option><option value="Ensayo">Ensayo</option></select></div>
-                        <FormInput label="Canciones (Sep. comas)" value={newService.songs} onChange={e => setNewService({...newService, songs: e.target.value})} />
-                        <div className="border-t pt-4">
-                            <p className="font-bold text-sm mb-2">Armar Equipo</p>
-                            {['Vocal', 'Bateria', 'Bajo', 'Guitarra'].map(inst => (
-                                <div key={inst} className="mb-2">
-                                    <p className="text-xs font-bold text-slate-500">{inst}</p>
-                                    <div className="flex flex-wrap gap-1">
-                                        {musicians.map(m => (
-                                            <button key={m} onClick={() => toggleMusician(inst, m)} className={`px-2 py-0.5 text-xs border rounded ${newService.roster[inst].includes(m) ? 'bg-brand-500 text-white' : 'bg-white'}`}>{m}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Planificar Servicio/Ensayo">
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormInput label="Fecha" type="date" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
+                            <div><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg" value={newService.type} onChange={e => setNewService({...newService, type: e.target.value})}><option value="Culto">Culto</option><option value="Ensayo">Ensayo</option></select></div>
                         </div>
-                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Guardar</Button></div>
+                        <FormInput label="Tema/Foco" value={newService.theme} onChange={e => setNewService({...newService, theme: e.target.value})} />
+                        <FormInput label="Canciones (Separa con comas)" value={newService.songs} placeholder="Ej: Tu Amor, Océanos, Santo Dios" onChange={e => setNewService({...newService, songs: e.target.value})} />
+                        <div className="border-t pt-4 mt-4">
+                            <p className="font-bold text-sm mb-2">Asignar Equipo por Roles</p>
+                            <div className="space-y-3 max-h-60 overflow-y-auto hide-scroll p-2 rounded-lg bg-slate-50 border border-slate-100">
+                                {allRoles.map(inst => (
+                                    <div key={inst}>
+                                        <p className="text-xs font-bold text-slate-600 mb-1">{inst}</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {musicians.map(m => (
+                                                <button key={m} onClick={() => toggleMusician(inst, m)} className={`px-2 py-1 text-xs border rounded-lg transition-all ${newService.roster[inst]?.includes(m) ? 'bg-blue-600 text-white font-semibold' : 'bg-white text-slate-600 hover:bg-slate-100'}`}>{m}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Guardar Planificación</Button></div>
                     </Modal>
                 </div>
             );
         };
 
-        // 5. ESCUELA BIBLICA & JOVENES (Simplificados pero funcionales)
-        const GenericModule = ({ title, items, typeKey, updateData, dataKey, fields }) => {
+        // 5. ESCUELA BIBLICA & JOVENES (Módulo genérico reforzado)
+        const GenericModule = ({ title, items, updateData, dataKey, fields, setAppMessage }) => {
             const [isAddOpen, setAddOpen] = useState(false);
-            const [newItem, setNewItem] = useState(fields.reduce((acc, f) => ({...acc, [f.key]: ''}), {}));
+            const initialNewItem = fields.reduce((acc, f) => ({...acc, [f.key]: f.type === 'array' ? [] : (f.type === 'date' ? new Date().toISOString().split('T')[0] : '')}), {});
+            const [newItem, setNewItem] = useState(initialNewItem);
 
             const handleAdd = () => {
-                updateData(dataKey, prev => [...prev, {...newItem, id: Date.now()}]);
+                const itemToAdd = {...newItem, id: Date.now()};
+                
+                // Procesar campos de colaboradores/miembros si son arrays (se asume input de texto separado por comas)
+                fields.filter(f => f.type === 'array').forEach(f => {
+                    itemToAdd[f.key] = typeof newItem[f.key] === 'string' ? newItem[f.key].split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                });
+                
+                updateData(dataKey, prev => [itemToAdd, ...prev]);
                 setAddOpen(false);
+                setNewItem(initialNewItem);
+                setAppMessage({text: `${title.split(' ')[0]} registrado con éxito.`, type: 'success'});
+            };
+            
+            const handleFieldChange = (key, value) => {
+                setNewItem(prev => ({...prev, [key]: value}));
             };
 
             return (
@@ -506,12 +596,21 @@
                         <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Evento/Clase</Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {items.map(i => (
-                            <Card key={i.id} title={i[fields[1].key]}> {/* Usamos el segundo campo como título */}
-                                <div className="text-sm text-slate-600 space-y-1">
-                                    <p><strong>Fecha:</strong> {formatDate(i.date)}</p>
+                        {items.sort((a,b) => new Date(b.date) - new Date(a.date)).map(i => (
+                            <Card key={i.id} title={i[fields[1].key]} icon={dataKey === 'ebd' ? 'Smile' : 'Target'}>
+                                <div className="text-sm text-slate-600 space-y-2 pt-1">
+                                    <p className="font-bold text-brand-600"><Icon name="Calendar" size={14} className="inline mr-1"/>{formatDate(i.date)}</p>
                                     {fields.slice(2).map(f => (
-                                        <p key={f.key}><strong>{f.label}:</strong> {i[f.key]}</p>
+                                        <div key={f.key}>
+                                            <p className="text-xs uppercase font-bold text-slate-400">{f.label}</p>
+                                            {f.type === 'array' ? (
+                                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                                    {i[f.key].map((item, idx) => <Badge key={idx} color="blue">{item}</Badge>)}
+                                                </div>
+                                            ) : (
+                                                <p className="font-medium text-slate-700">{i[f.key]}</p>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
                             </Card>
@@ -519,7 +618,14 @@
                     </div>
                     <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title={`Nuevo en ${title}`}>
                         {fields.map(f => (
-                            <FormInput key={f.key} label={f.label} type={f.type || 'text'} value={newItem[f.key]} onChange={e => setNewItem({...newItem, [f.key]: e.target.value})} />
+                            <FormInput 
+                                key={f.key} 
+                                label={f.label} 
+                                type={f.type === 'array' ? 'text' : f.type || 'text'} 
+                                value={newItem[f.key]} 
+                                placeholder={f.placeholder}
+                                onChange={e => handleFieldChange(f.key, e.target.value)} 
+                            />
                         ))}
                         <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Guardar</Button></div>
                     </Modal>
@@ -528,38 +634,95 @@
         };
 
         // 6. MENSAJERIA
-        const MessagingModule = ({ data, updateData }) => {
+        const MessagingModule = ({ data, updateData, setAppMessage }) => {
             const [msg, setMsg] = useState({ to: 'Todos', text: '' });
             const handleSend = () => {
-                if(!msg.text) return;
-                updateData('messages', prev => [{...msg, id: Date.now(), from: 'Pastor', date: new Date().toISOString()}, ...prev]);
+                if(!msg.text.trim()) {
+                    setAppMessage({text: 'El mensaje no puede estar vacío.', type: 'error'});
+                    return;
+                }
+
+                updateData('messages', prev => [{
+                    id: Date.now(), from: 'Pastor', to: msg.to, text: msg.text, date: new Date().toISOString().split('T')[0]
+                }, ...prev]);
+                
                 setMsg({ to: 'Todos', text: '' });
-                alert("Mensaje enviado (Simulado)");
+                setAppMessage({text: `Mensaje enviado a ${msg.to}.`, type: 'success'});
             };
+            
+            const recipientOptions = ['Todos', 'Líderes', 'Alabanza', 'EBD', 'Jóvenes', ...data.members.map(m => m.name)];
+
             return (
                 <div className="space-y-6 animate-fade-in">
                     <h2 className="text-2xl font-bold text-slate-800">Mensajería Masiva</h2>
                     <Card title="Redactar Mensaje" icon="Send">
-                        <div className="mb-4"><label className="text-xs font-bold uppercase">Destinatario</label><select className="w-full border p-2 rounded" value={msg.to} onChange={e => setMsg({...msg, to: e.target.value})}><option>Todos</option><option>Líderes</option><option>Alabanza</option></select></div>
-                        <div className="mb-4"><label className="text-xs font-bold uppercase">Mensaje</label><textarea className="w-full border p-2 rounded h-24" value={msg.text} onChange={e => setMsg({...msg, text: e.target.value})}></textarea></div>
-                        <div className="flex justify-end"><Button onClick={handleSend} icon="Send">Enviar</Button></div>
+                        <div className="mb-4">
+                            <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Destinatario</label>
+                            <select className="w-full border p-2 rounded-lg bg-slate-50 border-slate-200" value={msg.to} onChange={e => setMsg({...msg, to: e.target.value})}>
+                                {recipientOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                            </select>
+                        </div>
+                        <div className="mb-4">
+                            <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Mensaje</label>
+                            <textarea className="w-full border p-4 rounded-xl h-32 bg-slate-50 border-slate-200 focus:ring-brand-500 focus:ring-2 focus:bg-white transition-all" value={msg.text} onChange={e => setMsg({...msg, text: e.target.value})} placeholder="Escribe aquí tu comunicado..."></textarea>
+                        </div>
+                        <div className="flex justify-end"><Button onClick={handleSend} icon="Send">Enviar Comunicación</Button></div>
+                    </Card>
+
+                    <Card title="Historial de Mensajes" icon="Bell">
+                        <div className="space-y-3 max-h-96 overflow-y-auto hide-scroll">
+                            {data.messages.map(m => (
+                                <div key={m.id} className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm flex gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-800 font-bold text-sm">{m.from[0]}</div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between items-start">
+                                            <div className="font-bold text-sm text-slate-800">{m.from} <Badge color="slate" className="ml-2">Para: {m.to}</Badge></div> 
+                                            <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-600 mt-1">{m.text}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </Card>
                 </div>
             );
         };
 
-        // --- APP SHELL ---
+        // --- APP SHELL (Componente Principal) ---
         const App = () => {
-            const [user, setUser] = useState(null);
+            // Usuario logueado (simulado)
+            const [user, setUser] = useState(null); 
+            // Pestaña activa en el sidebar
             const [activeTab, setActiveTab] = useState('dashboard');
+            // Datos centrales
             const [data, setData] = useState(INITIAL_DATA);
+            // Control del sidebar en móviles
             const [sidebarOpen, setSidebarOpen] = useState(false);
+            // Mensajes de la app (feedback)
+            const [appMessage, setAppMessage] = useState({ text: '', type: 'info' });
 
             // Función genérica para actualizar cualquier parte del estado
             const updateData = (key, action) => {
                 setData(prev => ({ ...prev, [key]: typeof action === 'function' ? action(prev[key]) : action }));
             };
 
+            // Módulos de datos para el módulo genérico
+            const EBD_FIELDS = [
+                {key:'date',label:'Fecha',type:'date'},
+                {key:'topic',label:'Tema de la Clase', placeholder: 'Ej: El Arca de Noé'},
+                {key:'ageGroup',label:'Grupo Edad', placeholder: 'Ej: Niños (4-8) / Preadolescentes'},
+                {key:'collaborators',label:'Maestros/Colaboradores (Sep. comas)', type:'array', placeholder: 'Ej: Juan, María'}
+            ];
+            
+            const YOUTH_FIELDS = [
+                {key:'date',label:'Fecha',type:'date'},
+                {key:'title',label:'Título del Evento', placeholder: 'Ej: Noche de Cine'},
+                {key:'type',label:'Tipo de Evento', placeholder: 'Ej: Social / Discipulado / Servicio'},
+                {key:'location',label:'Lugar', placeholder: 'Ej: Salón Principal / Casa de Familia'}
+            ];
+
+            // Pantalla de login simulada
             if (!user) {
                 return (
                     <div className="min-h-screen flex items-center justify-center bg-brand-50 p-4">
@@ -567,12 +730,12 @@
                             <div className="text-center mb-8">
                                 <div className="w-16 h-16 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-4"><Icon name="Target" size={32}/></div>
                                 <h1 className="text-2xl font-bold text-slate-800">Conquistadores</h1>
-                                <p className="text-slate-500">Selecciona tu rol</p>
+                                <p className="text-slate-500">Selecciona tu rol para acceder</p>
                             </div>
                             <div className="space-y-3">
-                                <button onClick={() => setUser({name:'Ana Perez', role:'Pastor', ministry:'Pastoral'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-brand-100 p-2 rounded"><Icon name="Users"/></div><div className="text-left font-bold text-slate-700">Pastor <span className="block text-xs font-normal text-slate-500">Acceso Total</span></div></button>
-                                <button onClick={() => setUser({name:'Carlos Gomez', role:'Líder', ministry:'Alabanza'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-blue-100 p-2 rounded"><Icon name="Music"/></div><div className="text-left font-bold text-slate-700">Líder Alabanza <span className="block text-xs font-normal text-slate-500">Gestión Música</span></div></button>
-                                <button onClick={() => setUser({name:'Marta Ríos', role:'Líder', ministry:'EBD'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-emerald-100 p-2 rounded"><Icon name="Smile"/></div><div className="text-left font-bold text-slate-700">Líder EBD <span className="block text-xs font-normal text-slate-500">Gestión Clases</span></div></button>
+                                <button onClick={() => setUser({name:'Ana Perez', role:'Pastor', ministry:'Pastoral'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-brand-100 p-2 rounded-xl"><Icon name="Users"/></div><div className="text-left font-bold text-slate-700">Pastor <span className="block text-xs font-normal text-slate-500">Acceso Total</span></div></button>
+                                <button onClick={() => setUser({name:'Carlos Gomez', role:'Líder', ministry:'Alabanza'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-blue-100 p-2 rounded-xl"><Icon name="Music"/></div><div className="text-left font-bold text-slate-700">Líder Alabanza <span className="block text-xs font-normal text-slate-500">Gestión Música</span></div></button>
+                                <button onClick={() => setUser({name:'Marta Ríos', role:'Líder', ministry:'EBD'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-emerald-100 p-2 rounded-xl"><Icon name="Smile"/></div><div className="text-left font-bold text-slate-700">Líder EBD <span className="block text-xs font-normal text-slate-500">Gestión Clases</span></div></button>
                             </div>
                         </div>
                     </div>
@@ -587,9 +750,10 @@
 
             return (
                 <div className="flex h-screen bg-brand-50/50">
+                    {/* Sidebar */}
                     <aside className={`fixed md:relative z-40 w-72 bg-brand-900 h-full p-6 flex flex-col justify-between transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
                         <div>
-                            <div className="flex items-center gap-3 mb-10 text-white"><div className="bg-white/10 p-2 rounded-lg"><Icon name="Target"/></div><span className="font-bold text-lg">Iglesia App</span></div>
+                            <div className="flex items-center gap-3 mb-10 text-white"><div className="bg-white/10 p-2 rounded-lg"><Icon name="Target"/></div><span className="font-bold text-lg">Conquistadores App</span></div>
                             <nav className="space-y-1">
                                 <NavItem id="dashboard" icon="LayoutDashboard" label="Inicio" />
                                 <NavItem id="members" icon="Users" label="Directorio" />
@@ -607,29 +771,34 @@
                             </nav>
                         </div>
                         <div className="flex items-center gap-3 text-white p-3 bg-brand-800 rounded-xl">
-                            <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center font-bold">{user.name[0]}</div>
+                            <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm">{user.name.split(' ')[0][0]}</div>
                             <div className="flex-1 overflow-hidden"><p className="font-bold text-sm truncate">{user.name}</p><p className="text-[10px] text-brand-300 uppercase">{user.role}</p></div>
                             <button onClick={() => setUser(null)} className="text-brand-300 hover:text-white"><Icon name="LogOut"/></button>
                         </div>
                     </aside>
                     
+                    {/* Overlay en móvil */}
                     {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
                     
+                    {/* Contenido principal */}
                     <main className="flex-1 overflow-y-auto relative">
                         <header className="md:hidden bg-white p-4 sticky top-0 z-20 shadow-sm flex justify-between items-center">
-                            <span className="font-bold text-brand-900">Conquistadores</span>
+                            <span className="font-bold text-brand-900">App</span>
                             <button onClick={() => setSidebarOpen(true)} className="text-brand-800"><Icon name="Menu"/></button>
                         </header>
                         <div className="p-6 md:p-10 max-w-7xl mx-auto pb-24">
                             {activeTab === 'dashboard' && <Dashboard user={user} data={data} />}
-                            {activeTab === 'members' && <MembersModule user={user} data={data} updateData={updateData} />}
-                            {activeTab === 'worship' && <WorshipModule data={data} updateData={updateData} />}
-                            {activeTab === 'finance' && <FinanceModule data={data} updateData={updateData} />}
-                            {activeTab === 'messaging' && <MessagingModule data={data} updateData={updateData} />}
-                            {activeTab === 'ebd' && <GenericModule title="Escuela Bíblica" items={data.ebd} updateData={updateData} dataKey="ebd" fields={[{key:'date',label:'Fecha',type:'date'},{key:'topic',label:'Tema'},{key:'ageGroup',label:'Grupo Edad'},{key:'collaborators',label:'Colaboradores'}]} />}
-                            {activeTab === 'youth' && <GenericModule title="Jóvenes" items={data.youth} updateData={updateData} dataKey="youth" fields={[{key:'date',label:'Fecha',type:'date'},{key:'title',label:'Título'},{key:'type',label:'Tipo'},{key:'location',label:'Lugar'}]} />}
+                            {activeTab === 'members' && <MembersModule user={user} data={data} updateData={updateData} setAppMessage={setAppMessage} />}
+                            {activeTab === 'worship' && <WorshipModule data={data} updateData={updateData} setAppMessage={setAppMessage} />}
+                            {activeTab === 'finance' && user.role === 'Pastor' && <FinanceModule data={data} updateData={updateData} setAppMessage={setAppMessage} />}
+                            {activeTab === 'messaging' && user.role === 'Pastor' && <MessagingModule data={data} updateData={updateData} setAppMessage={setAppMessage} />}
+                            {activeTab === 'ebd' && (user.role === 'Pastor' || user.ministry === 'EBD') && <GenericModule title="Escuela Bíblica" items={data.ebd} updateData={updateData} dataKey="ebd" fields={EBD_FIELDS} setAppMessage={setAppMessage} />}
+                            {activeTab === 'youth' && (user.role === 'Pastor' || user.ministry === 'Jóvenes') && <GenericModule title="Jóvenes" items={data.youth} updateData={updateData} dataKey="youth" fields={YOUTH_FIELDS} setAppMessage={setAppMessage} />}
                         </div>
                     </main>
+
+                    {/* Alerta de feedback global */}
+                    <CustomAlert message={appMessage.text} type={appMessage.type} onClose={() => setAppMessage({text: ''})} />
                 </div>
             );
         };
