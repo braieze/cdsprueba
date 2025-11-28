@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conquistadores - Gestión Integral</title>
+    <title>Conquistadores - Gestión Eclesial 2.0</title>
     
     <!-- React y ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -22,21 +22,25 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#FDFBF7',  // Fondo muy claro
-                            100: '#F7F3E8', 
-                            200: '#EFE5D1',
-                            500: '#E67E22', // Naranja/Terracota medio
-                            600: '#C0392B', // Terracota Principal (Rojo Tierra)
-                            700: '#A93226',
-                            800: '#7B241C',
-                            900: '#5D1C16', // Terracota Oscuro (Sidebar)
+                            50: '#FDF8F6',
+                            100: '#F2E8E5',
+                            200: '#EADDD7',
+                            500: '#E67E22', // Naranja Principal
+                            600: '#D35400', // Terracota Fuerte
+                            700: '#A04000',
+                            800: '#6E2C00',
+                            900: '#4A1D05', // Café Oscuro (Sidebar)
                         },
-                        accent: {
-                            500: '#3498DB', // Azul para gráficos y links
+                        secondary: {
+                            500: '#2E86C1', // Azul Complementario
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)',
                     }
                 }
             }
@@ -45,122 +49,120 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #FDFBF7; }
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #34495E; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Animaciones */
+        /* Animaciones suaves */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(230, 126, 34, 0.3); }
 
-        /* Estilo para Recharts */
-        .recharts-default-tooltip {
-            background-color: #5D1C16 !important;
-            color: white !important;
-            border-radius: 8px !important;
-            padding: 8px !important;
-            border: none !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+        /* Estilo Gráficos */
+        .recharts-tooltip-wrapper { outline: none; }
     </style>
 </head>
-<body class="text-slate-800">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useCallback } = React;
-        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
+        const { useState, useEffect, useMemo } = React;
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } = Recharts;
 
-        // --- FUNCIONES DE UTILIDAD ---
-        const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
-        const formatDate = (dateString) => new Date(dateString).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-        const getAge = (birthDate) => new Date().getFullYear() - new Date(birthDate).getFullYear();
-        
-        // --- ICONOS SVG (Lucide Icons) ---
-        const Icons = {
-            Users: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-            Wallet: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>,
-            LayoutDashboard: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
-            Music: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
-            Smile: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>,
-            Bell: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
-            LogOut: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
-            Calendar: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
-            Plus: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
-            Trash: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
-            Edit: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>,
-            ChevronsRight: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>,
-            MessageSquare: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-            Target: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-            Send: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        // --- ICONOS SVG (Sistema Robusto) ---
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const icons = {
+                Users: <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>,
+                Wallet: <path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>,
+                LayoutDashboard: <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>,
+                Music: <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>,
+                Smile: <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>,
+                Bell: <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>,
+                LogOut: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>,
+                Calendar: <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>,
+                Plus: <path d="M5 12h14"/><path d="M12 5v14"/>,
+                Trash: <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>,
+                Edit: <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>,
+                ChevronRight: <path d="m9 18 6-6-6-6"/>,
+                Send: <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>,
+                Target: <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>,
+                Menu: <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>,
+                Search: <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>,
+                Briefcase: <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>,
+                DollarSign: <line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>,
+                Clipboard: <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            };
+            
+            // Fallback para evitar crash si el icono no existe
+            const selectedIcon = icons[name] || icons['Target']; 
+            
+            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{selectedIcon}</svg>;
         };
 
-        // --- COMPONENTES UI BASE ---
-        const Card = ({ children, className = "", title = null, icon: Icon = null }) => (
-            <div className={`bg-white rounded-2xl shadow-lg border border-brand-200 p-6 ${className}`}>
-                {title && (
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-brand-800 border-b border-brand-100 pb-3">
-                        {Icon && <Icon className="text-brand-500" width={22} />}
-                        {title}
-                    </h3>
+        // --- UTILIDADES ---
+        const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(amount);
+        const formatDate = (dateString) => new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+        const formatDateLong = (dateString) => new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const getAge = (birthDate) => new Date().getFullYear() - new Date(birthDate).getFullYear();
+
+        // --- COMPONENTES UI ---
+        const Card = ({ children, className = "", title, icon, action }) => (
+            <div className={`bg-white rounded-2xl p-6 shadow-card border border-brand-100 ${className}`}>
+                {(title || icon) && (
+                    <div className="flex justify-between items-center mb-5 pb-3 border-b border-brand-50">
+                        <h3 className="text-lg font-bold text-brand-900 flex items-center gap-2">
+                            {icon && <span className="text-brand-500 bg-brand-50 p-1.5 rounded-lg"><Icon name={icon} size={20} /></span>}
+                            {title}
+                        </h3>
+                        {action}
+                    </div>
                 )}
                 {children}
             </div>
         );
 
-        const Button = ({ children, onClick, variant = "primary", className = "", icon: IconName, disabled=false, ...props }) => {
-            const base = "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md";
+        const Button = ({ children, onClick, variant = "primary", className = "", icon, disabled=false, size="md" }) => {
+            const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-5 py-2.5 text-sm" };
             const variants = {
-                primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-brand-600/30",
-                secondary: "bg-white text-slate-600 border border-slate-300 hover:bg-slate-50 shadow-slate-300/10",
-                danger: "bg-red-500 text-white hover:bg-red-600 shadow-red-500/30",
-                ghost: "text-slate-500 hover:bg-brand-50 hover:text-brand-700 shadow-none",
+                primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-500/20",
+                secondary: "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50",
+                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
+                ghost: "text-slate-500 hover:bg-slate-50 hover:text-brand-600",
             };
-            const Icon = IconName ? Icons[IconName] : null;
-            return <button onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`} {...props}>{Icon && <Icon width={18}/>}{children}</button>;
+            return (
+                <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}>
+                    {icon && <Icon name={icon} size={size === 'sm' ? 16 : 18} />}
+                    {children}
+                </button>
+            );
         };
-
-        const Input = ({ label, type = "text", ...props }) => (
-            <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
-                <input className="w-full px-4 py-3 bg-brand-50 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/30 transition-all font-medium text-slate-700" type={type} {...props}/>
-            </div>
-        );
-
-        const Select = ({ label, children, ...props }) => (
-            <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
-                <div className="relative">
-                    <select className="w-full px-4 py-3 bg-brand-50 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/30 transition-all font-medium text-slate-700 appearance-none" {...props}>
-                        {children}
-                    </select>
-                </div>
-            </div>
-        );
 
         const Badge = ({ children, color = "brand" }) => {
              const colors = {
                 brand: "bg-brand-100 text-brand-800 border-brand-200",
-                green: "bg-emerald-100 text-emerald-800 border-emerald-200",
-                blue: "bg-accent-500/10 text-accent-500 border-accent-500/20",
-                red: "bg-red-100 text-red-800 border-red-200",
+                green: "bg-emerald-100 text-emerald-700 border-emerald-200",
+                blue: "bg-blue-100 text-blue-700 border-blue-200",
+                red: "bg-red-100 text-red-700 border-red-200",
+                purple: "bg-purple-100 text-purple-700 border-purple-200",
                 slate: "bg-slate-100 text-slate-600 border-slate-200"
             };
-            return <span className={`px-3 py-1 rounded-full text-xs font-bold border ${colors[color] || colors.brand}`}>{children}</span>
+            return <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${colors[color] || colors.brand}`}>{children}</span>
         };
 
-        const Modal = ({ isOpen, onClose, title, children, className = "max-w-2xl" }) => {
+        const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-                    <div className={`bg-white w-full ${className} max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl`}>
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-900/40 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-fade-in border border-white/50">
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
                             <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
-                                <Icons.Trash className="rotate-45" width={24}/> 
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                                <Icon name="Plus" className="rotate-45" size={24}/> 
                             </button>
                         </div>
-                        <div className="p-6">
+                        <div className="p-6 space-y-4">
                             {children}
                         </div>
                     </div>
@@ -168,812 +170,518 @@
             );
         };
 
-        // --- MOCK DATA ---
-        const MOCK_MEMBERS = [
-            { id: 1, name: 'Carlos Gomez', birthDate: '1993-05-15', ministry: 'Alabanza', role: 'Leader', status: 'Activo', photo: 'https://placehold.co/150x150/F0F4F8/333333?text=CG', lastVisit: '2023-11-20', followUp: 'Llamar por nueva guitarra', visits: 10 },
-            { id: 2, name: 'Ana Perez', birthDate: '1978-01-20', ministry: 'Pastoral', role: 'Pastor', status: 'Activo', photo: 'https://placehold.co/150x150/F0F4F8/333333?text=AP', lastVisit: '2023-11-26', followUp: 'Planificación 2024', visits: 50 },
-            { id: 3, name: 'Lucas Torres', birthDate: '2007-08-01', ministry: 'Jóvenes', role: 'Member', status: 'Activo', photo: 'https://placehold.co/150x150/F0F4F8/333333?text=LT', lastVisit: '2023-11-26', followUp: 'Confirmar campamento', visits: 22 },
-            { id: 4, name: 'Sofía Ramirez', birthDate: '2015-10-10', ministry: 'EBD', role: 'Child', status: 'Activo', photo: 'https://placehold.co/150x150/F0F4F8/333333?text=SR', lastVisit: '2023-11-26', followUp: 'Entrega de diploma EBD', visits: 15 },
-            { id: 5, name: 'Pedro Díaz', birthDate: '1997-03-25', ministry: 'Ujieres', role: 'Server', status: 'Activo', photo: 'https://placehold.co/150x150/F0F4F8/333333?text=PD', lastVisit: '2023-11-26', followUp: 'Renovación de credencial', visits: 8 },
-            { id: 6, name: 'Marta Ríos', birthDate: '1988-12-05', ministry: 'EBD', role: 'Leader', status: 'Activo', photo: 'https://placehold.co/150x150/F0F4F8/333333?text=MR', lastVisit: '2023-11-20', followUp: 'Reunión de maestros', visits: 35 },
-            { id: 7, name: 'Juan Cruz', birthDate: '2000-09-22', ministry: 'Jóvenes', role: 'Leader', status: 'Activo', photo: 'https://placehold.co/150x150/F0F4F8/333333?text=JC', lastVisit: '2023-11-26', followUp: 'Armar equipo de alcance', visits: 18 },
-        ];
+        const FormInput = ({ label, type = "text", ...props }) => (
+            <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+                <input className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm font-medium text-slate-700" type={type} {...props}/>
+            </div>
+        );
 
-        const MOCK_FINANCES = [
-            { date: '2023-11-05', type: 'Culto', cash: 15000, transfer: 30000, tithes: 10, notes: 'Ofrenda general, cierre de la mañana' },
-            { date: '2023-11-12', type: 'Culto', cash: 18000, transfer: 35000, tithes: 12, notes: 'Ofrenda general, cierre de la tarde' },
-            { date: '2023-11-15', type: 'Gasto', cash: -5000, transfer: 0, tithes: 0, notes: 'Compra de insumos para EBD' },
-            { date: '2023-11-19', type: 'Culto', cash: 22000, transfer: 40000, tithes: 15, notes: 'Ofrenda de la conferencia' },
-            { date: '2023-11-25', type: 'Gasto', cash: 0, transfer: -12000, tithes: 0, notes: 'Pago de alquiler de sala' },
-        ];
+        const FormSelect = ({ label, children, ...props }) => (
+            <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+                <div className="relative">
+                    <select className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm font-medium text-slate-700 appearance-none" {...props}>
+                        {children}
+                    </select>
+                    <div className="absolute right-3 top-3 pointer-events-none text-slate-400"><Icon name="ChevronRight" size={16} className="rotate-90"/></div>
+                </div>
+            </div>
+        );
 
-        const MOCK_MESSAGES = [
-            { id: 1, from: 'Pastoral', to: 'all', message: 'Reunión general de servidores este Viernes 20hs.', date: '2023-11-20' },
-            { id: 2, from: 'Pastoral', to: 'Alabanza', message: 'Recordar subir lista de temas antes del lunes.', date: '2023-11-21' },
-            { id: 3, from: 'Pastor', to: 'Jóvenes', message: 'Felicidades por el evento del sábado, fue un éxito!', date: '2023-11-27' },
-        ];
-        
-        const MOCK_EVENTS = [
-            { id: 1, title: 'Culto General', date: '2023-11-28', type: 'General', ministry: 'General' },
-            { id: 2, title: 'Ensayo Especial', date: '2023-11-29', type: 'Alabanza', ministry: 'Alabanza' },
-            { id: 3, title: 'Clase Liderazgo', date: '2023-11-30', type: 'Jóvenes', ministry: 'Jóvenes' },
-            { id: 4, title: 'Campamento EBD', date: '2023-12-01', type: 'EBD', ministry: 'EBD' },
-        ];
-        
-        const MOCK_WORSHIP_SERVICES = [
-            { 
-                id: 1, 
-                date: '2023-12-03', 
-                theme: 'La Fe Inquebrantable', 
-                songs: ['Tu Fidelidad', 'En los Montes'], 
-                roster: { Vocal: ['Carlos', 'Marta'], Drums: ['Pedro'], Bass: ['Juan'], AcGuitar: ['Lucas'], ElGuitar: ['Ana'] } 
-            },
-            { 
-                id: 2, 
-                date: '2023-12-10', 
-                theme: 'Un Corazón de Siervo', 
-                songs: ['Santo Espíritu', 'Alabanza al Rey'], 
-                roster: { Vocal: ['Ana', 'Juan'], Drums: ['Lucas'], Bass: ['Pedro'], AcGuitar: ['Carlos'], ElGuitar: ['Marta'] } 
-            },
-        ];
-
-        const MOCK_EBD_CLASSES = [
-             { id: 1, date: '2023-12-03', topic: 'El Arca de Noé', collaborators: ['Marta', 'Sofía'], ageGroup: '< 8 años' },
-             { id: 2, date: '2023-12-10', topic: 'El Buen Pastor', collaborators: ['Marta', 'Lucas'], ageGroup: '8-12 años' },
-        ];
-
-        const MOCK_YOUTH_EVENTS = [
-            { id: 1, date: '2023-12-08', title: 'Noche de Películas y Pizza', type: 'Social', location: 'Salón Principal' },
-            { id: 2, date: '2023-12-15', title: 'Taller de Oración', type: 'Espiritual', location: 'Sala de Estudio' },
-        ];
-        
-        // --- COMPONENTES DE VISTA GENERAL (COMPARTIDO) ---
-
-        // 1. Panel de Servicios Próximos
-        const ServicePanel = ({ user, services, title = "Tus Servicios", icon: Icon = Icons.ChevronsRight }) => {
-            const now = new Date();
-            const futureServices = services
-                .filter(s => s.ministry === user.ministry)
-                .map(s => ({ ...s, isServing: s.roster ? Object.values(s.roster).flat().includes(user.name.split(' ')[0]) : true }))
-                .filter(s => s.isServing && new Date(s.date) > now)
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            if (futureServices.length === 0) {
-                 return (
-                    <Card title={title} icon={Icon} className="md:col-span-1 border-l-4 border-l-brand-500 bg-brand-50/50">
-                        <p className="text-slate-500 text-sm italic">No tienes servicios agendados próximos.</p>
-                    </Card>
-                );
-            }
-
-            return (
-                <Card title={title} icon={Icon} className="md:col-span-1 border-l-4 border-l-brand-500 bg-brand-50/50">
-                    <div className="space-y-3">
-                        {futureServices.slice(0, 3).map(s => (
-                            <div key={s.id} className="p-3 rounded-lg bg-white shadow-sm border border-brand-200">
-                                <p className="text-sm font-bold text-brand-800">{s.theme || s.topic || s.title}</p>
-                                <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
-                                    <Icons.Calendar width={14}/> {formatDate(s.date)}
-                                    {s.roster && <Badge color="blue">Vocalista</Badge>}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            );
-        };
-        
-        // 2. Módulo de Mensajes
-        const MessagesModule = ({ user, messages }) => {
-            const myMessages = messages.filter(n => n.to === 'all' || n.to === user.ministry || (user.role === 'Pastor'));
-
-            return (
-                <Card title="Mensajes Recibidos" icon={Icons.Bell} className="md:col-span-2">
-                    <div className="space-y-3 max-h-96 overflow-y-auto hide-scroll">
-                        {myMessages.length > 0 ? myMessages.map(n => (
-                            <div key={n.id} className="bg-brand-50 p-4 rounded-xl flex gap-4 items-start border-l-4 border-l-brand-600">
-                                <div className="w-10 h-10 rounded-full bg-brand-200 flex items-center justify-center text-brand-800 font-bold text-sm flex-shrink-0">
-                                    {n.from.charAt(0)}
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-brand-900 flex justify-between items-center">{n.from} <Badge color="slate">{n.to === 'all' ? 'General' : n.to}</Badge></p>
-                                    <p className="text-sm text-slate-700 mt-1">{n.message}</p>
-                                    <p className="text-[10px] text-slate-400 mt-2">{formatDate(n.date)}</p>
-                                </div>
-                            </div>
-                        )) : <p className="text-slate-400 italic">No tienes mensajes nuevos.</p>}
-                    </div>
-                </Card>
-            );
+        // --- DATA INICIAL ---
+        const DATA = {
+            members: [
+                { id: 1, name: 'Carlos Gomez', birthDate: '1993-05-15', ministry: 'Alabanza', role: 'Líder', status: 'Activo', photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-20', followUp: 'Llamar por nueva guitarra', visits: 12 },
+                { id: 2, name: 'Ana Perez', birthDate: '1978-01-20', ministry: 'Pastoral', role: 'Pastor', status: 'Activo', photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-26', followUp: 'Planificación 2024', visits: 50 },
+                { id: 3, name: 'Lucas Torres', birthDate: '2005-08-01', ministry: 'Jóvenes', role: 'Miembro', status: 'Activo', photo: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-26', followUp: 'Confirmar campamento', visits: 22 },
+                { id: 4, name: 'Marta Ríos', birthDate: '1988-12-05', ministry: 'EBD', role: 'Líder', status: 'Activo', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-20', followUp: 'Reunión de maestros', visits: 35 },
+                { id: 5, name: 'Pedro Díaz', birthDate: '1997-03-25', ministry: 'Alabanza', role: 'Baterista', status: 'Activo', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-26', followUp: 'Renovación de credencial', visits: 8 },
+            ],
+            finances: [
+                { id: 1, date: '2023-11-05', type: 'Culto', cash: 25000, transfer: 45000, tithes: 12, notes: 'Ofrenda dominical' },
+                { id: 2, date: '2023-11-12', type: 'Culto', cash: 18000, transfer: 32000, tithes: 10, notes: 'Ofrenda misionera' },
+                { id: 3, date: '2023-11-15', type: 'Gasto', cash: -5000, transfer: 0, tithes: 0, notes: 'Compra librería EBD' },
+                { id: 4, date: '2023-11-19', type: 'Culto', cash: 22000, transfer: 40000, tithes: 15, notes: 'Culto especial' },
+                { id: 5, date: '2023-11-25', type: 'Gasto', cash: 0, transfer: -15000, tithes: 0, notes: 'Pago luz y servicios' },
+            ],
+            worship: [
+                { id: 1, date: '2023-12-03', type: 'Culto', theme: 'La Fe Inquebrantable', songs: ['Tu Fidelidad', 'En los Montes', 'Gracia Sublime'], roster: { Vocal: ['Carlos', 'Marta'], Bateria: ['Pedro'], Bajo: ['Juan'], Acustica: ['Lucas'], Electrica: [] } },
+                { id: 2, date: '2023-12-01', type: 'Ensayo', theme: 'Ensayo General', songs: ['Repertorio Domingo'], roster: { Vocal: ['Carlos'], Bateria: ['Pedro'], Bajo: [], Acustica: [], Electrica: [] } },
+            ],
+            ebd: [
+                { id: 1, date: '2023-12-03', topic: 'El Arca de Noé', collaborators: ['Marta', 'Sofía'], ageGroup: 'Niños (4-8)' },
+                { id: 2, date: '2023-12-10', topic: 'David y Goliat', collaborators: ['Marta', 'Lucas'], ageGroup: 'Pre-Adolescentes' },
+            ],
+            youth: [
+                { id: 1, date: '2023-12-08', title: 'Noche de Cine', type: 'Social', location: 'Salón Principal' },
+                { id: 2, date: '2023-12-15', title: 'Charla: Identidad', type: 'Espiritual', location: 'Aula 2' },
+            ],
+            messages: [
+                { id: 1, from: 'Pastor', to: 'all', message: 'Recordatorio: Reunión de líderes este Sábado 18hs.', date: '2023-11-28' },
+                { id: 2, from: 'Líder Alabanza', to: 'Alabanza', message: 'Escuchen los temas nuevos en Spotify.', date: '2023-11-27' },
+            ]
         };
 
-        // 3. Módulo Calendario General (Ampliado)
-        const CalendarModule = ({ events }) => {
-            const today = new Date();
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0=Dom, 1=Lun...
-            const blankDays = Array(firstDay).fill(null);
-            const days = Array.from({length: daysInMonth}, (_, i) => i + 1);
-            
-            const monthName = today.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+        // --- MÓDULOS DEL SISTEMA ---
 
-            const getDayEvents = (day) => {
-                const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                return events.filter(e => e.date === dateString);
-            };
+        // 1. DASHBOARD COMPONENT
+        const Dashboard = ({ user, data }) => {
+            const currentBalance = data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
+            const cashTotal = data.finances.reduce((acc, f) => acc + f.cash, 0);
+            const transferTotal = data.finances.reduce((acc, f) => acc + f.transfer, 0);
+
+            // Buscar próximos servicios del usuario
+            const myNextServices = useMemo(() => {
+                let services = [];
+                // Buscar en Alabanza
+                data.worship.forEach(s => {
+                    const isInRoster = Object.values(s.roster).flat().some(n => user.name.includes(n));
+                    if(isInRoster || user.ministry === 'Alabanza') services.push({...s, ministry: 'Alabanza', roleTitle: 'Músico/Vocal'});
+                });
+                // Buscar en EBD
+                data.ebd.forEach(s => {
+                    if(s.collaborators.some(n => user.name.includes(n)) || user.ministry === 'EBD') services.push({...s, ministry: 'EBD', roleTitle: 'Maestro', title: s.topic});
+                });
+                
+                return services
+                    .filter(s => new Date(s.date) >= new Date())
+                    .sort((a,b) => new Date(a.date) - new Date(b.date))
+                    .slice(0, 3);
+            }, [data, user]);
+
+            const chartData = data.finances.filter(f => f.type === 'Culto').map(f => ({
+                name: formatDate(f.date),
+                ingresos: f.cash + f.transfer
+            }));
 
             return (
                 <div className="space-y-6 animate-fade-in">
-                     <Card title={`Calendario: ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`} icon={Icons.Calendar}>
-                        <div className="grid grid-cols-7 gap-1.5 mb-3 text-center text-xs font-bold uppercase text-slate-500">
-                            {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => <div key={day}>{day}</div>)}
+                    {/* Header */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-brand-900">Hola, {user.name.split(' ')[0]} 👋</h2>
+                            <p className="text-slate-500">Panel de Control - {user.role}</p>
                         </div>
-                        <div className="grid grid-cols-7 gap-1.5">
-                            {blankDays.map((_, i) => <div key={`blank-${i}`} className="min-h-[80px]"></div>)}
-                            {days.map(day => {
-                                const dayEvents = getDayEvents(day);
-                                const isToday = day === today.getDate() && currentMonth === today.getMonth();
-                                return (
-                                    <div key={day} className={`min-h-[100px] border border-slate-100 rounded-xl p-2 hover:bg-brand-50 transition-colors ${isToday ? 'bg-brand-100 border-brand-500' : 'bg-white'}`}>
-                                        <span className={`text-xs font-bold ${isToday ? 'text-brand-800' : 'text-slate-600'}`}>{day}</span>
-                                        <div className="mt-1 space-y-1">
-                                            {dayEvents.map(e => (
-                                                <div key={e.id} className="text-[10px] font-medium p-1 rounded-md bg-accent-500 text-white truncate shadow-sm" title={e.title}>
-                                                    {e.title}
-                                                </div>
-                                            ))}
+                        {user.role === 'Pastor' && (
+                            <div className="bg-white px-4 py-2 rounded-xl border border-brand-100 shadow-sm flex items-center gap-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Balance Actual</p>
+                                    <p className="text-xl font-extrabold text-brand-600">{formatCurrency(currentBalance)}</p>
+                                </div>
+                                <div className="h-8 w-px bg-slate-200"></div>
+                                <div className="flex gap-3 text-xs">
+                                    <div><span className="block font-bold text-slate-700">Efectivo</span> {formatCurrency(cashTotal)}</div>
+                                    <div><span className="block font-bold text-slate-700">Banco</span> {formatCurrency(transferTotal)}</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Alertas de Servicio (CRÍTICO) */}
+                    <Card title="Tus Próximos Servicios" icon="Briefcase" className="border-l-4 border-l-brand-500">
+                        {myNextServices.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {myNextServices.map((s, idx) => (
+                                    <div key={idx} className="bg-brand-50 rounded-xl p-4 flex flex-col gap-2 relative overflow-hidden group">
+                                        <div className="absolute right-0 top-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <Icon name="Target" size={60} className="text-brand-500"/>
+                                        </div>
+                                        <div className="flex justify-between items-start z-10">
+                                            <Badge color="brand">{s.ministry}</Badge>
+                                            <span className="text-xs font-bold text-brand-700">{formatDate(s.date)}</span>
+                                        </div>
+                                        <div className="z-10">
+                                            <p className="font-bold text-brand-900 text-lg leading-tight">{s.theme || s.title || 'Servicio General'}</p>
+                                            <p className="text-xs text-brand-700 mt-1">Rol: {s.roleTitle}</p>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                <Icon name="Smile" className="mx-auto mb-2 opacity-50"/>
+                                No tienes servicios asignados próximamente. ¡Descansa!
+                            </div>
+                        )}
                     </Card>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Panel Izquierdo: Gráficos Pastor o Calendario */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {user.role === 'Pastor' && (
+                                <Card title="Ingresos Mensuales (Noviembre)" icon="DollarSign">
+                                    <div className="h-64">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={chartData}>
+                                                <defs>
+                                                    <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#E67E22" stopOpacity={0.8}/>
+                                                        <stop offset="95%" stopColor="#E67E22" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0"/>
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} dy={10}/>
+                                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} tickFormatter={(val)=>`$${val/1000}k`}/>
+                                                <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} formatter={(value) => formatCurrency(value)}/>
+                                                <Area type="monotone" dataKey="ingresos" stroke="#E67E22" fillOpacity={1} fill="url(#colorIngresos)" strokeWidth={3} />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                            )}
+                            
+                            <Card title="Mensajes Recientes" icon="Bell">
+                                <div className="space-y-3">
+                                    {data.messages.slice(0,3).map(m => (
+                                        <div key={m.id} className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xs shrink-0">
+                                                {m.from.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between items-center w-full">
+                                                    <p className="text-sm font-bold text-slate-800">{m.from}</p>
+                                                    <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600 mt-0.5">{m.message}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Panel Derecho: Calendario Rápido */}
+                        <div className="lg:col-span-1">
+                            <Card title="Agenda Semanal" icon="Calendar" className="h-full">
+                                <div className="space-y-4">
+                                    {[...data.worship, ...data.ebd, ...data.youth]
+                                        .filter(e => new Date(e.date) >= new Date())
+                                        .sort((a,b) => new Date(a.date) - new Date(b.date))
+                                        .slice(0, 5)
+                                        .map((ev, i) => (
+                                            <div key={i} className="flex gap-3 items-center group">
+                                                <div className="text-center px-2 py-1 bg-slate-100 rounded-lg group-hover:bg-brand-100 transition-colors">
+                                                    <span className="block text-xs font-bold text-slate-500 group-hover:text-brand-600">{new Date(ev.date).getDate()}</span>
+                                                    <span className="block text-[10px] uppercase text-slate-400 group-hover:text-brand-500">{new Date(ev.date).toLocaleDateString('es-AR', {month:'short'})}</span>
+                                                </div>
+                                                <div className="flex-1 border-b border-slate-50 pb-2">
+                                                    <p className="text-sm font-bold text-slate-700 truncate">{ev.theme || ev.topic || ev.title}</p>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <Badge color="slate">{ev.ministry || (ev.collaborators ? 'EBD' : 'Jóvenes')}</Badge>
+                                                        {ev.type && <span className="text-[10px] text-slate-400 italic">{ev.type}</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
                 </div>
             )
-        }
+        };
 
-        // --- DASHBOARD (INICIO) ---
-        const Dashboard = ({ user, members, finances, services, messages, worshipServices, ebdClasses, youthEvents }) => {
-            const totalBalance = finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
-            const tithesData = finances.filter(f => f.type === 'Culto').reduce((acc, f) => ({
-                count: acc.count + f.tithes,
-                sum: acc.sum + f.cash + f.transfer // Asumiendo que diezmos están incluidos en culto
-            }), { count: 0, sum: 0 });
-            
-            // Gráfico de Barras para Pastor
-            const chartData = [
-                { name: 'Ofrendas', valor: finances.filter(f => f.type === 'Culto').reduce((a, b) => a + b.cash + b.transfer, 0) },
-                { name: 'Gastos', valor: finances.filter(f => f.type === 'Gasto').reduce((a, b) => a + b.cash + b.transfer, 0) },
-            ];
+        // 2. MEMBERS DIRECTORY (FICHA STYLE)
+        const MembersDirectory = ({ user, members, updateMembers }) => {
+            const [viewMember, setViewMember] = useState(null);
+            const [isAddOpen, setAddOpen] = useState(false);
+            const [newMember, setNewMember] = useState({ name: '', ministry: 'General', birthDate: '', role: 'Miembro', photo: '' });
 
-            const pieData = [
-                { name: 'Efectivo', value: finances.reduce((acc, f) => acc + f.cash, 0) },
-                { name: 'Transferencia', value: finances.reduce((acc, f) => acc + f.transfer, 0) }
-            ];
+            const handleDelete = (id) => {
+                if(confirm("¿Seguro que deseas eliminar esta ficha? Esta acción es irreversible.")) {
+                    updateMembers(prev => prev.filter(m => m.id !== id));
+                    setViewMember(null);
+                }
+            };
 
-            const PIE_COLORS = ['#C0392B', '#E67E22'];
+            const handleAdd = () => {
+                updateMembers(prev => [...prev, { 
+                    ...newMember, 
+                    id: Date.now(), 
+                    visits: 0, 
+                    lastVisit: new Date().toISOString().split('T')[0],
+                    photo: newMember.photo || `https://ui-avatars.com/api/?name=${newMember.name}&background=random`
+                }]);
+                setAddOpen(false);
+            };
 
             return (
                 <div className="space-y-6 animate-fade-in">
-                    <header className="flex justify-between items-end mb-8">
-                        <div>
-                            <h2 className="text-3xl font-extrabold text-brand-800">Hola, {user.name.split(' ')[0]} 👋</h2>
-                            <p className="text-slate-500 font-medium">Panel de {user.role === 'Pastor' ? 'Administración Total' : user.ministry}</p>
-                        </div>
-                    </header>
-
-                    {/* Fila de Tarjetas Superiores */}
-                    {user.role === 'Pastor' && (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <Card className="border-b-4 border-b-brand-600">
-                                <p className="text-xs font-bold text-slate-500 uppercase">Balance Total</p>
-                                <h3 className="text-3xl font-extrabold text-brand-800 mt-2">{formatCurrency(totalBalance)}</h3>
-                            </Card>
-                            <Card className="border-b-4 border-b-accent-500">
-                                <p className="text-xs font-bold text-slate-500 uppercase">Total Miembros</p>
-                                <h3 className="text-3xl font-extrabold text-accent-500 mt-2">{members.length}</h3>
-                            </Card>
-                            <Card className="border-b-4 border-b-emerald-500">
-                                <p className="text-xs font-bold text-slate-500 uppercase">Total Diezmantes</p>
-                                <h3 className="text-3xl font-extrabold text-emerald-600 mt-2">{tithesData.count}</h3>
-                            </Card>
-                            <Card className="border-b-4 border-b-red-500">
-                                <p className="text-xs font-bold text-slate-500 uppercase">Total Gastos (Nov)</p>
-                                <h3 className="text-3xl font-extrabold text-red-600 mt-2">{formatCurrency(finances.filter(f => f.type === 'Gasto').reduce((a, b) => a + b.cash + b.transfer, 0))}</h3>
-                            </Card>
-                        </div>
-                    )}
-                    
-                    {/* Contenido Principal: Pastor vs Líder/Servidor */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {user.role === 'Pastor' ? (
-                            // Vista Pastor: Gráficos y Actividad
-                            <>
-                                <Card title="Resumen de Flujo (Nov)" className="md:col-span-2 h-96">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                            <XAxis dataKey="name" stroke="#5D1C16" />
-                                            <YAxis tickFormatter={formatCurrency} stroke="#5D1C16" />
-                                            <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: '#5D1C16', border: 'none', borderRadius: '8px' }} />
-                                            <Bar dataKey="valor" fill="#C0392B" name="Monto" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </Card>
-                                <Card title="Composición de Caja" className="h-96">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                                                {pieData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: '#5D1C16', border: 'none', borderRadius: '8px' }}/>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </Card>
-                            </>
-                        ) : (
-                            // Vista Líder/Servidor: Mensajes y Servicios
-                            <>
-                                <MessagesModule user={user} messages={messages} />
-                                <ServicePanel user={user} services={[...worshipServices, ...ebdClasses, ...youthEvents].map(s => ({ ...s, ministry: s.ministry || user.ministry }))} />
-                            </>
-                        )}
-                    </div>
-                    
-                    {/* Mensajes para Pastor / Calendario para Lider/Servidor (Rotación) */}
-                    {user.role === 'Pastor' && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <MessagesModule user={user} messages={messages} />
-                            <ServicePanel user={user} services={[...worshipServices, ...ebdClasses, ...youthEvents].map(s => ({ ...s, ministry: s.ministry || user.ministry }))} />
-                        </div>
-                    )}
-
-                </div>
-            );
-        };
-
-        // --- MÓDULO DE MIEMBROS (DIRECTORIO GENERAL) ---
-
-        const MemberCard = ({ member, isPastor, onDelete, onView }) => {
-            const age = getAge(member.birthDate);
-            return (
-                <Card className="p-4 flex flex-col h-full hover:shadow-xl transition-all duration-300">
-                    <div className="flex-1">
-                         <div className="flex items-center gap-4 mb-4">
-                            <img 
-                                src={member.photo} 
-                                alt={member.name} 
-                                className="w-16 h-16 rounded-full object-cover border-4 border-brand-100"
-                                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/150x150/F0F4F8/333333?text=N/F" }}
-                            />
-                            <div>
-                                <h4 className="font-extrabold text-lg text-brand-900">{member.name}</h4>
-                                <p className="text-sm text-slate-500">{member.ministry} ({member.role})</p>
-                            </div>
-                        </div>
-                        
-                        <div className="text-xs space-y-2 mb-4 p-3 bg-brand-50 rounded-lg">
-                            <p className="flex justify-between font-medium"><span className="text-slate-500">Edad:</span> <span className="text-brand-700 font-bold">{age} años</span></p>
-                            <p className="flex justify-between font-medium"><span className="text-slate-500">Última Visita:</span> {formatDate(member.lastVisit)}</p>
-                            <p className="flex justify-between font-medium"><span className="text-slate-500">Visitas Totales:</span> {member.visits}</p>
-                        </div>
-
-                        <p className="text-xs text-slate-600 italic border-l-2 border-accent-500 pl-2">
-                           <span className='font-bold text-slate-500'>Seguimiento:</span> {member.followUp}
-                        </p>
-                    </div>
-
-                    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-brand-100">
-                        <Button variant="ghost" className="!px-3 !py-1 text-xs" onClick={() => onView(member)} icon="Edit">Ver Ficha</Button>
-                        {isPastor && (
-                            <Button variant="danger" className="!px-3 !py-1 text-xs" onClick={() => onDelete(member.id)} icon="Trash">Eliminar</Button>
-                        )}
-                    </div>
-                </Card>
-            );
-        };
-
-        const MembersModule = ({ user, members, setMembers }) => {
-            const [isModalOpen, setModalOpen] = useState(false);
-            const [newMember, setNewMember] = useState({ name: '', birthDate: '', ministry: 'General', role: 'Member', status: 'Activo', photo: '', lastVisit: new Date().toISOString().split('T')[0], followUp: '', visits: 0 });
-            const [selectedMember, setSelectedMember] = useState(null);
-
-            const isPastor = user.role === 'Pastor';
-            // Solo Pastor puede eliminar, pero todos pueden ver y agregar
-            const canDelete = isPastor;
-
-            const handleAdd = () => {
-                if(!newMember.name || !newMember.birthDate) return;
-                const memberToAdd = { 
-                    ...newMember, 
-                    id: Date.now(), 
-                    visits: parseInt(newMember.visits) || 0,
-                    // photo placeholder si no se pone nada
-                    photo: newMember.photo || `https://placehold.co/150x150/F0F4F8/333333?text=${newMember.name.charAt(0)}` 
-                };
-                setMembers([...members, memberToAdd]);
-                setModalOpen(false);
-                setNewMember({ name: '', birthDate: '', ministry: 'General', role: 'Member', status: 'Activo', photo: '', lastVisit: new Date().toISOString().split('T')[0], followUp: '', visits: 0 });
-            };
-
-            const handleDelete = (id) => {
-                if(canDelete && confirm('¿Estás seguro de ELIMINAR PERMANENTEMENTE este miembro?')) {
-                    setMembers(members.filter(m => m.id !== id));
-                }
-            };
-            
-            const handleView = (member) => {
-                setSelectedMember(member);
-            };
-
-            const handleCloseView = () => {
-                setSelectedMember(null);
-            };
-
-            return (
-                <div className="space-y-8 animate-fade-in">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-bold text-brand-800 flex items-center gap-3">
-                            <Icons.Users className="text-brand-600"/> Directorio General de Miembros
-                        </h2>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Nueva Ficha</Button>
+                        <h2 className="text-2xl font-bold text-brand-900">Directorio de Miembros</h2>
+                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nueva Ficha</Button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {members.map(m => (
-                            <MemberCard 
-                                key={m.id} 
-                                member={m} 
-                                isPastor={isPastor} 
-                                onDelete={handleDelete} 
-                                onView={handleView}
-                            />
+                        {members.map(member => (
+                            <div key={member.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:border-brand-200 transition-all duration-300 overflow-hidden group flex flex-col">
+                                <div className="p-6 flex gap-4 items-start">
+                                    <div className="relative">
+                                        <img src={member.photo} className="w-16 h-16 rounded-2xl object-cover shadow-md group-hover:scale-105 transition-transform" alt={member.name} onError={(e) => e.target.src = 'https://ui-avatars.com/api/?name=' + member.name} />
+                                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${member.status === 'Activo' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg text-slate-800 leading-tight">{member.name}</h3>
+                                        <p className="text-xs text-brand-600 font-semibold uppercase mt-1">{member.ministry} • {member.role}</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">{getAge(member.birthDate)} años</p>
+                                    </div>
+                                </div>
+                                <div className="px-6 pb-4 space-y-3 flex-1">
+                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-slate-500 font-medium">Asistencia</span>
+                                            <span className="text-brand-600 font-bold">{member.visits} visitas</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                            <div className="bg-brand-500 h-full rounded-full" style={{width: `${Math.min(member.visits * 2, 100)}%`}}></div>
+                                        </div>
+                                    </div>
+                                    {member.followUp && (
+                                        <p className="text-xs text-slate-500 italic truncate border-l-2 border-brand-300 pl-2">"{member.followUp}"</p>
+                                    )}
+                                </div>
+                                <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                                    <button onClick={() => setViewMember(member)} className="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
+                                        VER FICHA COMPLETA <Icon name="ChevronRight" size={14}/>
+                                    </button>
+                                </div>
+                            </div>
                         ))}
                     </div>
 
-                    {/* MODAL AGREGAR */}
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Nueva Ficha de Miembro">
-                        <Input label="Nombre Completo" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-                        <Input label="Fecha de Nacimiento" type="date" value={newMember.birthDate} onChange={e => setNewMember({...newMember, birthDate: e.target.value})} />
-                        <Input label="URL Foto (Opcional)" value={newMember.photo} onChange={e => setNewMember({...newMember, photo: e.target.value})} placeholder="https://..." />
-                        <Select label="Ministerio" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
-                            <option value="General">General</option>
-                            <option value="Alabanza">Alabanza</option>
-                            <option value="Ujieres">Ujieres</option>
-                            <option value="Jóvenes">Jóvenes</option>
-                            <option value="EBD">EBD</option>
-                            <option value="Pastoral">Pastoral</option>
-                        </Select>
-                        <Input label="Seguimiento (Notas)" value={newMember.followUp} onChange={e => setNewMember({...newMember, followUp: e.target.value})} placeholder="Pendiente de visita..." />
-                        <div className="flex justify-end gap-2 mt-6 border-t pt-4">
-                            <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd} disabled={!newMember.name || !newMember.birthDate}>Guardar Ficha</Button>
-                        </div>
-                    </Modal>
-
-                    {/* MODAL VER FICHA (Detalle) */}
-                    {selectedMember && (
-                        <Modal isOpen={!!selectedMember} onClose={handleCloseView} title={`Ficha: ${selectedMember.name}`} className="max-w-3xl">
+                    {/* Modal Detalles */}
+                    <Modal isOpen={!!viewMember} onClose={() => setViewMember(null)} title="Ficha Técnica">
+                        {viewMember && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="md:col-span-1 flex flex-col items-center">
-                                    <img 
-                                        src={selectedMember.photo} 
-                                        alt={selectedMember.name} 
-                                        className="w-32 h-32 rounded-full object-cover border-4 border-brand-200 shadow-lg mb-4"
-                                        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/150x150/F0F4F8/333333?text=N/F" }}
-                                    />
-                                    <h4 className="font-extrabold text-xl text-brand-900">{selectedMember.name}</h4>
-                                    <Badge color="blue" className="mt-2">{selectedMember.ministry} ({selectedMember.role})</Badge>
-                                    {isPastor && <Button variant="danger" className="mt-4" icon="Trash" onClick={() => { handleDelete(selectedMember.id); handleCloseView(); }}>Eliminar Miembro</Button>}
+                                <div className="md:col-span-1 flex flex-col items-center text-center">
+                                    <img src={viewMember.photo} className="w-32 h-32 rounded-full shadow-lg border-4 border-brand-50 mb-4 object-cover" onError={(e) => e.target.src = 'https://ui-avatars.com/api/?name=' + viewMember.name}/>
+                                    <h2 className="text-xl font-bold text-slate-800">{viewMember.name}</h2>
+                                    <Badge className="mt-2">{viewMember.role}</Badge>
+                                    
+                                    {user.role === 'Pastor' && (
+                                        <Button variant="danger" className="mt-6 w-full" onClick={() => handleDelete(viewMember.id)} icon="Trash">
+                                            Eliminar Ficha
+                                        </Button>
+                                    )}
                                 </div>
-                                <div className="md:col-span-2 space-y-4">
-                                    <h5 className="font-bold text-lg text-brand-700 border-b pb-2">Datos Personales</h5>
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <p><span className="font-bold text-slate-500">Edad:</span> {getAge(selectedMember.birthDate)} años</p>
-                                        <p><span className="font-bold text-slate-500">Estado:</span> <Badge color={selectedMember.status === 'Activo' ? 'green' : 'red'}>{selectedMember.status}</Badge></p>
+                                <div className="md:col-span-2 space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-slate-50 p-3 rounded-xl">
+                                            <p className="text-xs text-slate-400 uppercase font-bold">Ministerio</p>
+                                            <p className="font-semibold text-slate-700">{viewMember.ministry}</p>
+                                        </div>
+                                        <div className="bg-slate-50 p-3 rounded-xl">
+                                            <p className="text-xs text-slate-400 uppercase font-bold">Fecha Nac.</p>
+                                            <p className="font-semibold text-slate-700">{formatDate(viewMember.birthDate)} ({getAge(viewMember.birthDate)} años)</p>
+                                        </div>
                                     </div>
-
-                                    <h5 className="font-bold text-lg text-brand-700 border-b pb-2 pt-4">Seguimiento</h5>
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <p><span className="font-bold text-slate-500">Última Visita:</span> {formatDate(selectedMember.lastVisit)}</p>
-                                        <p><span className="font-bold text-slate-500">Total Visitas:</span> {selectedMember.visits}</p>
-                                    </div>
-                                    <div className="text-sm p-4 bg-brand-50 rounded-xl border border-brand-200">
-                                        <p className="font-bold text-brand-700 mb-1">Notas de Seguimiento:</p>
-                                        <p className="text-slate-700">{selectedMember.followUp}</p>
+                                    
+                                    <div>
+                                        <h4 className="font-bold text-brand-800 border-b border-brand-100 pb-2 mb-3">Seguimiento Pastoral</h4>
+                                        <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-amber-900 text-sm">
+                                            <p className="font-bold mb-1">Última nota:</p>
+                                            {viewMember.followUp}
+                                        </div>
+                                        <div className="mt-3 flex justify-between text-sm text-slate-500">
+                                            <span>Última visita: {formatDate(viewMember.lastVisit)}</span>
+                                            <span>Visitas totales: {viewMember.visits}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </Modal>
-                    )}
+                        )}
+                    </Modal>
+
+                    {/* Modal Agregar */}
+                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Nueva Ficha de Miembro">
+                        <FormInput label="Nombre Completo" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
+                        <FormInput label="Fecha de Nacimiento" type="date" value={newMember.birthDate} onChange={e => setNewMember({...newMember, birthDate: e.target.value})} />
+                        <FormSelect label="Ministerio Principal" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
+                            <option value="General">General</option>
+                            <option value="Alabanza">Alabanza</option>
+                            <option value="EBD">Escuela Bíblica</option>
+                            <option value="Jóvenes">Jóvenes</option>
+                            <option value="Ujieres">Ujieres</option>
+                        </FormSelect>
+                        <FormInput label="URL Foto (Opcional)" value={newMember.photo} onChange={e => setNewMember({...newMember, photo: e.target.value})} placeholder="https://..." />
+                        <div className="pt-4 flex justify-end gap-3">
+                            <Button variant="secondary" onClick={() => setAddOpen(false)}>Cancelar</Button>
+                            <Button onClick={handleAdd}>Crear Ficha</Button>
+                        </div>
+                    </Modal>
                 </div>
-            );
+            )
         };
 
-        // --- MÓDULO ALABANZA ---
-
-        const WORSHIP_ROLES = ['Vocal', 'Drums', 'Bass', 'AcGuitar', 'ElGuitar'];
-        const WorshipModule = ({ user, worshipServices, setWorshipServices, members }) => {
+        // 3. WORSHIP MODULE
+        const WorshipModule = ({ user, data, setData }) => {
             const [isModalOpen, setModalOpen] = useState(false);
-            const [newService, setNewService] = useState({ date: '', theme: '', songs: '', roster: WORSHIP_ROLES.reduce((acc, role) => ({ ...acc, [role]: [] }), {}) });
-            const membersNames = members.map(m => m.name.split(' ')[0]).sort();
+            const [newService, setNewService] = useState({ 
+                date: '', type: 'Culto', theme: '', songs: '', 
+                roster: { Vocal: [], Bateria: [], Bajo: [], Acustica: [], Electrica: [] } 
+            });
+
+            // Flatten musicians for selection
+            const musicians = data.members.map(m => m.name.split(' ')[0]);
+            const instruments = ['Vocal', 'Bateria', 'Bajo', 'Acustica', 'Electrica'];
 
             const handleAdd = () => {
-                if(!newService.date) return;
-                const serviceToAdd = { 
-                    ...newService, 
-                    id: Date.now(), 
-                    songs: newService.songs.split(',').map(s => s.trim()).filter(s => s.length > 0)
-                };
-                setWorshipServices([...worshipServices, serviceToAdd]);
+                const songsArray = newService.songs.split(',').map(s => s.trim());
+                setData(prev => ({
+                    ...prev,
+                    worship: [...prev.worship, { ...newService, id: Date.now(), songs: songsArray }]
+                }));
                 setModalOpen(false);
-                setNewService({ date: '', theme: '', songs: '', roster: WORSHIP_ROLES.reduce((acc, role) => ({ ...acc, [role]: [] }), {}) });
             };
 
-            const handleRosterChange = (role, event) => {
-                const value = event.target.value;
-                setNewService(prev => ({
-                    ...prev,
-                    roster: {
-                        ...prev.roster,
-                        [role]: prev.roster[role].includes(value) ? prev.roster[role].filter(n => n !== value) : [...prev.roster[role], value]
-                    }
-                }));
+            const toggleMusician = (inst, name) => {
+                setNewService(prev => {
+                    const current = prev.roster[inst] || []; // FIX: Fallback to empty array
+                    const updated = current.includes(name) ? current.filter(n => n !== name) : [...current, name];
+                    return { ...prev, roster: { ...prev.roster, [inst]: updated } };
+                });
             };
-            
-            const futureServices = useMemo(() => worshipServices.filter(s => new Date(s.date) >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date)), [worshipServices]);
 
             return (
-                <div className="space-y-8 animate-fade-in">
+                <div className="space-y-6 animate-fade-in">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-bold text-brand-800 flex items-center gap-3">
-                            <Icons.Music className="text-brand-600"/> Gestión de Alabanza
-                        </h2>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Nuevo Culto</Button>
+                        <h2 className="text-2xl font-bold text-brand-900">Alabanza: Cultos y Ensayos</h2>
+                        <Button onClick={() => setModalOpen(true)} icon="Plus">Agendar</Button>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Calendario del Ministerio */}
-                        <div className="lg:col-span-2">
-                            <CalendarModule events={worshipServices.map(s => ({...s, title: s.theme || 'Culto', date: s.date}))} />
-                        </div>
-                        
-                        {/* Próximos Cultos y Ensayos */}
-                        <Card title="Próximos Servicios" icon={Icons.ChevronsRight} className="lg:col-span-1">
-                            <div className="space-y-4 max-h-96 overflow-y-auto hide-scroll">
-                                {futureServices.length > 0 ? futureServices.map(s => (
-                                    <div key={s.id} className="p-4 rounded-xl bg-brand-50 border border-brand-200">
-                                        <p className="text-sm font-bold text-brand-900">{s.theme}</p>
-                                        <p className="text-xs text-slate-500 mt-1">{formatDate(s.date)}</p>
-                                        <div className="mt-2 text-xs">
-                                            <p className='font-bold text-brand-700'>Canciones:</p>
-                                            <p className='text-slate-600'>{s.songs.join(', ')}</p>
-                                            <p className='font-bold text-brand-700 mt-2'>Roster:</p>
-                                            <div className='flex flex-wrap gap-2 mt-1'>
-                                                {Object.entries(s.roster).map(([role, names]) => names.length > 0 && (
-                                                    <Badge key={role} color="blue">{role}: {names.join(', ')}</Badge>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {data.worship.sort((a,b) => new Date(a.date) - new Date(b.date)).map(service => (
+                            <Card key={service.id} className="relative overflow-hidden group">
+                                <div className={`absolute top-0 left-0 w-2 h-full ${service.type === 'Ensayo' ? 'bg-slate-400' : 'bg-brand-500'}`}></div>
+                                <div className="pl-4">
+                                    <div className="flex justify-between mb-2">
+                                        <Badge color={service.type === 'Ensayo' ? 'slate' : 'brand'}>{service.type}</Badge>
+                                        <span className="text-xs font-bold text-slate-400">{formatDate(service.date)}</span>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-brand-900 mb-1">{service.theme}</h3>
+                                    
+                                    <div className="mt-4 space-y-3">
+                                        <div className="bg-brand-50/50 p-2 rounded-lg border border-brand-100">
+                                            <p className="text-[10px] uppercase font-bold text-brand-400 mb-1">Canciones</p>
+                                            <div className="flex flex-wrap gap-1">
+                                                {service.songs.map((s, i) => <span key={i} className="text-xs text-slate-600 bg-white px-1.5 py-0.5 rounded border border-slate-100">{s}</span>)}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Equipo (Roster)</p>
+                                            <div className="text-xs space-y-1">
+                                                {Object.entries(service.roster).map(([inst, people]) => people.length > 0 && (
+                                                    <div key={inst} className="flex gap-2">
+                                                        <span className="font-bold text-slate-600 w-16">{inst}:</span>
+                                                        <span className="text-slate-500">{people.join(', ')}</span>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
-                                )) : <p className="text-slate-500 italic">No hay cultos o ensayos programados.</p>}
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* MODAL AGREGAR CULTO/ENSAYO */}
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Programar Nuevo Culto/Ensayo" className="max-w-3xl">
-                        <Input label="Fecha del Servicio" type="date" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
-                        <Input label="Tema/Título del Culto" value={newService.theme} onChange={e => setNewService({...newService, theme: e.target.value})} />
-                        <Input label="Canciones (Separadas por coma)" value={newService.songs} onChange={e => setNewService({...newService, songs: e.target.value})} placeholder="Tu Fidelidad, Santo Espíritu, ..." />
-                        
-                        <h4 className="font-bold text-brand-700 mt-4 mb-3">Definir Roster (Servidores)</h4>
-                        <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-                            {WORSHIP_ROLES.map(role => (
-                                <div key={role} className='border p-3 rounded-xl bg-brand-50'>
-                                    <p className='text-sm font-bold text-slate-700 mb-2'>{role}</p>
-                                    <div className='space-y-1 max-h-24 overflow-y-auto hide-scroll'>
-                                        {membersNames.map(name => (
-                                            <label key={name} className="flex items-center space-x-2 text-xs">
-                                                <input 
-                                                    type="checkbox" 
-                                                    value={name} 
-                                                    checked={newService.roster[role]?.includes(name)}
-                                                    onChange={(e) => {
-                                                        const isChecked = e.target.checked;
-                                                        const updatedList = isChecked 
-                                                            ? [...newService.roster[role], name] 
-                                                            : newService.roster[role].filter(n => n !== name);
-                                                        setNewService(prev => ({
-                                                            ...prev,
-                                                            roster: { ...prev.roster, [role]: updatedList }
-                                                        }));
-                                                    }}
-                                                    className='rounded text-brand-600 focus:ring-brand-600'
-                                                />
-                                                <span>{name}</span>
-                                            </label>
-                                        ))}
-                                    </div>
                                 </div>
-                            ))}
-                        </div>
-
-                        <div className="flex justify-end gap-2 mt-6 border-t pt-4">
-                            <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd} disabled={!newService.date || !newService.theme}>Programar</Button>
-                        </div>
-                    </Modal>
-                </div>
-            );
-        };
-
-        // --- MÓDULO ESCUELA BÍBLICA (EBD) ---
-
-        const EBDModule = ({ user, ebdClasses, setEbdClasses, members }) => {
-            const [isModalOpen, setModalOpen] = useState(false);
-            const [newClass, setNewClass] = useState({ date: '', topic: '', collaborators: [], ageGroup: '< 8 años' });
-            const membersNames = members.map(m => m.name.split(' ')[0]).sort();
-            
-            const handleAdd = () => {
-                if(!newClass.date || !newClass.topic) return;
-                setEbdClasses([...ebdClasses, { ...newClass, id: Date.now() }]);
-                setModalOpen(false);
-                setNewClass({ date: '', topic: '', collaborators: [], ageGroup: '< 8 años' });
-            };
-
-            const handleCollaboratorChange = (event) => {
-                const value = event.target.value;
-                setNewClass(prev => ({
-                    ...prev,
-                    collaborators: prev.collaborators.includes(value) ? prev.collaborators.filter(n => n !== value) : [...prev.collaborators, value]
-                }));
-            };
-            
-            const futureClasses = useMemo(() => ebdClasses.filter(c => new Date(c.date) >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date)), [ebdClasses]);
-
-            return (
-                <div className="space-y-8 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-bold text-brand-800 flex items-center gap-3">
-                            <Icons.Smile className="text-brand-600"/> Gestión de Escuela Bíblica Dominical (EBD)
-                        </h2>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Nueva Clase</Button>
+                            </Card>
+                        ))}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2">
-                             <CalendarModule events={ebdClasses.map(c => ({...c, title: c.topic, date: c.date}))} />
+                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Planificar Servicio">
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormInput label="Fecha" type="date" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
+                            <FormSelect label="Tipo" value={newService.type} onChange={e => setNewService({...newService, type: e.target.value})}>
+                                <option value="Culto">Culto General</option>
+                                <option value="Ensayo">Ensayo</option>
+                                <option value="Especial">Evento Especial</option>
+                            </FormSelect>
                         </div>
-                        <Card title="Próximas Clases" icon={Icons.ChevronsRight} className="lg:col-span-1">
-                            <div className="space-y-4 max-h-96 overflow-y-auto hide-scroll">
-                                {futureClasses.length > 0 ? futureClasses.map(c => (
-                                    <div key={c.id} className="p-4 rounded-xl bg-brand-50 border border-brand-200">
-                                        <p className="text-sm font-bold text-brand-900">{c.topic}</p>
-                                        <p className="text-xs text-slate-500 mt-1">{formatDate(c.date)} | <span className='font-bold'>{c.ageGroup}</span></p>
-                                        <div className="mt-2 text-xs">
-                                            <p className='font-bold text-brand-700'>Colaboradores:</p>
-                                            <div className='flex flex-wrap gap-2 mt-1'>
-                                                {c.collaborators.map(name => <Badge key={name} color="green">{name}</Badge>)}
-                                            </div>
+                        <FormInput label="Título / Tema" value={newService.theme} onChange={e => setNewService({...newService, theme: e.target.value})} />
+                        <FormInput label="Canciones (Separar por coma)" value={newService.songs} onChange={e => setNewService({...newService, songs: e.target.value})} placeholder="Tu Fidelidad, Océanos..." />
+                        
+                        <div className="border-t border-slate-100 pt-4 mt-2">
+                            <p className="text-xs font-bold text-brand-600 uppercase mb-3">Armar Equipo</p>
+                            <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scroll">
+                                {instruments.map(inst => (
+                                    <div key={inst} className="bg-slate-50 p-2 rounded-lg">
+                                        <p className="text-xs font-bold text-slate-500 mb-1">{inst}</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {musicians.map(musico => (
+                                                <button 
+                                                    key={musico}
+                                                    onClick={() => toggleMusician(inst, musico)}
+                                                    className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                                                        newService.roster[inst]?.includes(musico) 
+                                                        ? 'bg-brand-500 text-white border-brand-600' 
+                                                        : 'bg-white text-slate-500 border-slate-200 hover:border-brand-300'
+                                                    }`}
+                                                >
+                                                    {musico}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
-                                )) : <p className="text-slate-500 italic">No hay clases programadas.</p>}
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* MODAL AGREGAR CLASE */}
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Programar Nueva Clase EBD" className="max-w-3xl">
-                        <Input label="Fecha de la Clase" type="date" value={newClass.date} onChange={e => setNewClass({...newClass, date: e.target.value})} />
-                        <Input label="Tema de la Clase" value={newClass.topic} onChange={e => setNewClass({...newClass, topic: e.target.value})} />
-                        <Select label="Grupo de Edad" value={newClass.ageGroup} onChange={e => setNewClass({...newClass, ageGroup: e.target.value})}>
-                            <option value="< 8 años">&lt; 8 años</option>
-                            <option value="8-12 años">8 - 12 años</option>
-                            <option value="General">Todos</option>
-                        </Select>
-                        
-                        <h4 className="font-bold text-brand-700 mt-4 mb-3">Colaboradores/Maestros</h4>
-                        <div className='max-h-32 overflow-y-auto hide-scroll p-3 bg-brand-50 rounded-xl border'>
-                            <div className='grid grid-cols-3 gap-3'>
-                                {membersNames.map(name => (
-                                    <label key={name} className="flex items-center space-x-2 text-sm">
-                                        <input 
-                                            type="checkbox" 
-                                            value={name} 
-                                            checked={newClass.collaborators.includes(name)}
-                                            onChange={handleCollaboratorChange}
-                                            className='rounded text-brand-600 focus:ring-brand-600'
-                                        />
-                                        <span>{name}</span>
-                                    </label>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 mt-6 border-t pt-4">
+                        <div className="pt-4 flex justify-end gap-3">
                             <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd} disabled={!newClass.date || !newClass.topic}>Programar</Button>
+                            <Button onClick={handleAdd}>Guardar</Button>
                         </div>
                     </Modal>
                 </div>
             );
         };
 
-        // --- MÓDULO JÓVENES ---
-        const YouthModule = ({ user, youthEvents, setYouthEvents, members }) => {
+        // 4. FINANCES (PASTOR)
+        const FinanceModule = ({ data, setData }) => {
             const [isModalOpen, setModalOpen] = useState(false);
-            const [newEvent, setNewEvent] = useState({ date: '', title: '', type: 'Social', location: '' });
-            
+            const [newMove, setNewMove] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
+
             const handleAdd = () => {
-                if(!newEvent.date || !newEvent.title) return;
-                setYouthEvents([...youthEvents, { ...newEvent, id: Date.now() }]);
+                const amountCash = newMove.type === 'Gasto' ? -Math.abs(newMove.cash) : Math.abs(newMove.cash);
+                const amountTransfer = newMove.type === 'Gasto' ? -Math.abs(newMove.transfer) : Math.abs(newMove.transfer);
+                
+                setData(prev => ({
+                    ...prev,
+                    finances: [...prev.finances, { ...newMove, id: Date.now(), cash: amountCash, transfer: amountTransfer }]
+                }));
                 setModalOpen(false);
-                setNewEvent({ date: '', title: '', type: 'Social', location: '' });
-            };
-            
-            const futureEvents = useMemo(() => youthEvents.filter(e => new Date(e.date) >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date)), [youthEvents]);
-
-            return (
-                <div className="space-y-8 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-bold text-brand-800 flex items-center gap-3">
-                            <Icons.Target className="text-brand-600"/> Gestión de Jóvenes
-                        </h2>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Nuevo Evento</Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2">
-                             <CalendarModule events={youthEvents.map(e => ({...e, title: e.title, date: e.date}))} />
-                        </div>
-                        <Card title="Próximos Eventos" icon={Icons.ChevronsRight} className="lg:col-span-1">
-                            <div className="space-y-4 max-h-96 overflow-y-auto hide-scroll">
-                                {futureEvents.length > 0 ? futureEvents.map(e => (
-                                    <div key={e.id} className="p-4 rounded-xl bg-brand-50 border border-brand-200">
-                                        <p className="text-sm font-bold text-brand-900">{e.title}</p>
-                                        <p className="text-xs text-slate-500 mt-1">{formatDate(e.date)} | <span className='font-bold'>{e.type}</span></p>
-                                        <div className="mt-2 text-xs">
-                                            <p className='font-bold text-brand-700'>Lugar:</p>
-                                            <p className='text-slate-600'>{e.location}</p>
-                                        </div>
-                                    </div>
-                                )) : <p className="text-slate-500 italic">No hay eventos programados.</p>}
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* Directorio de Jóvenes (Filtrado por edad) - Usando la misma lógica de Miembros */}
-                    <h3 className="text-2xl font-bold text-brand-800 border-b border-brand-100 pb-3 mt-8">Directorio (13-25 años)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {members.filter(m => {
-                            const age = getAge(m.birthDate);
-                            return age >= 13 && age <= 25;
-                        }).map(m => (
-                             <MemberCard 
-                                key={m.id} 
-                                member={m} 
-                                isPastor={user.role === 'Pastor'} 
-                                onDelete={() => { /* Lógica de borrado solo Pastor */ }} 
-                                onView={() => { /* Lógica de vista */ }}
-                            />
-                        ))}
-                    </div>
-
-                    {/* MODAL AGREGAR EVENTO */}
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Programar Nuevo Evento Joven" className="max-w-3xl">
-                        <Input label="Fecha del Evento" type="date" value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} />
-                        <Input label="Título del Evento" value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} />
-                        <Input label="Lugar/Ubicación" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} />
-                        <Select label="Tipo de Evento" value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})}>
-                            <option value="Social">Social/Recreativo</option>
-                            <option value="Espiritual">Espiritual/Estudio</option>
-                            <option value="Alcance">Alcance/Misiones</option>
-                        </Select>
-
-                        <div className="flex justify-end gap-2 mt-6 border-t pt-4">
-                            <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd} disabled={!newEvent.date || !newEvent.title}>Programar</Button>
-                        </div>
-                    </Modal>
-                </div>
-            );
-        };
-        
-        // --- MÓDULO FINANZAS (PASTORAL) ---
-        const FinanceModule = ({ finances, setFinances }) => {
-            const [isModalOpen, setModalOpen] = useState(false);
-            const [newMovement, setNewMovement] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
-
-            const currentBalance = useMemo(() => finances.reduce((acc, f) => acc + f.cash + f.transfer, 0), [finances]);
-            const cashBalance = useMemo(() => finances.reduce((acc, f) => acc + f.cash, 0), [finances]);
-            const transferBalance = useMemo(() => finances.reduce((acc, f) => acc + f.transfer, 0), [finances]);
-            const totalTithes = useMemo(() => finances.filter(f => f.type === 'Culto').reduce((acc, f) => acc + f.tithes, 0), [finances]);
-
-            const handleAddMovement = () => {
-                if(newMovement.type === 'Gasto' && (newMovement.cash > 0 || newMovement.transfer > 0)) {
-                    // Si es Gasto, se convierten los montos a negativo para restar del total
-                    const gasto = {
-                        ...newMovement, 
-                        cash: -Math.abs(newMovement.cash), 
-                        transfer: -Math.abs(newMovement.transfer),
-                        id: Date.now()
-                    };
-                    setFinances([...finances, gasto]);
-                } else if (newMovement.type === 'Culto' && (newMovement.cash > 0 || newMovement.transfer > 0)) {
-                    const ingreso = {
-                        ...newMovement,
-                        cash: Math.abs(newMovement.cash),
-                        transfer: Math.abs(newMovement.transfer),
-                        tithes: parseInt(newMovement.tithes) || 0,
-                        id: Date.now()
-                    };
-                    setFinances([...finances, ingreso]);
-                } else {
-                    return; // No hacer nada si no hay montos válidos
-                }
-                setModalOpen(false);
-                setNewMovement({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
             };
 
             return (
-                <div className="space-y-8 animate-fade-in">
+                <div className="space-y-6 animate-fade-in">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-bold text-brand-800 flex items-center gap-3">
-                            <Icons.Wallet className="text-brand-600"/> Tesorería y Finanzas
-                        </h2>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Cierre / Movimiento</Button>
+                        <h2 className="text-2xl font-bold text-brand-900">Tesorería y Cierres</h2>
+                        <Button onClick={() => setModalOpen(true)} icon="Plus">Nuevo Cierre / Movimiento</Button>
                     </div>
 
-                    {/* KPIs Financieros */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <Card className="bg-brand-600 text-white">
-                            <p className="text-xs font-bold uppercase opacity-80">Balance Total</p>
-                            <h3 className="text-3xl font-extrabold mt-2">{formatCurrency(currentBalance)}</h3>
-                        </Card>
-                        <Card className="border-b-4 border-b-emerald-500">
-                            <p className="text-xs font-bold text-slate-500 uppercase">Caja (Efectivo)</p>
-                            <h3 className="text-2xl font-extrabold text-emerald-600 mt-2">{formatCurrency(cashBalance)}</h3>
-                        </Card>
-                        <Card className="border-b-4 border-b-accent-500">
-                            <p className="text-xs font-bold text-slate-500 uppercase">Transferencia (Banco)</p>
-                            <h3 className="text-2xl font-extrabold text-accent-500 mt-2">{formatCurrency(transferBalance)}</h3>
-                        </Card>
-                        <Card className="border-b-4 border-b-brand-500">
-                            <p className="text-xs font-bold text-slate-500 uppercase">Total Diezmantes</p>
-                            <h3 className="text-2xl font-extrabold text-brand-700 mt-2">{totalTithes} personas</h3>
-                        </Card>
-                    </div>
-                    
-                    {/* Historial de Movimientos */}
-                    <Card title="Historial de Movimientos" icon={Icons.Clipboard}>
-                        <div className="max-h-96 overflow-y-auto hide-scroll">
-                            <table className="w-full text-left text-sm">
-                                <thead className="sticky top-0 bg-slate-50 text-slate-500 uppercase font-bold text-xs">
+                    <Card title="Historial de Movimientos" icon="DollarSign">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
                                     <tr>
-                                        <th className="p-3">Fecha</th>
-                                        <th className="p-3">Tipo</th>
+                                        <th className="p-3 rounded-l-lg">Fecha</th>
+                                        <th className="p-3">Concepto</th>
                                         <th className="p-3 text-right">Efectivo</th>
                                         <th className="p-3 text-right">Transferencia</th>
-                                        <th className="p-3 text-right">Diezmantes</th>
-                                        <th className="p-3">Notas</th>
+                                        <th className="p-3 text-center">Diezmantes</th>
+                                        <th className="p-3 rounded-r-lg">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {finances.sort((a, b) => new Date(b.date) - new Date(a.date)).map(f => (
-                                        <tr key={f.id} className="hover:bg-brand-50/50">
-                                            <td className="p-3">{formatDate(f.date)}</td>
+                                    {data.finances.sort((a,b) => new Date(b.date) - new Date(a.date)).map(f => (
+                                        <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="p-3 font-medium text-slate-700">{formatDate(f.date)}</td>
                                             <td className="p-3">
-                                                <Badge color={f.type === 'Culto' ? 'green' : (f.type === 'Gasto' ? 'red' : 'blue')}>{f.type}</Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge color={f.type === 'Gasto' ? 'red' : 'green'}>{f.type}</Badge>
+                                                    <span className="text-slate-500 truncate max-w-[150px]">{f.notes}</span>
+                                                </div>
                                             </td>
-                                            <td className={`p-3 text-right font-bold ${f.cash >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(f.cash)}</td>
-                                            <td className={`p-3 text-right font-bold ${f.transfer >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(f.transfer)}</td>
-                                            <td className="p-3 text-right">{f.tithes > 0 ? f.tithes : '-'}</td>
-                                            <td className="p-3 text-slate-500 text-xs max-w-xs truncate">{f.notes}</td>
+                                            <td className={`p-3 text-right ${f.cash < 0 ? 'text-red-500' : 'text-slate-600'}`}>{formatCurrency(f.cash)}</td>
+                                            <td className={`p-3 text-right ${f.transfer < 0 ? 'text-red-500' : 'text-slate-600'}`}>{formatCurrency(f.transfer)}</td>
+                                            <td className="p-3 text-center text-slate-400">{f.tithes > 0 ? f.tithes : '-'}</td>
+                                            <td className="p-3 text-right font-bold text-brand-700">{formatCurrency(f.cash + f.transfer)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -981,140 +689,64 @@
                         </div>
                     </Card>
 
-                    {/* MODAL Cierre/Movimiento */}
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Cierre de Culto / Movimiento" className="max-w-xl">
-                        <Select label="Tipo de Movimiento" value={newMovement.type} onChange={e => setNewMovement({...newMovement, type: e.target.value, tithes: 0})}>
-                            <option value="Culto">Cierre de Culto (Ofrendas/Diezmos)</option>
+                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Registrar Movimiento">
+                        <FormSelect label="Tipo de Registro" value={newMove.type} onChange={e => setNewMove({...newMove, type: e.target.value})}>
+                            <option value="Culto">Cierre de Culto (Ingreso)</option>
                             <option value="Gasto">Gasto / Egreso</option>
-                            <option value="Ingreso">Otro Ingreso</option>
-                        </Select>
-                        <Input label="Fecha" type="date" value={newMovement.date} onChange={e => setNewMovement({...newMovement, date: e.target.value})} />
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <Input label="Monto Efectivo (ARS)" type="number" value={newMovement.cash} onChange={e => setNewMovement({...newMovement, cash: parseFloat(e.target.value) || 0})} placeholder="0.00" />
-                            <Input label="Monto Transferencia (ARS)" type="number" value={newMovement.transfer} onChange={e => setNewMovement({...newMovement, transfer: parseFloat(e.target.value) || 0})} placeholder="0.00" />
+                            <option value="Donacion">Donación Externa</option>
+                        </FormSelect>
+                        <FormInput label="Fecha" type="date" value={newMove.date} onChange={e => setNewMove({...newMove, date: e.target.value})} />
+                        
+                        <div className="grid grid-cols-2 gap-4 bg-brand-50 p-4 rounded-xl border border-brand-100">
+                            <FormInput label="Monto Efectivo" type="number" value={newMove.cash} onChange={e => setNewMove({...newMove, cash: parseFloat(e.target.value) || 0})} placeholder="0.00" />
+                            <FormInput label="Monto Transferencia" type="number" value={newMove.transfer} onChange={e => setNewMove({...newMove, transfer: parseFloat(e.target.value) || 0})} placeholder="0.00" />
                         </div>
 
-                        {newMovement.type === 'Culto' && (
-                            <Input label="Número de Diezmantes" type="number" value={newMovement.tithes} onChange={e => setNewMovement({...newMovement, tithes: parseInt(e.target.value) || 0})} placeholder="0" />
+                        {newMove.type === 'Culto' && (
+                             <FormInput label="Cantidad de Personas que Diezmaron" type="number" value={newMove.tithes} onChange={e => setNewMove({...newMove, tithes: parseInt(e.target.value) || 0})} />
                         )}
-                        <Input label="Notas/Concepto" value={newMovement.notes} onChange={e => setNewMovement({...newMovement, notes: e.target.value})} />
-
-                        <div className="flex justify-end gap-2 mt-6 border-t pt-4">
+                        <FormInput label="Notas / Detalle" value={newMove.notes} onChange={e => setNewMove({...newMove, notes: e.target.value})} placeholder="Ej: Ofrenda especial misiones" />
+                        
+                        <div className="pt-4 flex justify-end gap-3">
                             <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAddMovement}>Registrar</Button>
+                            <Button onClick={handleAdd}>Registrar</Button>
                         </div>
                     </Modal>
                 </div>
             );
         };
-        
-        // --- MÓDULO MENSAJERÍA (PASTORAL) ---
-        const MessagingModule = ({ setMessages }) => {
-            const [message, setMessage] = useState('');
-            const [recipient, setRecipient] = useState('all');
 
-            const handleSend = () => {
-                if (message.trim() === '') return;
-                const newMessage = {
-                    id: Date.now(),
-                    from: 'Pastor',
-                    to: recipient,
-                    message: message.trim(),
-                    date: new Date().toISOString().split('T')[0]
-                };
-                setMessages(prev => [newMessage, ...prev]);
-                setMessage('');
-                alert('Mensaje enviado exitosamente (Simulación).');
-            };
-
-            return (
-                <div className="space-y-8 animate-fade-in">
-                     <Card title="Enviar Mensaje Masivo / Dirigido" icon={Icons.Send} className="max-w-3xl mx-auto">
-                        <Select label="Destinatario" value={recipient} onChange={e => setRecipient(e.target.value)}>
-                            <option value="all">TODOS los Miembros / Servidores</option>
-                            <option value="Alabanza">Líderes de Alabanza</option>
-                            <option value="EBD">Líderes de EBD</option>
-                            <option value="Jóvenes">Líderes de Jóvenes</option>
-                            <option value="Ujieres">Servidores/Ujieres</option>
-                        </Select>
-                        
-                        <div className="flex flex-col gap-1.5 mb-4">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Mensaje</label>
-                            <textarea 
-                                className="w-full px-4 py-3 h-32 bg-brand-50 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/30 transition-all font-medium text-slate-700" 
-                                value={message} 
-                                onChange={e => setMessage(e.target.value)} 
-                                placeholder="Escribe el mensaje para el grupo seleccionado..."
-                            />
-                        </div>
-
-                        <div className="flex justify-end mt-4">
-                            <Button onClick={handleSend} disabled={!message.trim()} icon="Send">
-                                Enviar Mensaje (Simulación)
-                            </Button>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        // --- APP PRINCIPAL ---
+        // --- APP SHELL ---
         const App = () => {
-            // Estado Global
-            const [user, setUser] = useState(null); 
+            const [user, setUser] = useState(null);
             const [activeTab, setActiveTab] = useState('dashboard');
-            const [isSidebarOpen, setSidebarOpen] = useState(false);
-            
-            // Mock Data States
-            const [members, setMembers] = useState(MOCK_MEMBERS);
-            const [finances, setFinances] = useState(MOCK_FINANCES);
-            const [messages, setMessages] = useState(MOCK_MESSAGES);
-            const [worshipServices, setWorshipServices] = useState(MOCK_WORSHIP_SERVICES.map(s => ({...s, ministry: 'Alabanza'})));
-            const [ebdClasses, setEbdClasses] = useState(MOCK_EBD_CLASSES.map(s => ({...s, ministry: 'EBD'})));
-            const [youthEvents, setYouthEvents] = useState(MOCK_YOUTH_EVENTS.map(s => ({...s, ministry: 'Jóvenes'})));
-            
-            const allEvents = [...worshipServices, ...ebdClasses, ...youthEvents].map(s => ({ 
-                ...s, 
-                title: s.theme || s.topic || s.title,
-                ministry: s.ministry,
-                date: s.date 
-            }));
-            
-            const allServices = [...worshipServices, ...ebdClasses, ...youthEvents];
+            const [data, setData] = useState(DATA);
+            const [sidebarOpen, setSidebarOpen] = useState(false);
 
-            // PANTALLA DE LOGIN SIMULADA
+            // Mock Login
             if (!user) {
                 return (
-                    <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
-                        <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-brand-100">
+                    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center p-6">
+                        <div className="bg-white w-full max-w-md p-8 rounded-3xl shadow-xl border border-white/50">
                             <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg shadow-brand-600/40">
-                                    <span className="font-extrabold text-2xl">G</span>
+                                <div className="w-16 h-16 bg-brand-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-brand-500/30">
+                                    <Icon name="Target" className="text-white" size={32}/>
                                 </div>
-                                <h1 className="text-2xl font-extrabold text-slate-800">Conquistadores</h1>
-                                <p className="text-slate-500">Selecciona tu rol para ingresar</p>
+                                <h1 className="text-2xl font-extrabold text-brand-900">Conquistadores App</h1>
+                                <p className="text-slate-500">Gestión Integral Ministerial</p>
                             </div>
                             <div className="space-y-3">
-                                <button onClick={() => setUser(MOCK_MEMBERS[1])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
-                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Pastor (Acceso Total)</div>
-                                    <div className="text-xs text-slate-500">Finanzas, Directorio (Borrar/Editar), Mensajería.</div>
+                                <button onClick={() => setUser({name:'Ana Perez', role:'Pastor', ministry:'Pastoral'})} className="w-full p-4 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
+                                    <div className="bg-brand-100 p-2 rounded-lg text-brand-600 group-hover:bg-brand-500 group-hover:text-white transition-colors"><Icon name="Users"/></div>
+                                    <div><p className="font-bold text-slate-700">Pastor</p><p className="text-xs text-slate-400">Acceso Total</p></div>
                                 </button>
-                                <button onClick={() => setUser(MOCK_MEMBERS[0])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
-                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Líder de Alabanza</div>
-                                    <div className="text-xs text-slate-500">Gestión de Roster, Canciones, Calendario, Directorio (Ver/Agregar).</div>
+                                <button onClick={() => setUser({name:'Carlos Gomez', role:'Líder', ministry:'Alabanza'})} className="w-full p-4 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
+                                    <div className="bg-blue-100 p-2 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors"><Icon name="Music"/></div>
+                                    <div><p className="font-bold text-slate-700">Líder Alabanza</p><p className="text-xs text-slate-400">Gestión Cultos</p></div>
                                 </button>
-                                <button onClick={() => setUser(MOCK_MEMBERS[5])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
-                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Líder EBD</div>
-                                    <div className="text-xs text-slate-500">Programación de Clases, Colaboradores, Calendario, Directorio (Ver/Agregar).</div>
-                                </button>
-                                <button onClick={() => setUser(MOCK_MEMBERS[6])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
-                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Líder Jóvenes</div>
-                                    <div className="text-xs text-slate-500">Gestión de Eventos, Directorio Jóvenes, Calendario, Directorio (Ver/Agregar).</div>
-                                </button>
-                                <button onClick={() => setUser(MOCK_MEMBERS[4])} className="w-full p-4 text-left border rounded-xl hover:bg-brand-50 hover:border-brand-600 transition-all group">
-                                    <div className="font-bold text-slate-800 group-hover:text-brand-700">Servidor General (Ujier)</div>
-                                    <div className="text-xs text-slate-500">Calendario General, Mensajes, Directorio (Ver/Agregar).</div>
+                                <button onClick={() => setUser({name:'Marta Ríos', role:'Líder', ministry:'EBD'})} className="w-full p-4 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
+                                    <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><Icon name="Smile"/></div>
+                                    <div><p className="font-bold text-slate-700">Líder EBD</p><p className="text-xs text-slate-400">Gestión Clases</p></div>
                                 </button>
                             </div>
                         </div>
@@ -1122,107 +754,109 @@
                 );
             }
 
-            const SidebarItem = ({ id, icon: IconName, label }) => {
-                const Icon = Icons[IconName];
-                const isActive = activeTab === id;
-                return (
-                    <button 
-                        onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 ${
-                            isActive 
-                                ? 'bg-brand-600 text-white shadow-lg shadow-black/20' 
-                                : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-                        }`}
-                    >
-                        <Icon width={20} className={isActive ? 'text-white' : 'opacity-70'} />
-                        {label}
-                    </button>
-                );
+            const NavItem = ({ id, icon, label }) => (
+                <button 
+                    onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${
+                        activeTab === id 
+                        ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/20' 
+                        : 'text-brand-200 hover:bg-brand-800 hover:text-white'
+                    }`}
+                >
+                    <Icon name={icon} size={18} className={activeTab === id ? 'opacity-100' : 'opacity-70'}/>
+                    {label}
+                </button>
+            );
+
+            // Función segura para actualizar miembros
+            const updateMembers = (newMembersOrFn) => {
+                setData(prev => ({
+                    ...prev,
+                    members: typeof newMembersOrFn === 'function' ? newMembersOrFn(prev.members) : newMembersOrFn
+                }));
             };
 
             return (
-                <div className="min-h-screen flex bg-brand-50 selection:bg-brand-200 selection:text-brand-900 font-sans">
+                <div className="flex min-h-screen bg-[#F8F9FA] text-slate-800 font-sans selection:bg-brand-200">
                     
                     {/* SIDEBAR */}
-                    <aside className={`
-                        fixed md:sticky top-0 h-screen w-72 bg-brand-900 text-white p-6 z-40 transition-transform duration-300 shadow-2xl flex flex-col justify-between
-                        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-                    `}>
+                    <aside className={`fixed md:sticky top-0 h-screen w-72 bg-brand-900 text-white p-6 z-40 transition-transform duration-300 shadow-2xl flex flex-col justify-between ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
                         <div>
                             <div className="flex items-center gap-3 mb-10 px-2 mt-2">
-                                <div className="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center text-white font-extrabold shadow-lg border border-brand-500">G</div>
-                                <div>
-                                    <h1 className="font-bold text-lg leading-none tracking-tight">Iglesia App</h1>
-                                    <p className="text-[10px] text-brand-300 uppercase tracking-widest font-bold mt-1">Gestión Ministerial</p>
+                                <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-white/10">
+                                    <Icon name="Target" className="text-brand-500"/>
                                 </div>
+                                <span className="font-bold text-lg tracking-tight">Iglesia App</span>
                             </div>
-
-                            <nav className="space-y-1.5">
-                                <SidebarItem id="dashboard" icon="LayoutDashboard" label="Inicio" />
-                                <SidebarItem id="calendar" icon="Calendar" label="Calendario General" />
-                                <SidebarItem id="messages" icon="Bell" label="Mensajes Recibidos" />
+                            
+                            <nav className="space-y-1">
+                                <NavItem id="dashboard" icon="LayoutDashboard" label="Inicio" />
+                                <NavItem id="members" icon="Users" label="Directorio" />
                                 
-                                {/* Permiso: Todos pueden ver el directorio y agregar (Pastor puede borrar) */}
-                                <SidebarItem id="members" icon="Users" label="Directorio General" />
-
-                                {/* Módulos de Ministerio (Pastor o Líder específico) */}
-                                {(user.role === 'Pastor' || user.ministry === 'Alabanza') && (
-                                    <SidebarItem id="worship" icon="Music" label="Alabanza (Roster)" />
-                                )}
-                                {(user.role === 'Pastor' || user.ministry === 'EBD') && (
-                                    <SidebarItem id="ebd" icon="Smile" label="EBD (Clases)" />
-                                )}
-                                {(user.role === 'Pastor' || user.ministry === 'Jóvenes') && (
-                                    <SidebarItem id="youth" icon="Target" label="Jóvenes (Eventos)" />
-                                )}
+                                <div className="text-xs font-bold text-brand-500 uppercase tracking-widest mt-6 mb-3 px-4">Ministerios</div>
+                                {(user.role === 'Pastor' || user.ministry === 'Alabanza') && <NavItem id="worship" icon="Music" label="Alabanza" />}
+                                {(user.role === 'Pastor' || user.ministry === 'EBD') && <NavItem id="ebd" icon="Smile" label="Escuela Bíblica" />}
+                                {(user.role === 'Pastor' || user.ministry === 'Jóvenes') && <NavItem id="youth" icon="Search" label="Jóvenes" />}
                                 
-                                {/* Módulos de Pastor (Acceso Total) */}
-                                {(user.role === 'Pastor') && (
+                                {user.role === 'Pastor' && (
                                     <>
-                                        <div className="border-t border-brand-800 mt-4 pt-4" />
-                                        <SidebarItem id="finance" icon="Wallet" label="Tesorería" />
-                                        <SidebarItem id="messaging" icon="Send" label="Mensajería (Enviar)" />
+                                        <div className="text-xs font-bold text-brand-500 uppercase tracking-widest mt-6 mb-3 px-4">Admin</div>
+                                        <NavItem id="finance" icon="Wallet" label="Tesorería" />
+                                        <NavItem id="messaging" icon="Send" label="Mensajería" />
                                     </>
                                 )}
                             </nav>
                         </div>
-
-                        <div className="bg-brand-800/50 rounded-xl p-4 border border-brand-700 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center text-sm font-bold text-white border-2 border-brand-900">
+                        
+                        <div className="bg-brand-800/50 p-4 rounded-xl border border-brand-700/50 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center font-bold border-2 border-brand-900 shadow-sm">
                                 {user.name.charAt(0)}
                             </div>
-                            <div className="overflow-hidden flex-1">
-                                <p className="text-sm font-bold text-white truncate">{user.name.split(' ')[0]}</p>
-                                <p className="text-[11px] text-brand-200 truncate uppercase font-bold">{user.ministry} / {user.role}</p>
+                            <div className="flex-1 overflow-hidden">
+                                <p className="text-sm font-bold truncate">{user.name.split(' ')[0]}</p>
+                                <p className="text-[10px] text-brand-300 uppercase">{user.role}</p>
                             </div>
-                            <button onClick={() => setUser(null)} className="text-brand-300 hover:text-white transition-colors" title="Salir">
-                                <Icons.LogOut width={18}/>
-                            </button>
+                            <button onClick={() => setUser(null)} className="text-brand-400 hover:text-white"><Icon name="LogOut" size={18}/></button>
                         </div>
                     </aside>
 
-                    {/* OVERLAY MÓVIL */}
-                    {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
+                    {/* OVERLAY */}
+                    {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
 
-                    {/* CONTENIDO PRINCIPAL */}
+                    {/* MAIN CONTENT */}
                     <main className="flex-1 h-screen overflow-y-auto relative">
-                        <header className="bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-brand-200 px-6 py-4 flex justify-between items-center md:hidden">
-                            <div className="font-bold text-brand-900 text-lg">Gestión</div>
-                            <button onClick={() => setSidebarOpen(true)} className="p-2 text-brand-800 active:bg-brand-100 rounded-lg">
-                                <Icons.Menu width={24} />
-                            </button>
+                        {/* Header Mobile */}
+                        <header className="md:hidden bg-white sticky top-0 z-20 px-6 py-4 flex justify-between items-center shadow-sm">
+                            <span className="font-bold text-brand-900">Conquistadores</span>
+                            <button onClick={() => setSidebarOpen(true)} className="text-brand-800"><Icon name="Menu"/></button>
                         </header>
 
                         <div className="p-6 md:p-10 max-w-7xl mx-auto pb-24">
-                            {activeTab === 'dashboard' && <Dashboard user={user} members={members} finances={finances} messages={messages} worshipServices={worshipServices} ebdClasses={ebdClasses} youthEvents={youthEvents} allServices={allServices} />}
-                            {activeTab === 'members' && <MembersModule user={user} members={members} setMembers={setMembers} />}
-                            {activeTab === 'finance' && user.role === 'Pastor' && <FinanceModule finances={finances} setFinances={setFinances} />}
-                            {activeTab === 'messaging' && user.role === 'Pastor' && <MessagingModule setMessages={setMessages} />}
-                            {activeTab === 'worship' && (user.role === 'Pastor' || user.ministry === 'Alabanza') && <WorshipModule user={user} worshipServices={worshipServices} setWorshipServices={setWorshipServices} members={members} />}
-                            {activeTab === 'ebd' && (user.role === 'Pastor' || user.ministry === 'EBD') && <EBDModule user={user} ebdClasses={ebdClasses} setEbdClasses={setEbdClasses} members={members} />}
-                            {activeTab === 'youth' && (user.role === 'Pastor' || user.ministry === 'Jóvenes') && <YouthModule user={user} youthEvents={youthEvents} setYouthEvents={setYouthEvents} members={members} />}
-                            {activeTab === 'calendar' && <CalendarModule events={allEvents} />}
-                            {activeTab === 'messages' && <MessagesModule user={user} messages={messages} />}
+                            {activeTab === 'dashboard' && <Dashboard user={user} data={data} />}
+                            {activeTab === 'members' && <MembersDirectory user={user} members={data.members} updateMembers={updateMembers} />}
+                            {activeTab === 'worship' && <WorshipModule user={user} data={data} setData={setData} />}
+                            {activeTab === 'finance' && <FinanceModule data={data} setData={setData} />}
+                            
+                            {/* Placeholders para módulos simples */}
+                            {activeTab === 'ebd' && (
+                                <Card title="Escuela Bíblica" icon="Smile">
+                                    <p className="text-slate-500">Módulo similar a Alabanza con lista de colaboradores y temas. (Funcionalidad base incluida en Dashboard)</p>
+                                </Card>
+                            )}
+                            {activeTab === 'youth' && (
+                                <Card title="Jóvenes" icon="Search">
+                                    <p className="text-slate-500">Gestión de eventos y directorio específico de jóvenes. (Funcionalidad base incluida en Dashboard)</p>
+                                </Card>
+                            )}
+                            {activeTab === 'messaging' && (
+                                <Card title="Mensajería Masiva" icon="Send">
+                                    <div className="max-w-xl">
+                                        <FormInput label="Asunto" />
+                                        <div className="mt-4"><FormInput label="Mensaje" /></div>
+                                        <Button className="mt-4" onClick={() => alert("Mensaje enviado (Simulación)")} icon="Send">Enviar Difusión</Button>
+                                    </div>
+                                </Card>
+                            )}
                         </div>
                     </main>
                 </div>
