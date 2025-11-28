@@ -3,117 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conquistadores - Gestión Eclesial 2.0</title>
+    <title>Conquistadores - Gestión Integral</title>
     
-    <!-- React y ReactDOM -->
+    <!-- Librerías Externas (React, Tailwind, Recharts) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Recharts para gráficos -->
     <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
     
-    <!-- Configuración de Colores y Estilos -->
+    <!-- Fuentes y Configuración -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         brand: {
-                            50: '#FDF8F6',
-                            100: '#F2E8E5',
-                            200: '#EADDD7',
-                            500: '#E67E22', // Naranja Principal
-                            600: '#D35400', // Terracota Fuerte
-                            700: '#A04000',
-                            800: '#6E2C00',
-                            900: '#4A1D05', // Café Oscuro (Sidebar)
-                        },
-                        secondary: {
-                            500: '#2E86C1', // Azul Complementario
+                            50: '#FDF8F6', 100: '#F2E8E5', 200: '#EADDD7', 500: '#E67E22', 
+                            600: '#D35400', 700: '#A04000', 800: '#6E2C00', 900: '#4A1D05'
                         }
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                    },
-                    boxShadow: {
-                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-                        'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)',
-                    }
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #34495E; }
+        body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Animaciones suaves */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(230, 126, 34, 0.3); }
-
-        /* Estilo Gráficos */
-        .recharts-tooltip-wrapper { outline: none; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } = Recharts;
+        const { useState, useMemo, useEffect } = React;
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } = Recharts;
 
-        // --- ICONOS SVG (Sistema Robusto) ---
-        const Icon = ({ name, size = 20, className = "" }) => {
-            const icons = {
-                Users: <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>,
-                Wallet: <path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>,
-                LayoutDashboard: <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>,
-                Music: <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>,
-                Smile: <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>,
-                Bell: <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>,
-                LogOut: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>,
-                Calendar: <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>,
-                Plus: <path d="M5 12h14"/><path d="M12 5v14"/>,
-                Trash: <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>,
-                Edit: <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>,
-                ChevronRight: <path d="m9 18 6-6-6-6"/>,
-                Send: <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>,
-                Target: <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>,
-                Menu: <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>,
-                Search: <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>,
-                Briefcase: <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>,
-                DollarSign: <line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>,
-                Clipboard: <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-            };
-            
-            // Fallback para evitar crash si el icono no existe
-            const selectedIcon = icons[name] || icons['Target']; 
-            
-            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{selectedIcon}</svg>;
+        // --- SISTEMA DE ICONOS (CORREGIDO) ---
+        // Usamos React.Fragment para agrupar múltiples paths y evitar el error de sintaxis.
+        const Icons = {
+            Users: <React.Fragment><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></React.Fragment>,
+            Wallet: <React.Fragment><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></React.Fragment>,
+            LayoutDashboard: <React.Fragment><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></React.Fragment>,
+            Music: <React.Fragment><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></React.Fragment>,
+            Smile: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></React.Fragment>,
+            Bell: <React.Fragment><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></React.Fragment>,
+            Calendar: <React.Fragment><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></React.Fragment>,
+            Target: <React.Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></React.Fragment>,
+            Send: <React.Fragment><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></React.Fragment>,
+            Plus: <React.Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></React.Fragment>,
+            Trash: <React.Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></React.Fragment>,
+            LogOut: <React.Fragment><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></React.Fragment>,
+            ChevronRight: <React.Fragment><polyline points="9 18 15 12 9 6"/></React.Fragment>,
+            Menu: <React.Fragment><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></React.Fragment>
         };
 
-        // --- UTILIDADES ---
-        const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(amount);
-        const formatDate = (dateString) => new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-        const formatDateLong = (dateString) => new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const getAge = (birthDate) => new Date().getFullYear() - new Date(birthDate).getFullYear();
+        const Icon = ({ name, size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {Icons[name] || <circle cx="12" cy="12" r="10"/>}
+            </svg>
+        );
 
-        // --- COMPONENTES UI ---
-        const Card = ({ children, className = "", title, icon, action }) => (
-            <div className={`bg-white rounded-2xl p-6 shadow-card border border-brand-100 ${className}`}>
+        // --- UTILS ---
+        const formatCurrency = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(val);
+        const formatDate = (d) => new Date(d + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+        const getAge = (d) => new Date().getFullYear() - new Date(d).getFullYear();
+
+        // --- COMPONENTES UI BASICOS ---
+        const Card = ({ children, title, icon, action, className = "" }) => (
+            <div className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-100 ${className}`}>
                 {(title || icon) && (
-                    <div className="flex justify-between items-center mb-5 pb-3 border-b border-brand-50">
-                        <h3 className="text-lg font-bold text-brand-900 flex items-center gap-2">
-                            {icon && <span className="text-brand-500 bg-brand-50 p-1.5 rounded-lg"><Icon name={icon} size={20} /></span>}
+                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-50">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                            {icon && <span className="text-brand-600 bg-brand-50 p-1.5 rounded-lg"><Icon name={icon} size={18}/></span>}
                             {title}
                         </h3>
                         {action}
@@ -123,508 +90,271 @@
             </div>
         );
 
-        const Button = ({ children, onClick, variant = "primary", className = "", icon, disabled=false, size="md" }) => {
-            const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-5 py-2.5 text-sm" };
-            const variants = {
-                primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-500/20",
+        const Button = ({ children, onClick, variant = 'primary', icon, className="" }) => {
+            const base = "flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all active:scale-95";
+            const styles = {
+                primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-500/20",
                 secondary: "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50",
-                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
-                ghost: "text-slate-500 hover:bg-slate-50 hover:text-brand-600",
+                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
             };
-            return (
-                <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}>
-                    {icon && <Icon name={icon} size={size === 'sm' ? 16 : 18} />}
-                    {children}
-                </button>
-            );
+            return <button onClick={onClick} className={`${base} ${styles[variant]} ${className}`}>{icon && <Icon name={icon} size={16}/>}{children}</button>;
         };
 
-        const Badge = ({ children, color = "brand" }) => {
-             const colors = {
-                brand: "bg-brand-100 text-brand-800 border-brand-200",
-                green: "bg-emerald-100 text-emerald-700 border-emerald-200",
-                blue: "bg-blue-100 text-blue-700 border-blue-200",
-                red: "bg-red-100 text-red-700 border-red-200",
-                purple: "bg-purple-100 text-purple-700 border-purple-200",
-                slate: "bg-slate-100 text-slate-600 border-slate-200"
+        const Badge = ({ children, color = 'slate' }) => {
+            const colors = {
+                brand: "bg-brand-100 text-brand-700", green: "bg-emerald-100 text-emerald-700",
+                blue: "bg-blue-100 text-blue-700", red: "bg-red-100 text-red-700", slate: "bg-slate-100 text-slate-600"
             };
-            return <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${colors[color] || colors.brand}`}>{children}</span>
+            return <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${colors[color] || colors.slate}`}>{children}</span>;
         };
 
         const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-900/40 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-fade-in border border-white/50">
-                        <div className="p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6">
+                        <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
-                                <Icon name="Plus" className="rotate-45" size={24}/> 
-                            </button>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full"><Icon name="Plus" className="rotate-45"/></button>
                         </div>
-                        <div className="p-6 space-y-4">
-                            {children}
-                        </div>
+                        {children}
                     </div>
                 </div>
             );
         };
 
         const FormInput = ({ label, type = "text", ...props }) => (
-            <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
-                <input className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm font-medium text-slate-700" type={type} {...props}/>
+            <div className="mb-4">
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{label}</label>
+                <input type={type} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all" {...props} />
             </div>
         );
 
-        const FormSelect = ({ label, children, ...props }) => (
-            <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
-                <div className="relative">
-                    <select className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm font-medium text-slate-700 appearance-none" {...props}>
-                        {children}
-                    </select>
-                    <div className="absolute right-3 top-3 pointer-events-none text-slate-400"><Icon name="ChevronRight" size={16} className="rotate-90"/></div>
-                </div>
-            </div>
-        );
-
-        // --- DATA INICIAL ---
-        const DATA = {
+        // --- DATOS INICIALES (MOCK) ---
+        const INITIAL_DATA = {
             members: [
-                { id: 1, name: 'Carlos Gomez', birthDate: '1993-05-15', ministry: 'Alabanza', role: 'Líder', status: 'Activo', photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-20', followUp: 'Llamar por nueva guitarra', visits: 12 },
-                { id: 2, name: 'Ana Perez', birthDate: '1978-01-20', ministry: 'Pastoral', role: 'Pastor', status: 'Activo', photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-26', followUp: 'Planificación 2024', visits: 50 },
-                { id: 3, name: 'Lucas Torres', birthDate: '2005-08-01', ministry: 'Jóvenes', role: 'Miembro', status: 'Activo', photo: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-26', followUp: 'Confirmar campamento', visits: 22 },
-                { id: 4, name: 'Marta Ríos', birthDate: '1988-12-05', ministry: 'EBD', role: 'Líder', status: 'Activo', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-20', followUp: 'Reunión de maestros', visits: 35 },
-                { id: 5, name: 'Pedro Díaz', birthDate: '1997-03-25', ministry: 'Alabanza', role: 'Baterista', status: 'Activo', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80', lastVisit: '2023-11-26', followUp: 'Renovación de credencial', visits: 8 },
+                { id: 1, name: 'Carlos Gomez', birthDate: '1995-05-15', ministry: 'Alabanza', role: 'Líder', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Carlos+Gomez&background=random', visits: 15, lastVisit: '2023-11-20', followUp: 'Llamar por nueva guitarra' },
+                { id: 2, name: 'Ana Perez', birthDate: '1980-03-10', ministry: 'Pastoral', role: 'Pastor', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Ana+Perez&background=random', visits: 48, lastVisit: '2023-11-26', followUp: 'Planificación 2024' },
+                { id: 3, name: 'Lucas Torres', birthDate: '2008-07-22', ministry: 'Jóvenes', role: 'Miembro', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Lucas+Torres&background=random', visits: 20, lastVisit: '2023-11-26', followUp: 'Confirmar campamento' },
+                { id: 4, name: 'Marta Ríos', birthDate: '1990-11-05', ministry: 'EBD', role: 'Maestra', status: 'Activo', photo: 'https://ui-avatars.com/api/?name=Marta+Rios&background=random', visits: 40, lastVisit: '2023-11-20', followUp: 'Reunión de maestros' },
             ],
             finances: [
-                { id: 1, date: '2023-11-05', type: 'Culto', cash: 25000, transfer: 45000, tithes: 12, notes: 'Ofrenda dominical' },
-                { id: 2, date: '2023-11-12', type: 'Culto', cash: 18000, transfer: 32000, tithes: 10, notes: 'Ofrenda misionera' },
-                { id: 3, date: '2023-11-15', type: 'Gasto', cash: -5000, transfer: 0, tithes: 0, notes: 'Compra librería EBD' },
-                { id: 4, date: '2023-11-19', type: 'Culto', cash: 22000, transfer: 40000, tithes: 15, notes: 'Culto especial' },
-                { id: 5, date: '2023-11-25', type: 'Gasto', cash: 0, transfer: -15000, tithes: 0, notes: 'Pago luz y servicios' },
+                { id: 1, date: '2023-11-05', type: 'Culto', cash: 25000, transfer: 40000, tithes: 12, notes: 'Ofrenda dominical' },
+                { id: 2, date: '2023-11-12', type: 'Culto', cash: 18000, transfer: 30000, tithes: 10, notes: 'Ofrenda misionera' },
+                { id: 3, date: '2023-11-15', type: 'Gasto', cash: -5000, transfer: 0, tithes: 0, notes: 'Material EBD' },
             ],
             worship: [
-                { id: 1, date: '2023-12-03', type: 'Culto', theme: 'La Fe Inquebrantable', songs: ['Tu Fidelidad', 'En los Montes', 'Gracia Sublime'], roster: { Vocal: ['Carlos', 'Marta'], Bateria: ['Pedro'], Bajo: ['Juan'], Acustica: ['Lucas'], Electrica: [] } },
-                { id: 2, date: '2023-12-01', type: 'Ensayo', theme: 'Ensayo General', songs: ['Repertorio Domingo'], roster: { Vocal: ['Carlos'], Bateria: ['Pedro'], Bajo: [], Acustica: [], Electrica: [] } },
+                { id: 1, date: '2023-12-03', type: 'Culto', theme: 'Fe Inquebrantable', songs: ['Tu Fidelidad', 'Océanos'], roster: { Vocal: ['Carlos'], Bateria: [], Bajo: [], Guitarra: [] } },
+                { id: 2, date: '2023-12-01', type: 'Ensayo', theme: 'Ensayo General', songs: ['Repertorio Domingo'], roster: { Vocal: ['Carlos'], Bateria: [], Bajo: [], Guitarra: [] } }
             ],
             ebd: [
-                { id: 1, date: '2023-12-03', topic: 'El Arca de Noé', collaborators: ['Marta', 'Sofía'], ageGroup: 'Niños (4-8)' },
-                { id: 2, date: '2023-12-10', topic: 'David y Goliat', collaborators: ['Marta', 'Lucas'], ageGroup: 'Pre-Adolescentes' },
+                { id: 1, date: '2023-12-03', topic: 'El Arca de Noé', collaborators: ['Marta'], ageGroup: 'Niños (4-8)' }
             ],
             youth: [
-                { id: 1, date: '2023-12-08', title: 'Noche de Cine', type: 'Social', location: 'Salón Principal' },
-                { id: 2, date: '2023-12-15', title: 'Charla: Identidad', type: 'Espiritual', location: 'Aula 2' },
+                { id: 1, date: '2023-12-08', title: 'Noche de Cine', location: 'Salón Principal', type: 'Social' }
             ],
             messages: [
-                { id: 1, from: 'Pastor', to: 'all', message: 'Recordatorio: Reunión de líderes este Sábado 18hs.', date: '2023-11-28' },
-                { id: 2, from: 'Líder Alabanza', to: 'Alabanza', message: 'Escuchen los temas nuevos en Spotify.', date: '2023-11-27' },
+                { id: 1, from: 'Pastor', to: 'Líderes', text: 'Reunión de planificación el sábado.', date: '2023-11-25' },
+                { id: 2, from: 'Sistema', to: 'Todos', text: 'Bienvenido al nuevo sistema de gestión.', date: '2023-11-20' }
             ]
         };
 
-        // --- MÓDULOS DEL SISTEMA ---
+        // --- MODULOS DEL SISTEMA ---
 
-        // 1. DASHBOARD COMPONENT
+        // 1. DASHBOARD & HOME
         const Dashboard = ({ user, data }) => {
-            const currentBalance = data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
-            const cashTotal = data.finances.reduce((acc, f) => acc + f.cash, 0);
-            const transferTotal = data.finances.reduce((acc, f) => acc + f.transfer, 0);
+            const balance = data.finances.reduce((acc, f) => acc + f.cash + f.transfer, 0);
+            
+            // Lógica "Tus Servicios"
+            const myServices = [
+                ...data.worship.filter(s => {
+                    const myName = user.name.split(' ')[0];
+                    return Object.values(s.roster).flat().some(n => user.name.includes(n)) || user.ministry === 'Alabanza';
+                }).map(s => ({...s, area: 'Alabanza', title: s.theme})),
+                ...data.ebd.filter(c => user.ministry === 'EBD').map(c => ({...c, area: 'EBD', title: c.topic})),
+                ...data.youth.filter(e => user.ministry === 'Jóvenes').map(e => ({...e, area: 'Jóvenes', title: e.title}))
+            ].sort((a,b) => new Date(a.date) - new Date(b.date)).filter(s => new Date(s.date) >= new Date());
 
-            // Buscar próximos servicios del usuario
-            const myNextServices = useMemo(() => {
-                let services = [];
-                // Buscar en Alabanza
-                data.worship.forEach(s => {
-                    const isInRoster = Object.values(s.roster).flat().some(n => user.name.includes(n));
-                    if(isInRoster || user.ministry === 'Alabanza') services.push({...s, ministry: 'Alabanza', roleTitle: 'Músico/Vocal'});
-                });
-                // Buscar en EBD
-                data.ebd.forEach(s => {
-                    if(s.collaborators.some(n => user.name.includes(n)) || user.ministry === 'EBD') services.push({...s, ministry: 'EBD', roleTitle: 'Maestro', title: s.topic});
-                });
-                
-                return services
-                    .filter(s => new Date(s.date) >= new Date())
-                    .sort((a,b) => new Date(a.date) - new Date(b.date))
-                    .slice(0, 3);
-            }, [data, user]);
-
-            const chartData = data.finances.filter(f => f.type === 'Culto').map(f => ({
-                name: formatDate(f.date),
-                ingresos: f.cash + f.transfer
-            }));
+            const chartData = data.finances.filter(f => f.type === 'Culto').map(f => ({ name: formatDate(f.date), total: f.cash + f.transfer }));
 
             return (
                 <div className="space-y-6 animate-fade-in">
-                    {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold text-brand-900">Hola, {user.name.split(' ')[0]} 👋</h2>
-                            <p className="text-slate-500">Panel de Control - {user.role}</p>
+                            <h2 className="text-2xl font-bold text-slate-800">Hola, {user.name.split(' ')[0]} 👋</h2>
+                            <p className="text-slate-500 text-sm">Panel de {user.role}</p>
                         </div>
                         {user.role === 'Pastor' && (
-                            <div className="bg-white px-4 py-2 rounded-xl border border-brand-100 shadow-sm flex items-center gap-4">
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Balance Actual</p>
-                                    <p className="text-xl font-extrabold text-brand-600">{formatCurrency(currentBalance)}</p>
-                                </div>
-                                <div className="h-8 w-px bg-slate-200"></div>
-                                <div className="flex gap-3 text-xs">
-                                    <div><span className="block font-bold text-slate-700">Efectivo</span> {formatCurrency(cashTotal)}</div>
-                                    <div><span className="block font-bold text-slate-700">Banco</span> {formatCurrency(transferTotal)}</div>
-                                </div>
+                            <div className="bg-white px-5 py-3 rounded-xl shadow-sm border border-slate-100 flex gap-6">
+                                <div><p className="text-xs text-slate-400 font-bold uppercase">Balance</p><p className="text-xl font-bold text-brand-600">{formatCurrency(balance)}</p></div>
+                                <div className="border-l pl-6"><p className="text-xs text-slate-400 font-bold uppercase">Miembros</p><p className="text-xl font-bold text-slate-700">{data.members.length}</p></div>
                             </div>
                         )}
                     </div>
 
-                    {/* Alertas de Servicio (CRÍTICO) */}
-                    <Card title="Tus Próximos Servicios" icon="Briefcase" className="border-l-4 border-l-brand-500">
-                        {myNextServices.length > 0 ? (
+                    {/* ALERTA DE SERVICIOS (PARA TODOS) */}
+                    <Card title="Tus Próximos Servicios" icon="Bell" className="border-l-4 border-l-brand-500 bg-brand-50/30">
+                        {myServices.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {myNextServices.map((s, idx) => (
-                                    <div key={idx} className="bg-brand-50 rounded-xl p-4 flex flex-col gap-2 relative overflow-hidden group">
-                                        <div className="absolute right-0 top-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                            <Icon name="Target" size={60} className="text-brand-500"/>
+                                {myServices.slice(0, 3).map((s, i) => (
+                                    <div key={i} className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <Badge color="brand">{s.area}</Badge>
+                                            <span className="text-xs font-bold text-slate-400">{formatDate(s.date)}</span>
                                         </div>
-                                        <div className="flex justify-between items-start z-10">
-                                            <Badge color="brand">{s.ministry}</Badge>
-                                            <span className="text-xs font-bold text-brand-700">{formatDate(s.date)}</span>
-                                        </div>
-                                        <div className="z-10">
-                                            <p className="font-bold text-brand-900 text-lg leading-tight">{s.theme || s.title || 'Servicio General'}</p>
-                                            <p className="text-xs text-brand-700 mt-1">Rol: {s.roleTitle}</p>
-                                        </div>
+                                        <p className="font-bold text-slate-800">{s.title}</p>
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <div className="text-center py-6 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                <Icon name="Smile" className="mx-auto mb-2 opacity-50"/>
-                                No tienes servicios asignados próximamente. ¡Descansa!
-                            </div>
-                        )}
+                        ) : <p className="text-slate-500 italic text-sm">No tienes servicios asignados próximamente.</p>}
                     </Card>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Panel Izquierdo: Gráficos Pastor o Calendario */}
                         <div className="lg:col-span-2 space-y-6">
                             {user.role === 'Pastor' && (
-                                <Card title="Ingresos Mensuales (Noviembre)" icon="DollarSign">
+                                <Card title="Resumen Financiero (Ofrendas)" icon="Wallet">
                                     <div className="h-64">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={chartData}>
                                                 <defs>
-                                                    <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                                                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                                                         <stop offset="5%" stopColor="#E67E22" stopOpacity={0.8}/>
                                                         <stop offset="95%" stopColor="#E67E22" stopOpacity={0}/>
                                                     </linearGradient>
                                                 </defs>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0"/>
-                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} dy={10}/>
-                                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} tickFormatter={(val)=>`$${val/1000}k`}/>
-                                                <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} formatter={(value) => formatCurrency(value)}/>
-                                                <Area type="monotone" dataKey="ingresos" stroke="#E67E22" fillOpacity={1} fill="url(#colorIngresos)" strokeWidth={3} />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12}} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12}} tickFormatter={(val)=>`$${val/1000}k`}/>
+                                                <Tooltip formatter={(val)=>formatCurrency(val)} />
+                                                <Area type="monotone" dataKey="total" stroke="#E67E22" fillOpacity={1} fill="url(#colorTotal)" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </Card>
                             )}
-                            
-                            <Card title="Mensajes Recientes" icon="Bell">
+                            <Card title="Mensajes Recientes" icon="Send">
                                 <div className="space-y-3">
-                                    {data.messages.slice(0,3).map(m => (
-                                        <div key={m.id} className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xs shrink-0">
-                                                {m.from.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="flex justify-between items-center w-full">
-                                                    <p className="text-sm font-bold text-slate-800">{m.from}</p>
-                                                    <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600 mt-0.5">{m.message}</p>
+                                    {data.messages.map(m => (
+                                        <div key={m.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-brand-200 flex items-center justify-center text-brand-800 font-bold text-xs">{m.from[0]}</div>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between"><span className="font-bold text-sm">{m.from}</span> <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span></div>
+                                                <p className="text-sm text-slate-600">{m.text}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </Card>
                         </div>
-
-                        {/* Panel Derecho: Calendario Rápido */}
                         <div className="lg:col-span-1">
-                            <Card title="Agenda Semanal" icon="Calendar" className="h-full">
+                            <Card title="Calendario Semanal" icon="Calendar" className="h-full">
                                 <div className="space-y-4">
                                     {[...data.worship, ...data.ebd, ...data.youth]
                                         .filter(e => new Date(e.date) >= new Date())
                                         .sort((a,b) => new Date(a.date) - new Date(b.date))
                                         .slice(0, 5)
                                         .map((ev, i) => (
-                                            <div key={i} className="flex gap-3 items-center group">
-                                                <div className="text-center px-2 py-1 bg-slate-100 rounded-lg group-hover:bg-brand-100 transition-colors">
-                                                    <span className="block text-xs font-bold text-slate-500 group-hover:text-brand-600">{new Date(ev.date).getDate()}</span>
-                                                    <span className="block text-[10px] uppercase text-slate-400 group-hover:text-brand-500">{new Date(ev.date).toLocaleDateString('es-AR', {month:'short'})}</span>
+                                            <div key={i} className="flex gap-3 items-center">
+                                                <div className="bg-slate-100 px-2 py-1 rounded text-center min-w-[3rem]">
+                                                    <span className="block text-xs font-bold text-slate-500">{new Date(ev.date).getDate()}</span>
+                                                    <span className="block text-[10px] text-slate-400 uppercase">{new Date(ev.date).toLocaleDateString('es-AR',{month:'short'})}</span>
                                                 </div>
-                                                <div className="flex-1 border-b border-slate-50 pb-2">
-                                                    <p className="text-sm font-bold text-slate-700 truncate">{ev.theme || ev.topic || ev.title}</p>
-                                                    <div className="flex items-center gap-2 mt-0.5">
-                                                        <Badge color="slate">{ev.ministry || (ev.collaborators ? 'EBD' : 'Jóvenes')}</Badge>
-                                                        {ev.type && <span className="text-[10px] text-slate-400 italic">{ev.type}</span>}
-                                                    </div>
+                                                <div className="border-b border-slate-50 flex-1 pb-2">
+                                                    <p className="font-semibold text-sm text-slate-700 truncate">{ev.theme || ev.topic || ev.title}</p>
+                                                    <Badge>{ev.type || 'Evento'}</Badge>
                                                 </div>
                                             </div>
-                                    ))}
+                                        ))}
                                 </div>
                             </Card>
                         </div>
                     </div>
                 </div>
-            )
+            );
         };
 
-        // 2. MEMBERS DIRECTORY (FICHA STYLE)
-        const MembersDirectory = ({ user, members, updateMembers }) => {
-            const [viewMember, setViewMember] = useState(null);
+        // 2. DIRECTORIO DE MIEMBROS
+        const MembersModule = ({ user, data, updateData }) => {
+            const [selectedMember, setSelectedMember] = useState(null);
             const [isAddOpen, setAddOpen] = useState(false);
-            const [newMember, setNewMember] = useState({ name: '', ministry: 'General', birthDate: '', role: 'Miembro', photo: '' });
+            const [newMember, setNewMember] = useState({ name: '', ministry: 'General', birthDate: '', photo: '' });
 
             const handleDelete = (id) => {
-                if(confirm("¿Seguro que deseas eliminar esta ficha? Esta acción es irreversible.")) {
-                    updateMembers(prev => prev.filter(m => m.id !== id));
-                    setViewMember(null);
+                if(confirm("¿Eliminar miembro?")) {
+                    updateData('members', prev => prev.filter(m => m.id !== id));
+                    setSelectedMember(null);
                 }
             };
-
+            
             const handleAdd = () => {
-                updateMembers(prev => [...prev, { 
-                    ...newMember, 
-                    id: Date.now(), 
-                    visits: 0, 
-                    lastVisit: new Date().toISOString().split('T')[0],
-                    photo: newMember.photo || `https://ui-avatars.com/api/?name=${newMember.name}&background=random`
-                }]);
+                updateData('members', prev => [...prev, { ...newMember, id: Date.now(), visits: 0, status: 'Activo', photo: `https://ui-avatars.com/api/?name=${newMember.name}` }]);
                 setAddOpen(false);
             };
 
             return (
                 <div className="space-y-6 animate-fade-in">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-brand-900">Directorio de Miembros</h2>
-                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nueva Ficha</Button>
+                        <h2 className="text-2xl font-bold text-slate-800">Directorio de Miembros</h2>
+                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Miembro</Button>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {members.map(member => (
-                            <div key={member.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:border-brand-200 transition-all duration-300 overflow-hidden group flex flex-col">
-                                <div className="p-6 flex gap-4 items-start">
-                                    <div className="relative">
-                                        <img src={member.photo} className="w-16 h-16 rounded-2xl object-cover shadow-md group-hover:scale-105 transition-transform" alt={member.name} onError={(e) => e.target.src = 'https://ui-avatars.com/api/?name=' + member.name} />
-                                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${member.status === 'Activo' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {data.members.map(m => (
+                            <div key={m.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col gap-4">
+                                <div className="flex gap-4 items-center">
+                                    <img src={m.photo} alt={m.name} className="w-14 h-14 rounded-full bg-slate-200 object-cover"/>
                                     <div>
-                                        <h3 className="font-bold text-lg text-slate-800 leading-tight">{member.name}</h3>
-                                        <p className="text-xs text-brand-600 font-semibold uppercase mt-1">{member.ministry} • {member.role}</p>
-                                        <p className="text-xs text-slate-400 mt-0.5">{getAge(member.birthDate)} años</p>
+                                        <h3 className="font-bold text-slate-800">{m.name}</h3>
+                                        <p className="text-xs text-brand-600 font-bold uppercase">{m.ministry} • {m.role}</p>
+                                        <p className="text-xs text-slate-400">{getAge(m.birthDate)} años</p>
                                     </div>
                                 </div>
-                                <div className="px-6 pb-4 space-y-3 flex-1">
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-slate-500 font-medium">Asistencia</span>
-                                            <span className="text-brand-600 font-bold">{member.visits} visitas</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                                            <div className="bg-brand-500 h-full rounded-full" style={{width: `${Math.min(member.visits * 2, 100)}%`}}></div>
-                                        </div>
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <div className="flex justify-between text-xs mb-1 font-semibold text-slate-500">
+                                        <span>Asistencia</span> <span>{m.visits} visitas</span>
                                     </div>
-                                    {member.followUp && (
-                                        <p className="text-xs text-slate-500 italic truncate border-l-2 border-brand-300 pl-2">"{member.followUp}"</p>
-                                    )}
+                                    <div className="w-full bg-slate-200 h-1.5 rounded-full"><div className="bg-brand-500 h-1.5 rounded-full" style={{width: `${Math.min(m.visits*2, 100)}%`}}></div></div>
                                 </div>
-                                <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
-                                    <button onClick={() => setViewMember(member)} className="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
-                                        VER FICHA COMPLETA <Icon name="ChevronRight" size={14}/>
-                                    </button>
-                                </div>
+                                <Button variant="secondary" onClick={() => setSelectedMember(m)} className="w-full">Ver Ficha</Button>
                             </div>
                         ))}
                     </div>
 
-                    {/* Modal Detalles */}
-                    <Modal isOpen={!!viewMember} onClose={() => setViewMember(null)} title="Ficha Técnica">
-                        {viewMember && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="md:col-span-1 flex flex-col items-center text-center">
-                                    <img src={viewMember.photo} className="w-32 h-32 rounded-full shadow-lg border-4 border-brand-50 mb-4 object-cover" onError={(e) => e.target.src = 'https://ui-avatars.com/api/?name=' + viewMember.name}/>
-                                    <h2 className="text-xl font-bold text-slate-800">{viewMember.name}</h2>
-                                    <Badge className="mt-2">{viewMember.role}</Badge>
-                                    
-                                    {user.role === 'Pastor' && (
-                                        <Button variant="danger" className="mt-6 w-full" onClick={() => handleDelete(viewMember.id)} icon="Trash">
-                                            Eliminar Ficha
-                                        </Button>
-                                    )}
-                                </div>
-                                <div className="md:col-span-2 space-y-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-slate-50 p-3 rounded-xl">
-                                            <p className="text-xs text-slate-400 uppercase font-bold">Ministerio</p>
-                                            <p className="font-semibold text-slate-700">{viewMember.ministry}</p>
-                                        </div>
-                                        <div className="bg-slate-50 p-3 rounded-xl">
-                                            <p className="text-xs text-slate-400 uppercase font-bold">Fecha Nac.</p>
-                                            <p className="font-semibold text-slate-700">{formatDate(viewMember.birthDate)} ({getAge(viewMember.birthDate)} años)</p>
-                                        </div>
-                                    </div>
-                                    
+                    <Modal isOpen={!!selectedMember} onClose={() => setSelectedMember(null)} title="Ficha Técnica">
+                        {selectedMember && (
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-4 border-b pb-4">
+                                    <img src={selectedMember.photo} className="w-20 h-20 rounded-full"/>
                                     <div>
-                                        <h4 className="font-bold text-brand-800 border-b border-brand-100 pb-2 mb-3">Seguimiento Pastoral</h4>
-                                        <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-amber-900 text-sm">
-                                            <p className="font-bold mb-1">Última nota:</p>
-                                            {viewMember.followUp}
-                                        </div>
-                                        <div className="mt-3 flex justify-between text-sm text-slate-500">
-                                            <span>Última visita: {formatDate(viewMember.lastVisit)}</span>
-                                            <span>Visitas totales: {viewMember.visits}</span>
-                                        </div>
+                                        <h2 className="text-xl font-bold">{selectedMember.name}</h2>
+                                        <Badge>{selectedMember.status}</Badge>
                                     </div>
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Edad</p><p className="font-bold">{getAge(selectedMember.birthDate)} años</p></div>
+                                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-400 font-bold uppercase">Ministerio</p><p className="font-bold">{selectedMember.ministry}</p></div>
+                                </div>
+                                <div className="bg-amber-50 border border-amber-100 p-4 rounded-lg text-sm text-amber-900">
+                                    <p className="font-bold mb-1">Seguimiento / Notas:</p>
+                                    <p>{selectedMember.followUp}</p>
+                                </div>
+                                {user.role === 'Pastor' && (
+                                    <Button variant="danger" onClick={() => handleDelete(selectedMember.id)} icon="Trash" className="w-full">Eliminar Miembro</Button>
+                                )}
                             </div>
                         )}
                     </Modal>
 
-                    {/* Modal Agregar */}
-                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Nueva Ficha de Miembro">
+                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Agregar Miembro">
                         <FormInput label="Nombre Completo" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-                        <FormInput label="Fecha de Nacimiento" type="date" value={newMember.birthDate} onChange={e => setNewMember({...newMember, birthDate: e.target.value})} />
-                        <FormSelect label="Ministerio Principal" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
-                            <option value="General">General</option>
-                            <option value="Alabanza">Alabanza</option>
-                            <option value="EBD">Escuela Bíblica</option>
-                            <option value="Jóvenes">Jóvenes</option>
-                            <option value="Ujieres">Ujieres</option>
-                        </FormSelect>
-                        <FormInput label="URL Foto (Opcional)" value={newMember.photo} onChange={e => setNewMember({...newMember, photo: e.target.value})} placeholder="https://..." />
-                        <div className="pt-4 flex justify-end gap-3">
+                        <FormInput label="Fecha Nacimiento" type="date" value={newMember.birthDate} onChange={e => setNewMember({...newMember, birthDate: e.target.value})} />
+                        <div className="mb-4">
+                            <label className="text-xs font-bold text-slate-500 uppercase">Ministerio</label>
+                            <select className="w-full mt-1 p-2 border rounded" value={newMember.ministry} onChange={e => setNewMember({...newMember, ministry: e.target.value})}>
+                                <option value="General">General</option><option value="Alabanza">Alabanza</option><option value="EBD">EBD</option><option value="Jóvenes">Jóvenes</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-2 mt-4">
                             <Button variant="secondary" onClick={() => setAddOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd}>Crear Ficha</Button>
-                        </div>
-                    </Modal>
-                </div>
-            )
-        };
-
-        // 3. WORSHIP MODULE
-        const WorshipModule = ({ user, data, setData }) => {
-            const [isModalOpen, setModalOpen] = useState(false);
-            const [newService, setNewService] = useState({ 
-                date: '', type: 'Culto', theme: '', songs: '', 
-                roster: { Vocal: [], Bateria: [], Bajo: [], Acustica: [], Electrica: [] } 
-            });
-
-            // Flatten musicians for selection
-            const musicians = data.members.map(m => m.name.split(' ')[0]);
-            const instruments = ['Vocal', 'Bateria', 'Bajo', 'Acustica', 'Electrica'];
-
-            const handleAdd = () => {
-                const songsArray = newService.songs.split(',').map(s => s.trim());
-                setData(prev => ({
-                    ...prev,
-                    worship: [...prev.worship, { ...newService, id: Date.now(), songs: songsArray }]
-                }));
-                setModalOpen(false);
-            };
-
-            const toggleMusician = (inst, name) => {
-                setNewService(prev => {
-                    const current = prev.roster[inst] || []; // FIX: Fallback to empty array
-                    const updated = current.includes(name) ? current.filter(n => n !== name) : [...current, name];
-                    return { ...prev, roster: { ...prev.roster, [inst]: updated } };
-                });
-            };
-
-            return (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-brand-900">Alabanza: Cultos y Ensayos</h2>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Agendar</Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {data.worship.sort((a,b) => new Date(a.date) - new Date(b.date)).map(service => (
-                            <Card key={service.id} className="relative overflow-hidden group">
-                                <div className={`absolute top-0 left-0 w-2 h-full ${service.type === 'Ensayo' ? 'bg-slate-400' : 'bg-brand-500'}`}></div>
-                                <div className="pl-4">
-                                    <div className="flex justify-between mb-2">
-                                        <Badge color={service.type === 'Ensayo' ? 'slate' : 'brand'}>{service.type}</Badge>
-                                        <span className="text-xs font-bold text-slate-400">{formatDate(service.date)}</span>
-                                    </div>
-                                    <h3 className="text-lg font-bold text-brand-900 mb-1">{service.theme}</h3>
-                                    
-                                    <div className="mt-4 space-y-3">
-                                        <div className="bg-brand-50/50 p-2 rounded-lg border border-brand-100">
-                                            <p className="text-[10px] uppercase font-bold text-brand-400 mb-1">Canciones</p>
-                                            <div className="flex flex-wrap gap-1">
-                                                {service.songs.map((s, i) => <span key={i} className="text-xs text-slate-600 bg-white px-1.5 py-0.5 rounded border border-slate-100">{s}</span>)}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Equipo (Roster)</p>
-                                            <div className="text-xs space-y-1">
-                                                {Object.entries(service.roster).map(([inst, people]) => people.length > 0 && (
-                                                    <div key={inst} className="flex gap-2">
-                                                        <span className="font-bold text-slate-600 w-16">{inst}:</span>
-                                                        <span className="text-slate-500">{people.join(', ')}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
-
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Planificar Servicio">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormInput label="Fecha" type="date" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
-                            <FormSelect label="Tipo" value={newService.type} onChange={e => setNewService({...newService, type: e.target.value})}>
-                                <option value="Culto">Culto General</option>
-                                <option value="Ensayo">Ensayo</option>
-                                <option value="Especial">Evento Especial</option>
-                            </FormSelect>
-                        </div>
-                        <FormInput label="Título / Tema" value={newService.theme} onChange={e => setNewService({...newService, theme: e.target.value})} />
-                        <FormInput label="Canciones (Separar por coma)" value={newService.songs} onChange={e => setNewService({...newService, songs: e.target.value})} placeholder="Tu Fidelidad, Océanos..." />
-                        
-                        <div className="border-t border-slate-100 pt-4 mt-2">
-                            <p className="text-xs font-bold text-brand-600 uppercase mb-3">Armar Equipo</p>
-                            <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scroll">
-                                {instruments.map(inst => (
-                                    <div key={inst} className="bg-slate-50 p-2 rounded-lg">
-                                        <p className="text-xs font-bold text-slate-500 mb-1">{inst}</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {musicians.map(musico => (
-                                                <button 
-                                                    key={musico}
-                                                    onClick={() => toggleMusician(inst, musico)}
-                                                    className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
-                                                        newService.roster[inst]?.includes(musico) 
-                                                        ? 'bg-brand-500 text-white border-brand-600' 
-                                                        : 'bg-white text-slate-500 border-slate-200 hover:border-brand-300'
-                                                    }`}
-                                                >
-                                                    {musico}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="pt-4 flex justify-end gap-3">
-                            <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
                             <Button onClick={handleAdd}>Guardar</Button>
                         </div>
                     </Modal>
@@ -632,86 +362,188 @@
             );
         };
 
-        // 4. FINANCES (PASTOR)
-        const FinanceModule = ({ data, setData }) => {
-            const [isModalOpen, setModalOpen] = useState(false);
-            const [newMove, setNewMove] = useState({ date: new Date().toISOString().split('T')[0], type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
+        // 3. FINANZAS
+        const FinanceModule = ({ data, updateData }) => {
+            const [isAddOpen, setAddOpen] = useState(false);
+            const [newMove, setNewMove] = useState({ date: '', type: 'Culto', cash: 0, transfer: 0, tithes: 0, notes: '' });
 
             const handleAdd = () => {
-                const amountCash = newMove.type === 'Gasto' ? -Math.abs(newMove.cash) : Math.abs(newMove.cash);
-                const amountTransfer = newMove.type === 'Gasto' ? -Math.abs(newMove.transfer) : Math.abs(newMove.transfer);
-                
-                setData(prev => ({
-                    ...prev,
-                    finances: [...prev.finances, { ...newMove, id: Date.now(), cash: amountCash, transfer: amountTransfer }]
-                }));
-                setModalOpen(false);
+                const isExpense = newMove.type === 'Gasto';
+                const move = { ...newMove, id: Date.now(), cash: isExpense ? -Math.abs(newMove.cash) : Math.abs(newMove.cash), transfer: isExpense ? -Math.abs(newMove.transfer) : Math.abs(newMove.transfer) };
+                updateData('finances', prev => [...prev, move]);
+                setAddOpen(false);
             };
 
             return (
                 <div className="space-y-6 animate-fade-in">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-brand-900">Tesorería y Cierres</h2>
-                        <Button onClick={() => setModalOpen(true)} icon="Plus">Nuevo Cierre / Movimiento</Button>
+                        <h2 className="text-2xl font-bold text-slate-800">Tesorería</h2>
+                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Movimiento</Button>
                     </div>
-
-                    <Card title="Historial de Movimientos" icon="DollarSign">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
-                                    <tr>
-                                        <th className="p-3 rounded-l-lg">Fecha</th>
-                                        <th className="p-3">Concepto</th>
-                                        <th className="p-3 text-right">Efectivo</th>
-                                        <th className="p-3 text-right">Transferencia</th>
-                                        <th className="p-3 text-center">Diezmantes</th>
-                                        <th className="p-3 rounded-r-lg">Total</th>
+                    <Card>
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                                <tr>
+                                    <th className="p-3">Fecha</th><th className="p-3">Concepto</th><th className="p-3 text-right">Efectivo</th><th className="p-3 text-right">Transf.</th><th className="p-3 text-center">Diez.</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {data.finances.map(f => (
+                                    <tr key={f.id} className="hover:bg-slate-50">
+                                        <td className="p-3 font-medium">{formatDate(f.date)}</td>
+                                        <td className="p-3"><Badge color={f.type==='Gasto'?'red':'green'}>{f.type}</Badge> <span className="text-slate-500 ml-2">{f.notes}</span></td>
+                                        <td className={`p-3 text-right font-mono font-bold ${f.cash<0?'text-red-500':'text-emerald-600'}`}>{formatCurrency(f.cash)}</td>
+                                        <td className={`p-3 text-right font-mono font-bold ${f.transfer<0?'text-red-500':'text-blue-600'}`}>{formatCurrency(f.transfer)}</td>
+                                        <td className="p-3 text-center">{f.tithes || '-'}</td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {data.finances.sort((a,b) => new Date(b.date) - new Date(a.date)).map(f => (
-                                        <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="p-3 font-medium text-slate-700">{formatDate(f.date)}</td>
-                                            <td className="p-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge color={f.type === 'Gasto' ? 'red' : 'green'}>{f.type}</Badge>
-                                                    <span className="text-slate-500 truncate max-w-[150px]">{f.notes}</span>
-                                                </div>
-                                            </td>
-                                            <td className={`p-3 text-right ${f.cash < 0 ? 'text-red-500' : 'text-slate-600'}`}>{formatCurrency(f.cash)}</td>
-                                            <td className={`p-3 text-right ${f.transfer < 0 ? 'text-red-500' : 'text-slate-600'}`}>{formatCurrency(f.transfer)}</td>
-                                            <td className="p-3 text-center text-slate-400">{f.tithes > 0 ? f.tithes : '-'}</td>
-                                            <td className="p-3 text-right font-bold text-brand-700">{formatCurrency(f.cash + f.transfer)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     </Card>
-
-                    <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Registrar Movimiento">
-                        <FormSelect label="Tipo de Registro" value={newMove.type} onChange={e => setNewMove({...newMove, type: e.target.value})}>
-                            <option value="Culto">Cierre de Culto (Ingreso)</option>
-                            <option value="Gasto">Gasto / Egreso</option>
-                            <option value="Donacion">Donación Externa</option>
-                        </FormSelect>
+                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Registrar Movimiento">
+                        <div className="mb-4"><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full border p-2 rounded" value={newMove.type} onChange={e => setNewMove({...newMove, type: e.target.value})}><option value="Culto">Cierre Culto</option><option value="Gasto">Gasto</option></select></div>
                         <FormInput label="Fecha" type="date" value={newMove.date} onChange={e => setNewMove({...newMove, date: e.target.value})} />
-                        
-                        <div className="grid grid-cols-2 gap-4 bg-brand-50 p-4 rounded-xl border border-brand-100">
-                            <FormInput label="Monto Efectivo" type="number" value={newMove.cash} onChange={e => setNewMove({...newMove, cash: parseFloat(e.target.value) || 0})} placeholder="0.00" />
-                            <FormInput label="Monto Transferencia" type="number" value={newMove.transfer} onChange={e => setNewMove({...newMove, transfer: parseFloat(e.target.value) || 0})} placeholder="0.00" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormInput label="Efectivo" type="number" value={newMove.cash} onChange={e => setNewMove({...newMove, cash: +e.target.value})} />
+                            <FormInput label="Transferencia" type="number" value={newMove.transfer} onChange={e => setNewMove({...newMove, transfer: +e.target.value})} />
                         </div>
-
-                        {newMove.type === 'Culto' && (
-                             <FormInput label="Cantidad de Personas que Diezmaron" type="number" value={newMove.tithes} onChange={e => setNewMove({...newMove, tithes: parseInt(e.target.value) || 0})} />
-                        )}
-                        <FormInput label="Notas / Detalle" value={newMove.notes} onChange={e => setNewMove({...newMove, notes: e.target.value})} placeholder="Ej: Ofrenda especial misiones" />
-                        
-                        <div className="pt-4 flex justify-end gap-3">
-                            <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleAdd}>Registrar</Button>
-                        </div>
+                        {newMove.type === 'Culto' && <FormInput label="Cant. Diezmantes" type="number" value={newMove.tithes} onChange={e => setNewMove({...newMove, tithes: +e.target.value})} />}
+                        <FormInput label="Notas" value={newMove.notes} onChange={e => setNewMove({...newMove, notes: e.target.value})} />
+                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Registrar</Button></div>
                     </Modal>
+                </div>
+            );
+        };
+
+        // 4. ALABANZA
+        const WorshipModule = ({ data, updateData }) => {
+            const [isAddOpen, setAddOpen] = useState(false);
+            const [newService, setNewService] = useState({ date: '', type: 'Culto', theme: '', songs: '', roster: { Vocal: [], Bateria: [], Bajo: [], Guitarra: [] } });
+
+            const handleAdd = () => {
+                const songsList = newService.songs.split(',').map(s=>s.trim());
+                updateData('worship', prev => [...prev, {...newService, id: Date.now(), songs: songsList}]);
+                setAddOpen(false);
+            };
+
+            const toggleMusician = (inst, name) => {
+                setNewService(prev => {
+                    const current = prev.roster[inst] || [];
+                    const updated = current.includes(name) ? current.filter(n=>n!==name) : [...current, name];
+                    return {...prev, roster: {...prev.roster, [inst]: updated}};
+                });
+            };
+
+            const musicians = data.members.map(m => m.name.split(' ')[0]);
+
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-slate-800">Ministerio de Alabanza</h2>
+                        <Button onClick={() => setAddOpen(true)} icon="Plus">Planificar</Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {data.worship.map(s => (
+                            <Card key={s.id}>
+                                <div className="flex justify-between mb-2">
+                                    <Badge color={s.type==='Ensayo'?'slate':'brand'}>{s.type}</Badge>
+                                    <span className="text-xs font-bold text-slate-400">{formatDate(s.date)}</span>
+                                </div>
+                                <h3 className="font-bold text-lg mb-2">{s.theme}</h3>
+                                <div className="bg-slate-50 p-2 rounded mb-2">
+                                    <p className="text-[10px] uppercase font-bold text-slate-400">Canciones</p>
+                                    <p className="text-sm">{s.songs.join(', ')}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Equipo</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {Object.entries(s.roster).map(([role, list]) => list.length>0 && (
+                                            <Badge key={role} color="blue">{role}: {list.join(', ')}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title="Planificar">
+                        <FormInput label="Fecha" type="date" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
+                        <FormInput label="Tema" value={newService.theme} onChange={e => setNewService({...newService, theme: e.target.value})} />
+                        <div className="mb-4"><label className="text-xs font-bold uppercase">Tipo</label><select className="w-full border p-2 rounded" value={newService.type} onChange={e => setNewService({...newService, type: e.target.value})}><option value="Culto">Culto</option><option value="Ensayo">Ensayo</option></select></div>
+                        <FormInput label="Canciones (Sep. comas)" value={newService.songs} onChange={e => setNewService({...newService, songs: e.target.value})} />
+                        <div className="border-t pt-4">
+                            <p className="font-bold text-sm mb-2">Armar Equipo</p>
+                            {['Vocal', 'Bateria', 'Bajo', 'Guitarra'].map(inst => (
+                                <div key={inst} className="mb-2">
+                                    <p className="text-xs font-bold text-slate-500">{inst}</p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {musicians.map(m => (
+                                            <button key={m} onClick={() => toggleMusician(inst, m)} className={`px-2 py-0.5 text-xs border rounded ${newService.roster[inst].includes(m) ? 'bg-brand-500 text-white' : 'bg-white'}`}>{m}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Guardar</Button></div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // 5. ESCUELA BIBLICA & JOVENES (Simplificados pero funcionales)
+        const GenericModule = ({ title, items, typeKey, updateData, dataKey, fields }) => {
+            const [isAddOpen, setAddOpen] = useState(false);
+            const [newItem, setNewItem] = useState(fields.reduce((acc, f) => ({...acc, [f.key]: ''}), {}));
+
+            const handleAdd = () => {
+                updateData(dataKey, prev => [...prev, {...newItem, id: Date.now()}]);
+                setAddOpen(false);
+            };
+
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
+                        <Button onClick={() => setAddOpen(true)} icon="Plus">Nuevo Evento/Clase</Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {items.map(i => (
+                            <Card key={i.id} title={i[fields[1].key]}> {/* Usamos el segundo campo como título */}
+                                <div className="text-sm text-slate-600 space-y-1">
+                                    <p><strong>Fecha:</strong> {formatDate(i.date)}</p>
+                                    {fields.slice(2).map(f => (
+                                        <p key={f.key}><strong>{f.label}:</strong> {i[f.key]}</p>
+                                    ))}
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                    <Modal isOpen={isAddOpen} onClose={() => setAddOpen(false)} title={`Nuevo en ${title}`}>
+                        {fields.map(f => (
+                            <FormInput key={f.key} label={f.label} type={f.type || 'text'} value={newItem[f.key]} onChange={e => setNewItem({...newItem, [f.key]: e.target.value})} />
+                        ))}
+                        <div className="flex justify-end mt-4"><Button onClick={handleAdd}>Guardar</Button></div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // 6. MENSAJERIA
+        const MessagingModule = ({ data, updateData }) => {
+            const [msg, setMsg] = useState({ to: 'Todos', text: '' });
+            const handleSend = () => {
+                if(!msg.text) return;
+                updateData('messages', prev => [{...msg, id: Date.now(), from: 'Pastor', date: new Date().toISOString()}, ...prev]);
+                setMsg({ to: 'Todos', text: '' });
+                alert("Mensaje enviado (Simulado)");
+            };
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <h2 className="text-2xl font-bold text-slate-800">Mensajería Masiva</h2>
+                    <Card title="Redactar Mensaje" icon="Send">
+                        <div className="mb-4"><label className="text-xs font-bold uppercase">Destinatario</label><select className="w-full border p-2 rounded" value={msg.to} onChange={e => setMsg({...msg, to: e.target.value})}><option>Todos</option><option>Líderes</option><option>Alabanza</option></select></div>
+                        <div className="mb-4"><label className="text-xs font-bold uppercase">Mensaje</label><textarea className="w-full border p-2 rounded h-24" value={msg.text} onChange={e => setMsg({...msg, text: e.target.value})}></textarea></div>
+                        <div className="flex justify-end"><Button onClick={handleSend} icon="Send">Enviar</Button></div>
+                    </Card>
                 </div>
             );
         };
@@ -720,34 +552,27 @@
         const App = () => {
             const [user, setUser] = useState(null);
             const [activeTab, setActiveTab] = useState('dashboard');
-            const [data, setData] = useState(DATA);
+            const [data, setData] = useState(INITIAL_DATA);
             const [sidebarOpen, setSidebarOpen] = useState(false);
 
-            // Mock Login
+            // Función genérica para actualizar cualquier parte del estado
+            const updateData = (key, action) => {
+                setData(prev => ({ ...prev, [key]: typeof action === 'function' ? action(prev[key]) : action }));
+            };
+
             if (!user) {
                 return (
-                    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center p-6">
-                        <div className="bg-white w-full max-w-md p-8 rounded-3xl shadow-xl border border-white/50">
+                    <div className="min-h-screen flex items-center justify-center bg-brand-50 p-4">
+                        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full">
                             <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-brand-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-brand-500/30">
-                                    <Icon name="Target" className="text-white" size={32}/>
-                                </div>
-                                <h1 className="text-2xl font-extrabold text-brand-900">Conquistadores App</h1>
-                                <p className="text-slate-500">Gestión Integral Ministerial</p>
+                                <div className="w-16 h-16 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-4"><Icon name="Target" size={32}/></div>
+                                <h1 className="text-2xl font-bold text-slate-800">Conquistadores</h1>
+                                <p className="text-slate-500">Selecciona tu rol</p>
                             </div>
                             <div className="space-y-3">
-                                <button onClick={() => setUser({name:'Ana Perez', role:'Pastor', ministry:'Pastoral'})} className="w-full p-4 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
-                                    <div className="bg-brand-100 p-2 rounded-lg text-brand-600 group-hover:bg-brand-500 group-hover:text-white transition-colors"><Icon name="Users"/></div>
-                                    <div><p className="font-bold text-slate-700">Pastor</p><p className="text-xs text-slate-400">Acceso Total</p></div>
-                                </button>
-                                <button onClick={() => setUser({name:'Carlos Gomez', role:'Líder', ministry:'Alabanza'})} className="w-full p-4 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
-                                    <div className="bg-blue-100 p-2 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors"><Icon name="Music"/></div>
-                                    <div><p className="font-bold text-slate-700">Líder Alabanza</p><p className="text-xs text-slate-400">Gestión Cultos</p></div>
-                                </button>
-                                <button onClick={() => setUser({name:'Marta Ríos', role:'Líder', ministry:'EBD'})} className="w-full p-4 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
-                                    <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><Icon name="Smile"/></div>
-                                    <div><p className="font-bold text-slate-700">Líder EBD</p><p className="text-xs text-slate-400">Gestión Clases</p></div>
-                                </button>
+                                <button onClick={() => setUser({name:'Ana Perez', role:'Pastor', ministry:'Pastoral'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-brand-100 p-2 rounded"><Icon name="Users"/></div><div className="text-left font-bold text-slate-700">Pastor <span className="block text-xs font-normal text-slate-500">Acceso Total</span></div></button>
+                                <button onClick={() => setUser({name:'Carlos Gomez', role:'Líder', ministry:'Alabanza'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-blue-100 p-2 rounded"><Icon name="Music"/></div><div className="text-left font-bold text-slate-700">Líder Alabanza <span className="block text-xs font-normal text-slate-500">Gestión Música</span></div></button>
+                                <button onClick={() => setUser({name:'Marta Ríos', role:'Líder', ministry:'EBD'})} className="w-full p-4 border rounded-xl hover:bg-brand-50 hover:border-brand-500 flex items-center gap-3"><div className="bg-emerald-100 p-2 rounded"><Icon name="Smile"/></div><div className="text-left font-bold text-slate-700">Líder EBD <span className="block text-xs font-normal text-slate-500">Gestión Clases</span></div></button>
                             </div>
                         </div>
                     </div>
@@ -755,108 +580,54 @@
             }
 
             const NavItem = ({ id, icon, label }) => (
-                <button 
-                    onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${
-                        activeTab === id 
-                        ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/20' 
-                        : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-                    }`}
-                >
-                    <Icon name={icon} size={18} className={activeTab === id ? 'opacity-100' : 'opacity-70'}/>
-                    {label}
+                <button onClick={() => { setActiveTab(id); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === id ? 'bg-brand-600 text-white shadow-lg' : 'text-brand-100 hover:bg-brand-800 hover:text-white'}`}>
+                    <Icon name={icon} size={18} className={activeTab === id ? 'opacity-100' : 'opacity-70'}/> {label}
                 </button>
             );
 
-            // Función segura para actualizar miembros
-            const updateMembers = (newMembersOrFn) => {
-                setData(prev => ({
-                    ...prev,
-                    members: typeof newMembersOrFn === 'function' ? newMembersOrFn(prev.members) : newMembersOrFn
-                }));
-            };
-
             return (
-                <div className="flex min-h-screen bg-[#F8F9FA] text-slate-800 font-sans selection:bg-brand-200">
-                    
-                    {/* SIDEBAR */}
-                    <aside className={`fixed md:sticky top-0 h-screen w-72 bg-brand-900 text-white p-6 z-40 transition-transform duration-300 shadow-2xl flex flex-col justify-between ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+                <div className="flex h-screen bg-brand-50/50">
+                    <aside className={`fixed md:relative z-40 w-72 bg-brand-900 h-full p-6 flex flex-col justify-between transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
                         <div>
-                            <div className="flex items-center gap-3 mb-10 px-2 mt-2">
-                                <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-white/10">
-                                    <Icon name="Target" className="text-brand-500"/>
-                                </div>
-                                <span className="font-bold text-lg tracking-tight">Iglesia App</span>
-                            </div>
-                            
+                            <div className="flex items-center gap-3 mb-10 text-white"><div className="bg-white/10 p-2 rounded-lg"><Icon name="Target"/></div><span className="font-bold text-lg">Iglesia App</span></div>
                             <nav className="space-y-1">
                                 <NavItem id="dashboard" icon="LayoutDashboard" label="Inicio" />
                                 <NavItem id="members" icon="Users" label="Directorio" />
-                                
-                                <div className="text-xs font-bold text-brand-500 uppercase tracking-widest mt-6 mb-3 px-4">Ministerios</div>
+                                <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500 uppercase tracking-widest">Ministerios</div>
                                 {(user.role === 'Pastor' || user.ministry === 'Alabanza') && <NavItem id="worship" icon="Music" label="Alabanza" />}
                                 {(user.role === 'Pastor' || user.ministry === 'EBD') && <NavItem id="ebd" icon="Smile" label="Escuela Bíblica" />}
-                                {(user.role === 'Pastor' || user.ministry === 'Jóvenes') && <NavItem id="youth" icon="Search" label="Jóvenes" />}
-                                
+                                {(user.role === 'Pastor' || user.ministry === 'Jóvenes') && <NavItem id="youth" icon="Target" label="Jóvenes" />}
                                 {user.role === 'Pastor' && (
                                     <>
-                                        <div className="text-xs font-bold text-brand-500 uppercase tracking-widest mt-6 mb-3 px-4">Admin</div>
+                                        <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500 uppercase tracking-widest">Admin</div>
                                         <NavItem id="finance" icon="Wallet" label="Tesorería" />
                                         <NavItem id="messaging" icon="Send" label="Mensajería" />
                                     </>
                                 )}
                             </nav>
                         </div>
-                        
-                        <div className="bg-brand-800/50 p-4 rounded-xl border border-brand-700/50 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center font-bold border-2 border-brand-900 shadow-sm">
-                                {user.name.charAt(0)}
-                            </div>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-bold truncate">{user.name.split(' ')[0]}</p>
-                                <p className="text-[10px] text-brand-300 uppercase">{user.role}</p>
-                            </div>
-                            <button onClick={() => setUser(null)} className="text-brand-400 hover:text-white"><Icon name="LogOut" size={18}/></button>
+                        <div className="flex items-center gap-3 text-white p-3 bg-brand-800 rounded-xl">
+                            <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center font-bold">{user.name[0]}</div>
+                            <div className="flex-1 overflow-hidden"><p className="font-bold text-sm truncate">{user.name}</p><p className="text-[10px] text-brand-300 uppercase">{user.role}</p></div>
+                            <button onClick={() => setUser(null)} className="text-brand-300 hover:text-white"><Icon name="LogOut"/></button>
                         </div>
                     </aside>
-
-                    {/* OVERLAY */}
-                    {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
-
-                    {/* MAIN CONTENT */}
-                    <main className="flex-1 h-screen overflow-y-auto relative">
-                        {/* Header Mobile */}
-                        <header className="md:hidden bg-white sticky top-0 z-20 px-6 py-4 flex justify-between items-center shadow-sm">
+                    
+                    {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
+                    
+                    <main className="flex-1 overflow-y-auto relative">
+                        <header className="md:hidden bg-white p-4 sticky top-0 z-20 shadow-sm flex justify-between items-center">
                             <span className="font-bold text-brand-900">Conquistadores</span>
                             <button onClick={() => setSidebarOpen(true)} className="text-brand-800"><Icon name="Menu"/></button>
                         </header>
-
                         <div className="p-6 md:p-10 max-w-7xl mx-auto pb-24">
                             {activeTab === 'dashboard' && <Dashboard user={user} data={data} />}
-                            {activeTab === 'members' && <MembersDirectory user={user} members={data.members} updateMembers={updateMembers} />}
-                            {activeTab === 'worship' && <WorshipModule user={user} data={data} setData={setData} />}
-                            {activeTab === 'finance' && <FinanceModule data={data} setData={setData} />}
-                            
-                            {/* Placeholders para módulos simples */}
-                            {activeTab === 'ebd' && (
-                                <Card title="Escuela Bíblica" icon="Smile">
-                                    <p className="text-slate-500">Módulo similar a Alabanza con lista de colaboradores y temas. (Funcionalidad base incluida en Dashboard)</p>
-                                </Card>
-                            )}
-                            {activeTab === 'youth' && (
-                                <Card title="Jóvenes" icon="Search">
-                                    <p className="text-slate-500">Gestión de eventos y directorio específico de jóvenes. (Funcionalidad base incluida en Dashboard)</p>
-                                </Card>
-                            )}
-                            {activeTab === 'messaging' && (
-                                <Card title="Mensajería Masiva" icon="Send">
-                                    <div className="max-w-xl">
-                                        <FormInput label="Asunto" />
-                                        <div className="mt-4"><FormInput label="Mensaje" /></div>
-                                        <Button className="mt-4" onClick={() => alert("Mensaje enviado (Simulación)")} icon="Send">Enviar Difusión</Button>
-                                    </div>
-                                </Card>
-                            )}
+                            {activeTab === 'members' && <MembersModule user={user} data={data} updateData={updateData} />}
+                            {activeTab === 'worship' && <WorshipModule data={data} updateData={updateData} />}
+                            {activeTab === 'finance' && <FinanceModule data={data} updateData={updateData} />}
+                            {activeTab === 'messaging' && <MessagingModule data={data} updateData={updateData} />}
+                            {activeTab === 'ebd' && <GenericModule title="Escuela Bíblica" items={data.ebd} updateData={updateData} dataKey="ebd" fields={[{key:'date',label:'Fecha',type:'date'},{key:'topic',label:'Tema'},{key:'ageGroup',label:'Grupo Edad'},{key:'collaborators',label:'Colaboradores'}]} />}
+                            {activeTab === 'youth' && <GenericModule title="Jóvenes" items={data.youth} updateData={updateData} dataKey="youth" fields={[{key:'date',label:'Fecha',type:'date'},{key:'title',label:'Título'},{key:'type',label:'Tipo'},{key:'location',label:'Lugar'}]} />}
                         </div>
                     </main>
                 </div>
