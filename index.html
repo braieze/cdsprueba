@@ -39,10 +39,14 @@
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Estilos modernos para inputs */
+        .input-modern { @apply w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all; }
+        .label-modern { @apply block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5; }
     </style>
 </head>
 <body>
@@ -59,7 +63,6 @@
             appId: "1:518647225464:web:b3344ca5172498187e218d"
         };
 
-        // Inicializar solo si no existe ya
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -87,11 +90,11 @@
                 Plus: <React.Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></React.Fragment>,
                 X: <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
                 Menu: <React.Fragment><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></React.Fragment>,
-                Search: <React.Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></React.Fragment>,
                 Trash: <React.Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></React.Fragment>,
                 Edit: <React.Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></React.Fragment>,
-                Check: <polyline points="20 6 9 17 4 12"/>,
-                Bank: <React.Fragment><path d="M3 21h18"/><path d="M5 21v-7"/><path d="M19 21v-7"/><path d="M10 21v-4a2 2 0 0 1 4 0v4"/><polyline points="2 7 12 2 22 7"/><path d="M3 7v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V7"/></React.Fragment>
+                Hand: <React.Fragment><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></React.Fragment>,
+                Mail: <React.Fragment><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></React.Fragment>,
+                Clipboard: <React.Fragment><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></React.Fragment>
             };
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -103,10 +106,11 @@
         const formatDate = (d) => {
             if(!d) return '';
             const date = new Date(d);
-            // Ajuste simple para zona horaria si es fecha pura string (YYYY-MM-DD)
+            // Ajuste zona horaria manual simple
             if(d.length === 10) date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
             return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
         };
+        const formatTime = (t) => t ? t : '--:--';
         const formatCurrency = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(val);
 
         // --- COMPONENTES UI ---
@@ -134,7 +138,7 @@
             );
         };
 
-        // --- PANTALLA DE LOGIN CON GOOGLE ---
+        // --- PANTALLA DE LOGIN ---
         const LoginScreen = ({ onLogin, loading, error }) => (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
                 <Card className="max-w-md w-full text-center space-y-8 py-12">
@@ -147,51 +151,45 @@
                     <Button onClick={onLogin} className="w-full justify-center py-4 text-lg" disabled={loading}>
                         {loading ? 'Conectando...' : 'Iniciar Sesión con Google'}
                     </Button>
-                    <p className="text-xs text-slate-400">Acceso exclusivo para miembros registrados</p>
                 </Card>
             </div>
         );
 
         // --- COMPONENTE PRINCIPAL ---
         const App = () => {
-            const [currentUser, setCurrentUser] = useState(null); // Usuario de Firebase Auth
-            const [userProfile, setUserProfile] = useState(null); // Perfil en Firestore (Rol, Ministerio)
+            const [currentUser, setCurrentUser] = useState(null);
+            const [userProfile, setUserProfile] = useState(null);
             const [loadingAuth, setLoadingAuth] = useState(true);
             const [authError, setAuthError] = useState(null);
             
             const [activeTab, setActiveTab] = useState('dashboard');
             const [sidebarOpen, setSidebarOpen] = useState(false);
 
-            // Datos de la App (Estados)
+            // Colecciones de Datos
             const [members, setMembers] = useState([]);
             const [finances, setFinances] = useState([]);
             const [worship, setWorship] = useState([]);
+            const [songs, setSongs] = useState([]); // Nueva colección
             const [ebd, setEbd] = useState([]);
             const [youth, setYouth] = useState([]);
-            const [youthTasks, setYouthTasks] = useState([]);
+            const [tasks, setTasks] = useState([]); // Nueva colección para tareas globales
+            const [servers, setServers] = useState([]); // Nueva colección Servidores
             const [messages, setMessages] = useState([]);
 
             // --- LISTENERS DE FIREBASE ---
-            
-            // 1. Auth Listener
             useEffect(() => {
                 const unsubscribe = auth.onAuthStateChanged(async (user) => {
                     if (user) {
                         setCurrentUser(user);
-                        // Buscar perfil en Firestore por email
                         const q = db.collection('members').where('email', '==', user.email);
                         const snapshot = await q.get();
                         
                         if (!snapshot.empty) {
-                            // Usuario existe, cargar perfil
                             const profileData = snapshot.docs[0].data();
                             setUserProfile({ ...profileData, id: snapshot.docs[0].id });
                         } else {
-                            // Usuario NO existe en Directorio.
-                            // VERIFICAR SI LA BASE DE DATOS ESTÁ VACÍA (Primer uso)
                             const checkEmpty = await db.collection('members').get();
                             if(checkEmpty.empty) {
-                                // Caso Bootstrap: Primer usuario se convierte en Pastor
                                 const newAdmin = {
                                     name: user.displayName || 'Pastor Principal',
                                     email: user.email,
@@ -199,15 +197,13 @@
                                     ministry: 'Pastoral',
                                     photo: user.photoURL,
                                     status: 'Activo',
-                                    visitHistory: [],
                                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                                 };
                                 await db.collection('members').add(newAdmin);
                                 setUserProfile(newAdmin);
                             } else {
-                                // Caso normal: Usuario no registrado
                                 setUserProfile(null); 
-                                setAuthError("Tu email no está registrado en el Directorio. Contacta al Pastor.");
+                                setAuthError("Tu email no está registrado. Contacta al Pastor.");
                             }
                         }
                     } else {
@@ -219,288 +215,536 @@
                 return () => unsubscribe();
             }, []);
 
-            // 2. Data Listeners (Solo si hay usuario autenticado)
             useEffect(() => {
                 if (!userProfile) return;
-
                 const unsubs = [];
-                // Helpers para escuchar colecciones
-                const sub = (col, setter) => {
-                    unsubs.push(db.collection(col).onSnapshot(snap => {
-                        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        setter(data);
-                    }));
-                };
-
+                const sub = (col, setter) => unsubs.push(db.collection(col).onSnapshot(snap => setter(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))));
+                
                 sub('members', setMembers);
                 sub('finances', setFinances);
                 sub('worship', setWorship);
+                sub('songs', setSongs);
                 sub('ebd', setEbd);
                 sub('youth', setYouth);
-                sub('youthTasks', setYouthTasks);
+                sub('tasks', setTasks);
+                sub('servers', setServers);
                 sub('messages', setMessages);
 
                 return () => unsubs.forEach(u => u());
             }, [userProfile]);
 
-            // --- ACCIONES ---
-            const handleLogin = async () => {
-                try {
-                    setAuthError(null);
-                    await auth.signInWithPopup(googleProvider);
-                } catch (err) {
-                    console.error(err);
-                    setAuthError("Error al iniciar sesión con Google.");
-                }
-            };
-
+            // --- HELPERS CRUD ---
+            const handleLogin = async () => { try { await auth.signInWithPopup(googleProvider); } catch(e) { setAuthError("Error Google"); } };
             const handleLogout = () => auth.signOut();
-
-            // Helpers CRUD Genéricos
             const addData = (col, data) => db.collection(col).add(data);
             const updateData = (col, id, data) => db.collection(col).doc(id).update(data);
-            const deleteData = (col, id) => {
-                if(window.confirm("¿Estás seguro de eliminar esto?")) db.collection(col).doc(id).delete();
-            };
+            const deleteData = (col, id) => { if(window.confirm("¿Seguro?")) db.collection(col).doc(id).delete(); };
 
-            // Renderizado Condicional de Login
             if (loadingAuth) return <div className="min-h-screen flex items-center justify-center text-slate-500">Cargando sistema...</div>;
             if (!currentUser || (currentUser && !userProfile && authError)) return <LoginScreen onLogin={handleLogin} error={authError} />;
             if (!userProfile) return <LoginScreen onLogin={handleLogin} error="Esperando perfil..." />;
 
-            // --- MÓDULOS DE UI ---
+            // --- VISTAS ESPECÍFICAS ---
 
-            // DASHBOARD
+            // 1. DASHBOARD & MIS SERVICIOS
             const Dashboard = () => {
-                const totalCash = finances.reduce((acc, f) => acc + (f.cash || 0), 0);
-                const totalTransfer = finances.reduce((acc, f) => acc + (f.transfer || 0), 0);
-                
-                // Servicios asignados al usuario
-                const myServices = [
-                    ...worship.filter(w => Object.values(w.team || {}).flat().includes(userProfile.name)).map(w => ({ ...w, from: 'Alabanza', title: w.theme })),
-                    ...ebd.filter(e => (e.teachers || []).includes(userProfile.name)).map(e => ({ ...e, from: 'EBD', title: e.topic })),
-                    ...youthTasks.filter(t => t.assignee === userProfile.name && t.status === 'Pendiente').map(t => ({ ...t, from: 'Jóvenes', title: t.task, isTask: true }))
-                ].sort((a,b) => new Date(a.date || 0) - new Date(b.date || 0));
+                // Cálculo de "Mis Servicios" (Alabanza, Servidores, Tareas)
+                const myServices = useMemo(() => {
+                    const services = [];
+                    const myName = userProfile.name;
+                    
+                    // Alabanza
+                    worship.forEach(w => {
+                        Object.entries(w.team || {}).forEach(([inst, list]) => {
+                            if(list.includes(myName)) services.push({ ...w, role: inst, category: 'Alabanza', color: 'bg-purple-100 text-purple-700' });
+                        });
+                    });
+                    // Servidores
+                    servers.forEach(s => {
+                        Object.entries(s.assignments || {}).forEach(([role, person]) => {
+                            if(person === myName) services.push({ ...s, role: role, category: 'Servidor', color: 'bg-blue-100 text-blue-700' });
+                        });
+                    });
+                    // Tareas
+                    tasks.filter(t => t.assignedTo === myName && t.status === 'Pendiente').forEach(t => {
+                        services.push({ ...t, title: t.description, category: 'Tarea', date: t.dueDate, color: 'bg-amber-100 text-amber-700', isTask:true });
+                    });
+
+                    return services.sort((a,b) => new Date(a.date) - new Date(b.date));
+                }, [worship, servers, tasks, userProfile]);
+
+                // Próximos Eventos General
+                const upcomingEvents = [...worship, ...youth, ...ebd, ...servers]
+                    .filter(e => new Date(e.date) >= new Date().setHours(0,0,0,0))
+                    .sort((a,b) => new Date(a.date) - new Date(b.date))
+                    .slice(0, 6);
+
+                // Mis Mensajes No Leídos
+                const myMessages = messages.filter(m => (m.to === 'all' || m.to === userProfile.id) && !m.readBy?.includes(userProfile.id));
+
+                const markAsRead = (msg) => {
+                    const readBy = msg.readBy || [];
+                    updateData('messages', msg.id, { readBy: [...readBy, userProfile.id] });
+                };
+
+                return (
+                    <div className="space-y-8 fade-in">
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Hola, {userProfile.name.split(' ')[0]}</h2>
+                                <p className="text-slate-500 font-medium">Panel de control de {userProfile.ministry}</p>
+                            </div>
+                            {myMessages.length > 0 && (
+                                <div className="bg-brand-600 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg shadow-brand-500/40 animate-pulse cursor-pointer" onClick={()=>setActiveTab('messages')}>
+                                    <Icon name="Mail" size={16}/> {myMessages.length} Mensajes nuevos
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Mis Servicios (Columna Izquierda) */}
+                            <div className="lg:col-span-2 space-y-6">
+                                <Card className="border-l-4 border-l-brand-500">
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-800">
+                                        <Icon name="Clipboard" className="text-brand-600"/> Mis Servicios & Tareas
+                                    </h3>
+                                    {myServices.length > 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {myServices.map((s, i) => (
+                                                <div key={i} className="flex flex-col bg-slate-50 p-4 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${s.color}`}>{s.category}</span>
+                                                        <div className="text-right">
+                                                            <span className="block text-xs font-bold text-slate-700">{formatDate(s.date)}</span>
+                                                            <span className="text-[10px] text-slate-400">{formatTime(s.time)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <p className="font-bold text-slate-800 leading-tight mb-1">{s.theme || s.title || 'Servicio General'}</p>
+                                                    <p className="text-sm text-slate-500">{s.isTask ? 'Tarea asignada' : `Rol: ${s.role}`}</p>
+                                                    {s.isTask && <Button variant="secondary" className="mt-3 text-xs py-1 h-8" onClick={()=>updateData('tasks', s.id, {status: 'Completada'})}>Marcar Lista</Button>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                            <p className="text-slate-400 text-sm">No tienes responsabilidades asignadas próximamente.</p>
+                                        </div>
+                                    )}
+                                </Card>
+
+                                <Card>
+                                    <h3 className="font-bold text-lg mb-4 text-slate-800">Próximos Eventos Generales</h3>
+                                    <div className="space-y-4">
+                                        {upcomingEvents.map((e,i) => (
+                                            <div key={i} className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors group">
+                                                <div className="bg-slate-100 text-slate-600 w-12 h-12 rounded-xl flex flex-col items-center justify-center border border-slate-200 group-hover:bg-white group-hover:border-brand-200 group-hover:text-brand-600 transition-colors">
+                                                    <span className="text-xs font-bold uppercase">{new Date(e.date).toLocaleDateString('es-AR',{month:'short'})}</span>
+                                                    <span className="text-lg font-bold leading-none">{new Date(e.date).getDate()}</span>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h4 className="font-bold text-slate-800">{e.theme || e.title || e.topic || 'Reunión'}</h4>
+                                                    <p className="text-xs text-slate-500 flex gap-2">
+                                                        <span>{formatTime(e.time)} hs</span> • <span>{e.team ? 'Alabanza' : (e.teachers ? 'EBD' : (e.assignments ? 'Servidores' : 'Jóvenes'))}</span>
+                                                    </p>
+                                                </div>
+                                                <Icon name="Calendar" className="text-slate-300"/>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            </div>
+
+                            {/* Lateral (Accesos y Mensajes) */}
+                            <div className="space-y-6">
+                                <Card className="bg-slate-900 text-white">
+                                    <h3 className="font-bold mb-4 flex items-center gap-2"><Icon name="Bell"/> Notificaciones</h3>
+                                    <div className="space-y-3 max-h-[300px] overflow-y-auto hide-scroll">
+                                        {myMessages.length > 0 ? myMessages.map(m => (
+                                            <div key={m.id} className="bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors" onClick={()=>markAsRead(m)}>
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="text-xs font-bold text-brand-400">{m.fromName}</span>
+                                                    <span className="text-[10px] text-slate-400">{formatDate(m.date)}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-200 line-clamp-2">{m.content}</p>
+                                                <div className="mt-2 text-[10px] text-blue-300 font-bold uppercase tracking-wider">Marcar como leído</div>
+                                            </div>
+                                        )) : <p className="text-slate-500 text-sm text-center italic py-4">Estás al día.</p>}
+                                    </div>
+                                </Card>
+                                
+                                {userProfile.role === 'Pastor' && (
+                                    <Card>
+                                        <h3 className="font-bold text-sm text-slate-500 uppercase mb-3">Accesos Rápidos</h3>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Button variant="secondary" className="text-xs" onClick={()=>setActiveTab('worship')}>Planificar</Button>
+                                            <Button variant="secondary" className="text-xs" onClick={()=>setActiveTab('finances')}>Caja</Button>
+                                        </div>
+                                    </Card>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // 2. DIRECTORIO COMPLETO
+            const Directory = () => {
+                const [editing, setEditing] = useState(null); // Si es null es nuevo, si es obj es edit
+                const [isOpen, setIsOpen] = useState(false);
+                const [searchTerm, setSearchTerm] = useState('');
+                const [formData, setFormData] = useState({});
+
+                const openModal = (member = null) => {
+                    setEditing(member);
+                    setFormData(member || { name: '', role: 'Miembro', ministry: 'General', email: '', phone: '', age: '', location: '', gender: 'M' });
+                    setIsOpen(true);
+                };
+
+                const handleSave = () => {
+                    const dataToSave = {
+                        ...formData,
+                        photo: formData.photo || `https://ui-avatars.com/api/?name=${formData.name}&background=random`,
+                    };
+                    
+                    if (editing) {
+                        updateData('members', editing.id, dataToSave);
+                    } else {
+                        addData('members', { ...dataToSave, status: 'Activo', visitHistory: [] });
+                    }
+                    setIsOpen(false);
+                };
+
+                const filtered = members.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
                 return (
                     <div className="space-y-6 fade-in">
                         <div className="flex justify-between items-center">
-                            <div>
-                                <h2 className="text-2xl font-bold text-slate-800">Hola, {userProfile.name.split(' ')[0]} 👋</h2>
-                                <p className="text-slate-500">Panel de {userProfile.role}</p>
-                            </div>
-                            {userProfile.role === 'Pastor' && (
-                                <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
-                                    <p className="text-xs text-slate-400 font-bold uppercase">Caja Total</p>
-                                    <p className="text-xl font-bold text-emerald-600">{formatCurrency(totalCash + totalTransfer)}</p>
-                                </div>
-                            )}
+                            <input className="input-modern max-w-xs" placeholder="Buscar miembro..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} />
+                            <Button icon="Plus" onClick={()=>openModal()}>Nuevo Miembro</Button>
                         </div>
-
-                        <Card className="border-l-4 border-l-brand-500 bg-brand-50/30">
-                            <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><Icon name="Bell" className="text-brand-600"/> Mis Pendientes & Servicios</h3>
-                            {myServices.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {myServices.map((s, i) => (
-                                        <div key={i} className="bg-white p-3 rounded-lg border border-brand-100 shadow-sm">
-                                            <div className="flex justify-between mb-1">
-                                                <Badge type="brand">{s.from}</Badge>
-                                                <span className="text-xs font-bold text-slate-400">{s.isTask ? 'Tarea' : formatDate(s.date)}</span>
-                                            </div>
-                                            <p className="font-semibold text-slate-800 truncate">{s.title}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : <p className="text-slate-500 italic text-sm">No tienes asignaciones pendientes.</p>}
-                        </Card>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div className="lg:col-span-2">
-                                <Card>
-                                    <h3 className="font-bold mb-4">Mensajes del Equipo</h3>
-                                    <div className="space-y-3">
-                                        {messages.slice(0, 5).map(m => (
-                                            <div key={m.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                <div className="flex justify-between">
-                                                    <span className="font-bold text-sm text-brand-700">{m.from}</span>
-                                                    <span className="text-xs text-slate-400">{formatDate(m.date)}</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600 mt-1">{m.content}</p>
-                                            </div>
-                                        ))}
-                                        {messages.length === 0 && <p className="text-center text-slate-400 text-sm">No hay mensajes recientes.</p>}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {filtered.map(m => (
+                                <div key={m.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all relative group">
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={()=>openModal(m)} className="p-1 bg-slate-100 rounded text-slate-600 hover:text-brand-600"><Icon name="Edit" size={14}/></button>
                                     </div>
-                                </Card>
-                            </div>
-                            <Card className="bg-slate-800 text-white">
-                                <h3 className="font-bold mb-4 flex items-center gap-2"><Icon name="Calendar"/> Próximos Eventos</h3>
-                                <div className="space-y-3">
-                                    {[...worship, ...ebd, ...youth].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0,5).map((e,i) => (
-                                        <div key={i} className="flex gap-3 border-b border-slate-700 pb-2 last:border-0">
-                                            <div className="text-center min-w-[3rem]">
-                                                <span className="block font-bold text-lg">{e.date ? new Date(e.date).getDate() : '-'}</span>
-                                                <span className="text-[10px] uppercase text-slate-400">{e.date ? new Date(e.date).toLocaleDateString('es-AR',{month:'short'}) : ''}</span>
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-sm truncate">{e.theme || e.topic || e.title}</p>
-                                                <Badge type="default">{e.topic ? 'EBD' : (e.theme ? 'Culto' : 'Jóvenes')}</Badge>
-                                            </div>
+                                    <div className="flex items-center gap-4">
+                                        <img src={m.photo} className="w-14 h-14 rounded-full object-cover bg-slate-100"/>
+                                        <div>
+                                            <h3 className="font-bold text-slate-800">{m.name}</h3>
+                                            <p className="text-xs text-brand-600 font-bold">{m.role} • {m.ministry}</p>
+                                            <p className="text-xs text-slate-400 mt-1">{m.phone || 'Sin cel'}</p>
                                         </div>
-                                    ))}
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
-                );
-            };
-
-            // DIRECTORIO
-            const Directory = () => {
-                const [selected, setSelected] = useState(null);
-                const [isAdding, setIsAdding] = useState(false);
-                const [newMember, setNewMember] = useState({ name: '', role: 'Miembro', ministry: 'General', email: '' });
-                const [searchTerm, setSearchTerm] = useState('');
-
-                // Lógica de email obligatorio
-                const isEmailRequired = ['Pastor', 'Líder', 'Servidor General'].includes(newMember.role);
-
-                const handleSaveMember = () => {
-                    if (isEmailRequired && !newMember.email) return alert("Para este rol, el email es obligatorio (acceso al sistema).");
-                    
-                    addData('members', {
-                        ...newMember,
-                        photo: `https://ui-avatars.com/api/?name=${newMember.name}&background=random`,
-                        status: 'Activo',
-                        visitHistory: []
-                    });
-                    setIsAdding(false);
-                    setNewMember({ name: '', role: 'Miembro', ministry: 'General', email: '' });
-                };
-
-                const updateRole = (memberId, field, value) => updateData('members', memberId, { [field]: value });
-
-                // Filtro para Líder de Jóvenes
-                const filteredMembers = members.filter(m => {
-                    const matchSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase());
-                    if (userProfile.role === 'Líder Jóvenes') return matchSearch && (m.ministry === 'Jóvenes' || m.ministry === 'Adolescentes');
-                    return matchSearch;
-                });
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex justify-between items-center gap-4">
-                            <input className="border p-2 rounded-lg w-full max-w-sm" placeholder="Buscar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} />
-                            <Button icon="Plus" onClick={() => setIsAdding(true)}>Nuevo</Button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {filteredMembers.map(m => (
-                                <div key={m.id} onClick={() => setSelected(m)} className="bg-white p-4 rounded-xl border hover:shadow-md cursor-pointer transition-all flex flex-col items-center text-center">
-                                    <img src={m.photo} className="w-16 h-16 rounded-full mb-3 bg-slate-100"/>
-                                    <h3 className="font-bold text-slate-800">{m.name}</h3>
-                                    <p className="text-xs text-brand-600 font-bold uppercase">{m.role}</p>
-                                    <p className="text-xs text-slate-400">{m.ministry}</p>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-slate-50 grid grid-cols-2 text-xs text-slate-500 gap-y-1">
+                                        <span>🎂 {m.age || '--'} años</span>
+                                        <span>📍 {m.location || '--'}</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-
-                        <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Ficha Técnica">
-                            {selected && (
-                                <div className="space-y-6">
-                                    <div className="flex items-center gap-4">
-                                        <img src={selected.photo} className="w-20 h-20 rounded-full"/>
-                                        <div>
-                                            <h2 className="text-xl font-bold">{selected.name}</h2>
-                                            <p className="text-sm text-slate-500">{selected.email || 'Sin email registrado'}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Gestión de Roles (Solo Pastor) */}
-                                    {userProfile.role === 'Pastor' && (
-                                        <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                                            <h4 className="font-bold text-orange-800 mb-2">Gestión de Accesos</h4>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <select className="border p-2 rounded bg-white" value={selected.role} onChange={(e)=>updateRole(selected.id, 'role', e.target.value)}>
-                                                    {['Pastor','Líder','Servidor General','Miembro'].map(r=><option key={r}>{r}</option>)}
-                                                </select>
-                                                <select className="border p-2 rounded bg-white" value={selected.ministry} onChange={(e)=>updateRole(selected.id, 'ministry', e.target.value)}>
-                                                    {['Pastoral','Alabanza','EBD','Jóvenes','General','Adolescentes'].map(m=><option key={m}>{m}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Visitas */}
-                                    <div>
-                                        <h4 className="font-bold mb-2">Historial de Visitas</h4>
-                                        <div className="space-y-2 max-h-40 overflow-y-auto bg-slate-50 p-2 rounded">
-                                            {selected.visitHistory && selected.visitHistory.length > 0 ? selected.visitHistory.map((v, i) => (
-                                                <div key={i} className="bg-white p-2 rounded border text-sm">
-                                                    <span className="font-bold">{v.date}</span>: {v.note}
-                                                </div>
-                                            )) : <p className="text-xs text-center text-slate-400">Sin visitas</p>}
-                                        </div>
-                                    </div>
-                                    
-                                    {userProfile.role === 'Pastor' && <Button variant="danger" className="w-full mt-4" onClick={() => { deleteData('members', selected.id); setSelected(null); }}>Eliminar Miembro</Button>}
-                                </div>
-                            )}
-                        </Modal>
-
-                        <Modal isOpen={isAdding} onClose={() => setIsAdding(false)} title="Agregar Miembro">
+                        
+                        <Modal isOpen={isOpen} onClose={()=>setIsOpen(false)} title={editing ? "Editar Miembro" : "Nuevo Miembro"}>
                             <div className="space-y-4">
-                                <input className="w-full border p-2 rounded" placeholder="Nombre Completo" value={newMember.name} onChange={e=>setNewMember({...newMember, name: e.target.value})} />
-                                <div>
-                                    <label className="text-xs font-bold uppercase">Rol</label>
-                                    <select className="w-full border p-2 rounded" value={newMember.role} onChange={e=>setNewMember({...newMember, role: e.target.value})}>
+                                <div><label className="label-modern">Nombre Completo</label><input className="input-modern" value={formData.name} onChange={e=>setFormData({...formData, name:e.target.value})} /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="label-modern">Rol</label>
+                                    <select className="input-modern" value={formData.role} onChange={e=>setFormData({...formData, role:e.target.value})}>
                                         {['Pastor','Líder','Servidor General','Miembro'].map(r=><option key={r}>{r}</option>)}
-                                    </select>
+                                    </select></div>
+                                    <div><label className="label-modern">Ministerio</label>
+                                    <select className="input-modern" value={formData.ministry} onChange={e=>setFormData({...formData, ministry:e.target.value})}>
+                                        {['Pastoral','Alabanza','EBD','Jóvenes','General','Adolescentes','Servidores'].map(m=><option key={m}>{m}</option>)}
+                                    </select></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="label-modern">Edad</label><input type="number" className="input-modern" value={formData.age} onChange={e=>setFormData({...formData, age:e.target.value})} /></div>
+                                    <div><label className="label-modern">Sexo</label>
+                                    <select className="input-modern" value={formData.gender} onChange={e=>setFormData({...formData, gender:e.target.value})}>
+                                        <option value="M">Masculino</option><option value="F">Femenino</option>
+                                    </select></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="label-modern">Teléfono</label><input className="input-modern" value={formData.phone} onChange={e=>setFormData({...formData, phone:e.target.value})} /></div>
+                                    <div><label className="label-modern">Localidad</label><input className="input-modern" value={formData.location} onChange={e=>setFormData({...formData, location:e.target.value})} /></div>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold uppercase">Ministerio</label>
-                                    <select className="w-full border p-2 rounded" value={newMember.ministry} onChange={e=>setNewMember({...newMember, ministry: e.target.value})}>
-                                        {['Pastoral','Alabanza','EBD','Jóvenes','General','Adolescentes'].map(m=><option key={m}>{m}</option>)}
-                                    </select>
+                                    <label className="label-modern">Email (Para acceso al sistema)</label>
+                                    <input type="email" className="input-modern" value={formData.email} onChange={e=>setFormData({...formData, email:e.target.value})} />
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold uppercase">Email de Login (Gmail)</label>
-                                    <input type="email" className={`w-full border p-2 rounded ${isEmailRequired ? 'border-orange-300 bg-orange-50' : ''}`} placeholder={isEmailRequired ? "Requerido para acceso" : "Opcional"} value={newMember.email} onChange={e=>setNewMember({...newMember, email: e.target.value})} />
-                                    {isEmailRequired && <p className="text-xs text-orange-600 mt-1">* Este rol requiere email para ingresar a la app.</p>}
-                                </div>
-                                <Button className="w-full" onClick={handleSaveMember}>Guardar</Button>
+                                <Button className="w-full mt-4" onClick={handleSave}>Guardar Cambios</Button>
                             </div>
                         </Modal>
                     </div>
                 );
             };
 
-            // FINANZAS (TESORERÍA)
-            const Finances = () => {
-                const [isAdding, setIsAdding] = useState(false);
-                const [type, setType] = useState('Culto');
-                const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], cash: 0, transfer: 0, notes: '' });
+            // 3. ALABANZA AVANZADO (Biblioteca + Edición + Instrumentos)
+            const Worship = () => {
+                const [view, setView] = useState('list'); // list, songs
+                const [editing, setEditing] = useState(null); // obj para editar servicio
+                const [isModalOpen, setIsModalOpen] = useState(false);
+                
+                // Formulario Servicio
+                const [srvForm, setSrvForm] = useState({ date: '', time: '', theme: '', type: 'Culto', team: {}, songList: [] });
+                const [songSearch, setSongSearch] = useState('');
 
-                const handleSave = () => {
-                    const finalData = { ...form, type, cash: Number(form.cash), transfer: Number(form.transfer) };
-                    if(type === 'Gasto') { finalData.cash *= -1; finalData.transfer *= -1; }
-                    addData('finances', finalData);
-                    setIsAdding(false);
-                    setForm({ date: new Date().toISOString().split('T')[0], cash: 0, transfer: 0, notes: '' });
+                // Músicos (filtrar solo ministerio Alabanza)
+                const musicians = members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor');
+                const instruments = ['Vocal', 'Guitarra A.', 'Guitarra E.', 'Bajo', 'Batería', 'Teclado'];
+
+                // Biblioteca Canciones
+                const [newSong, setNewSong] = useState({ title: '', artist: '' });
+
+                const openServiceModal = (srv = null) => {
+                    setEditing(srv);
+                    setSrvForm(srv || { date: '', time: '', theme: '', type: 'Culto', team: {}, songList: [] });
+                    setIsModalOpen(true);
                 };
 
-                const totalCash = finances.reduce((acc, f) => acc + (f.cash || 0), 0);
-                const totalTransfer = finances.reduce((acc, f) => acc + (f.transfer || 0), 0);
+                const toggleMusician = (inst, name) => {
+                    const current = srvForm.team[inst] || [];
+                    const updated = current.includes(name) ? current.filter(n => n !== name) : [...current, name];
+                    setSrvForm({ ...srvForm, team: { ...srvForm.team, [inst]: updated } });
+                };
+
+                const addSongToService = (songTitle) => {
+                    if(!srvForm.songList.includes(songTitle)) {
+                        setSrvForm({ ...srvForm, songList: [...srvForm.songList, songTitle] });
+                    }
+                    setSongSearch('');
+                };
+
+                const saveService = () => {
+                    if(editing) updateData('worship', editing.id, srvForm);
+                    else addData('worship', srvForm);
+                    setIsModalOpen(false);
+                };
+
+                const saveSongLibrary = () => {
+                    if(newSong.title) { addData('songs', newSong); setNewSong({title:'', artist:''}); }
+                };
 
                 return (
                     <div className="space-y-6 fade-in">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="flex gap-2 border-b border-slate-200 pb-2">
+                            <button onClick={()=>setView('list')} className={`px-4 py-2 text-sm font-bold rounded-lg ${view==='list'?'bg-brand-100 text-brand-700':'text-slate-500'}`}>Eventos</button>
+                            <button onClick={()=>setView('songs')} className={`px-4 py-2 text-sm font-bold rounded-lg ${view==='songs'?'bg-brand-100 text-brand-700':'text-slate-500'}`}>Biblioteca de Canciones</button>
+                        </div>
+
+                        {view === 'list' && (
+                            <>
+                                <div className="flex justify-end"><Button icon="Plus" onClick={()=>openServiceModal()}>Nuevo Evento</Button></div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {worship.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(w => (
+                                        <Card key={w.id} className="relative group">
+                                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={()=>openServiceModal(w)} className="p-1 bg-blue-50 text-blue-600 rounded"><Icon name="Edit" size={16}/></button>
+                                                <button onClick={()=>deleteData('worship', w.id)} className="p-1 bg-red-50 text-red-600 rounded"><Icon name="Trash" size={16}/></button>
+                                            </div>
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <Badge type={w.type === 'Ensayo' ? 'default' : 'brand'}>{w.type}</Badge>
+                                                <span className="text-sm font-bold text-slate-500">{formatDate(w.date)} • {formatTime(w.time)}</span>
+                                            </div>
+                                            <h3 className="font-bold text-xl text-slate-800 mb-2">{w.theme || 'Sin Tema'}</h3>
+                                            
+                                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
+                                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Setlist</p>
+                                                <ul className="list-disc list-inside text-sm text-slate-700">
+                                                    {w.songList?.map((s,i) => <li key={i}>{s}</li>)}
+                                                </ul>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {Object.entries(w.team || {}).map(([inst, ppl]) => ppl.length > 0 && (
+                                                    <div key={inst} className="text-xs bg-white border px-2 py-1 rounded">
+                                                        <span className="font-bold text-slate-500">{inst}:</span> {ppl.join(', ')}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        {view === 'songs' && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <Card className="h-fit">
+                                    <h3 className="font-bold mb-4">Agregar Canción</h3>
+                                    <input className="input-modern mb-2" placeholder="Título" value={newSong.title} onChange={e=>setNewSong({...newSong, title:e.target.value})}/>
+                                    <input className="input-modern mb-4" placeholder="Artista / Tonalidad" value={newSong.artist} onChange={e=>setNewSong({...newSong, artist:e.target.value})}/>
+                                    <Button className="w-full" onClick={saveSongLibrary}>Guardar en Biblioteca</Button>
+                                </Card>
+                                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {songs.map(s => (
+                                        <div key={s.id} className="bg-white p-3 rounded-lg border flex justify-between items-center">
+                                            <div>
+                                                <p className="font-bold">{s.title}</p>
+                                                <p className="text-xs text-slate-500">{s.artist}</p>
+                                            </div>
+                                            <button onClick={()=>deleteData('songs',s.id)} className="text-red-400 hover:text-red-600"><Icon name="Trash" size={16}/></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Planificar Alabanza">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="col-span-1"><label className="label-modern">Tipo</label><select className="input-modern" value={srvForm.type} onChange={e=>setSrvForm({...srvForm, type:e.target.value})}><option>Culto</option><option>Ensayo</option></select></div>
+                                    <div className="col-span-1"><label className="label-modern">Fecha</label><input type="date" className="input-modern" value={srvForm.date} onChange={e=>setSrvForm({...srvForm, date:e.target.value})}/></div>
+                                    <div className="col-span-1"><label className="label-modern">Hora</label><input type="time" className="input-modern" value={srvForm.time} onChange={e=>setSrvForm({...srvForm, time:e.target.value})}/></div>
+                                </div>
+                                <div><label className="label-modern">Tema / Título</label><input className="input-modern" value={srvForm.theme} onChange={e=>setSrvForm({...srvForm, theme:e.target.value})}/></div>
+                                
+                                {/* Selector de Canciones */}
+                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                    <label className="label-modern">Canciones</label>
+                                    <div className="flex gap-2 mb-2">
+                                        <input className="input-modern" placeholder="Buscar en biblioteca o escribir..." value={songSearch} onChange={e=>setSongSearch(e.target.value)} />
+                                        <Button variant="secondary" onClick={()=>addSongToService(songSearch)}>Agg</Button>
+                                    </div>
+                                    {songSearch && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {songs.filter(s => s.title.toLowerCase().includes(songSearch.toLowerCase())).slice(0,3).map(s => (
+                                                <button key={s.id} onClick={()=>addSongToService(s.title)} className="text-xs bg-brand-100 text-brand-700 px-2 py-1 rounded-full hover:bg-brand-200">+ {s.title}</button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex flex-wrap gap-2">
+                                        {srvForm.songList.map((s,i) => (
+                                            <span key={i} className="bg-white border px-2 py-1 rounded text-sm flex items-center gap-2">
+                                                {s} <button onClick={()=>setSrvForm({...srvForm, songList: srvForm.songList.filter(x=>x!==s)})} className="text-red-500 font-bold">×</button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Selección de Equipo */}
+                                <div>
+                                    <label className="label-modern">Equipo de Activación</label>
+                                    <div className="space-y-3">
+                                        {instruments.map(inst => (
+                                            <div key={inst} className="flex items-start gap-2 border-b border-slate-100 pb-2">
+                                                <div className="w-24 text-xs font-bold text-slate-500 mt-1">{inst}</div>
+                                                <div className="flex-1 flex flex-wrap gap-1">
+                                                    {musicians.map(m => (
+                                                        <button key={m.id} onClick={()=>toggleMusician(inst, m.name)} 
+                                                            className={`text-xs px-2 py-1 border rounded-full transition-all ${(srvForm.team[inst]||[]).includes(m.name) ? 'bg-brand-600 text-white border-brand-600' : 'bg-white hover:bg-slate-50'}`}>
+                                                            {m.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Button className="w-full" onClick={saveService}>Guardar Evento</Button>
+                            </div>
+                        </Modal>
+                    </div>
+                );
+            };
+
+            // 4. NUEVO MINISTERIO: SERVIDORES (Limpieza y Culto)
+            const ServersMinistry = () => {
+                const [isModalOpen, setIsModalOpen] = useState(false);
+                const [form, setForm] = useState({ date: '', time: '', type: 'Orden de Culto', assignments: {} });
+                
+                // Roles fijos
+                const roles = ['Baños', 'Altar', 'Ofrenda', 'Autos', 'Recepción', 'Limpieza General'];
+                // Miembros disponibles (Todos o filtro servidores)
+                const available = members.filter(m => m.ministry === 'Servidores' || m.ministry === 'General' || m.role === 'Pastor');
+
+                const handleAssign = (role, name) => {
+                    setForm(prev => ({ ...prev, assignments: { ...prev.assignments, [role]: name } }));
+                };
+
+                return (
+                    <div className="space-y-6 fade-in">
+                        <div className="flex justify-between">
+                            <h2 className="text-2xl font-bold">Servidores & Orden</h2>
+                            <Button icon="Plus" onClick={()=>{setForm({ date: '', time: '', type: 'Orden de Culto', assignments: {} }); setIsModalOpen(true);}}>Crear Cronograma</Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {servers.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(s => (
+                                <Card key={s.id}>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <Badge type="blue">{s.type}</Badge>
+                                            <h3 className="font-bold text-lg mt-1">{formatDate(s.date)} <span className="text-slate-400 text-sm font-normal">at {formatTime(s.time)}</span></h3>
+                                        </div>
+                                        <button onClick={()=>deleteData('servers', s.id)} className="text-red-300 hover:text-red-500"><Icon name="Trash"/></button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {Object.entries(s.assignments || {}).map(([role, person]) => (
+                                            <div key={role} className="bg-slate-50 p-2 rounded border border-slate-100">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase">{role}</p>
+                                                <p className="text-sm font-semibold text-slate-700">{person}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        <Modal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} title="Organización">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div><label className="label-modern">Tipo</label><select className="input-modern" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}><option>Orden de Culto</option><option>Limpieza</option><option>Evento Especial</option></select></div>
+                                    <div><label className="label-modern">Fecha</label><input type="date" className="input-modern" onChange={e=>setForm({...form, date:e.target.value})}/></div>
+                                    <div><label className="label-modern">Hora</label><input type="time" className="input-modern" onChange={e=>setForm({...form, time:e.target.value})}/></div>
+                                </div>
+                                <div className="space-y-3 pt-2">
+                                    <p className="font-bold text-slate-800">Asignar Roles</p>
+                                    {roles.map(role => (
+                                        <div key={role} className="flex items-center gap-2">
+                                            <span className="w-1/3 text-sm text-slate-600">{role}</span>
+                                            <select className="input-modern" value={form.assignments[role] || ''} onChange={e=>handleAssign(role, e.target.value)}>
+                                                <option value="">-- Seleccionar --</option>
+                                                {available.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button className="w-full" onClick={()=>{addData('servers', form); setIsModalOpen(false);}}>Guardar Cronograma</Button>
+                            </div>
+                        </Modal>
+                    </div>
+                );
+            };
+
+            // 5. TESORERÍA (Diezmantes)
+            const Finances = () => {
+                const [isAdding, setIsAdding] = useState(false);
+                const [type, setType] = useState('Culto');
+                const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], cash: 0, transfer: 0, notes: '', tithersCount: 0 });
+
+                const handleSave = () => {
+                    let finalData = { ...form, type, cash: Number(form.cash), transfer: Number(form.transfer), tithersCount: Number(form.tithersCount || 0) };
+                    if(type === 'Gasto') { finalData.cash *= -1; finalData.transfer *= -1; }
+                    addData('finances', finalData);
+                    setIsAdding(false);
+                    setForm({ date: new Date().toISOString().split('T')[0], cash: 0, transfer: 0, notes: '', tithersCount: 0 });
+                };
+
+                const total = finances.reduce((acc, f) => acc + (f.cash || 0) + (f.transfer || 0), 0);
+                const totalTithers = finances.reduce((acc, f) => acc + (f.tithersCount || 0), 0);
+
+                return (
+                    <div className="space-y-6 fade-in">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <Card className="bg-emerald-50 border-emerald-200 text-emerald-800">
-                                <p className="text-xs uppercase font-bold">Efectivo</p>
-                                <p className="text-2xl font-bold">{formatCurrency(totalCash)}</p>
+                                <p className="text-xs uppercase font-bold">Caja Actual</p>
+                                <p className="text-2xl font-bold">{formatCurrency(total)}</p>
                             </Card>
                             <Card className="bg-blue-50 border-blue-200 text-blue-800">
-                                <p className="text-xs uppercase font-bold">Banco / Transf.</p>
-                                <p className="text-2xl font-bold">{formatCurrency(totalTransfer)}</p>
+                                <p className="text-xs uppercase font-bold">Diezmantes (Mes)</p>
+                                <p className="text-2xl font-bold">{totalTithers}</p>
                             </Card>
                         </div>
                         <div className="flex gap-2 justify-end">
@@ -518,7 +762,11 @@
                                     {finances.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(f => (
                                         <tr key={f.id} className="border-t border-slate-100">
                                             <td className="p-3">{formatDate(f.date)}</td>
-                                            <td className="p-3"><Badge type={f.type === 'Gasto' ? 'danger' : 'success'}>{f.type}</Badge> {f.notes}</td>
+                                            <td className="p-3">
+                                                <Badge type={f.type === 'Gasto' ? 'danger' : 'success'}>{f.type}</Badge> 
+                                                <span className="ml-2">{f.notes}</span>
+                                                {f.tithersCount > 0 && <span className="ml-2 text-xs text-slate-400">({f.tithersCount} diezmantes)</span>}
+                                            </td>
                                             <td className={`p-3 text-right font-mono font-bold ${(f.cash+f.transfer) < 0 ? 'text-red-500' : 'text-slate-700'}`}>{formatCurrency(f.cash + f.transfer)}</td>
                                         </tr>
                                     ))}
@@ -528,11 +776,17 @@
 
                         <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title={`Registrar ${type}`}>
                             <div className="space-y-4">
-                                <input type="date" className="w-full border p-2 rounded" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/>
-                                <input className="w-full border p-2 rounded" placeholder="Detalle / Notas" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/>
+                                <input type="date" className="input-modern" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/>
+                                <input className="input-modern" placeholder="Detalle / Notas" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/>
+                                {type === 'Culto' && (
+                                    <div>
+                                        <label className="label-modern text-brand-600">Cantidad de Diezmantes</label>
+                                        <input type="number" className="input-modern bg-brand-50 border-brand-200" value={form.tithersCount} onChange={e=>setForm({...form, tithersCount:e.target.value})}/>
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-xs font-bold">Efectivo</label><input type="number" className="w-full border p-2 rounded" value={form.cash} onChange={e=>setForm({...form, cash:e.target.value})}/></div>
-                                    <div><label className="text-xs font-bold">Transferencia</label><input type="number" className="w-full border p-2 rounded" value={form.transfer} onChange={e=>setForm({...form, transfer:e.target.value})}/></div>
+                                    <div><label className="label-modern">Efectivo</label><input type="number" className="input-modern" value={form.cash} onChange={e=>setForm({...form, cash:e.target.value})}/></div>
+                                    <div><label className="label-modern">Transferencia</label><input type="number" className="input-modern" value={form.transfer} onChange={e=>setForm({...form, transfer:e.target.value})}/></div>
                                 </div>
                                 <Button className="w-full" onClick={handleSave}>Guardar</Button>
                             </div>
@@ -541,154 +795,143 @@
                 );
             };
 
-            // ALABANZA
-            const Worship = () => {
+            // 6. MINISTERIOS CON TAREAS (Jóvenes / EBD)
+            const MinistryWithTasks = ({ title, col, filterMinistry }) => {
                 const [isAdding, setIsAdding] = useState(false);
-                const [newSrv, setNewSrv] = useState({ date: '', theme: '', type: 'Culto', songs: [], team: {} });
+                const [tab, setTab] = useState('events'); // events, tasks
+                const [evtForm, setEvtForm] = useState({ date: '', time: '', title: '', location: '' });
+                const [taskForm, setTaskForm] = useState({ description: '', assignedTo: '', dueDate: '', status: 'Pendiente' });
                 
-                // Músicos disponibles
-                const musicians = members.filter(m => m.ministry === 'Alabanza' || m.role === 'Pastor');
-
-                const toggleMusician = (role, name) => {
-                    const current = newSrv.team[role] || [];
-                    const updated = current.includes(name) ? current.filter(n => n !== name) : [...current, name];
-                    setNewSrv({ ...newSrv, team: { ...newSrv.team, [role]: updated } });
-                };
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">Alabanza</h2>
-                            <Button icon="Plus" onClick={() => setIsAdding(true)}>Planificar</Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {worship.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(w => (
-                                <Card key={w.id}>
-                                    <div className="flex justify-between mb-2">
-                                        <Badge type={w.type === 'Ensayo' ? 'default' : 'brand'}>{w.type}</Badge>
-                                        <span className="text-xs font-bold text-slate-400">{formatDate(w.date)}</span>
-                                        <button onClick={()=>deleteData('worship', w.id)} className="text-red-300 hover:text-red-500"><Icon name="Trash" size={16}/></button>
-                                    </div>
-                                    <h3 className="font-bold text-lg mb-2">{w.theme}</h3>
-                                    <div className="bg-slate-50 p-2 rounded text-sm mb-2">
-                                        <strong>Canciones:</strong> {w.songs?.join(', ')}
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                        
-                        <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title="Planificar">
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <select className="border p-2 rounded" value={newSrv.type} onChange={e=>setNewSrv({...newSrv, type:e.target.value})}>
-                                        <option>Culto</option><option>Ensayo</option>
-                                    </select>
-                                    <input type="date" className="border p-2 rounded" onChange={e=>setNewSrv({...newSrv, date:e.target.value})}/>
-                                </div>
-                                <input className="w-full border p-2 rounded" placeholder="Tema" onChange={e=>setNewSrv({...newSrv, theme:e.target.value})}/>
-                                <input className="w-full border p-2 rounded" placeholder="Canciones (separar con comas)" onBlur={e=>setNewSrv({...newSrv, songs:e.target.value.split(',')})}/>
-                                
-                                <div className="border-t pt-2">
-                                    <p className="text-xs font-bold mb-2">Equipo</p>
-                                    {['Vocal', 'Guitarra', 'Bateria', 'Bajo'].map(inst => (
-                                        <div key={inst} className="mb-2">
-                                            <p className="text-xs text-slate-500">{inst}</p>
-                                            <div className="flex flex-wrap gap-1">
-                                                {musicians.map(m => (
-                                                    <button key={m.id} onClick={()=>toggleMusician(inst, m.name)} 
-                                                        className={`text-xs px-2 py-1 border rounded ${(newSrv.team[inst]||[]).includes(m.name) ? 'bg-brand-600 text-white' : 'bg-white'}`}>
-                                                        {m.name}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <Button className="w-full" onClick={() => { addData('worship', newSrv); setIsAdding(false); }}>Guardar</Button>
-                            </div>
-                        </Modal>
-                    </div>
-                );
-            };
-
-            // CALENDARIO REAL
-            const CalendarView = () => {
-                const [date, setDate] = useState(new Date());
-                const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-                const startDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-
-                const events = [
-                    ...worship.map(e => ({ date: e.date, title: e.theme, color: 'bg-orange-100 text-orange-700' })),
-                    ...ebd.map(e => ({ date: e.date, title: 'EBD: ' + e.topic, color: 'bg-emerald-100 text-emerald-700' })),
-                    ...youth.map(e => ({ date: e.date, title: 'Jóvenes: ' + e.title, color: 'bg-purple-100 text-purple-700' }))
-                ];
-
-                const getEvents = (d) => {
-                    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                    return events.filter(e => e.date === dateStr);
-                };
-
-                return (
-                    <div className="h-full flex flex-col fade-in">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-bold">Calendario</h2>
-                            <div className="flex gap-2">
-                                <Button variant="secondary" onClick={() => setDate(new Date(date.getFullYear(), date.getMonth() - 1, 1))}>&lt;</Button>
-                                <span className="font-bold text-lg min-w-[150px] text-center">{date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}</span>
-                                <Button variant="secondary" onClick={() => setDate(new Date(date.getFullYear(), date.getMonth() + 1, 1))}>&gt;</Button>
-                            </div>
-                        </div>
-                        <div className="bg-white rounded-xl shadow border flex-1 grid grid-cols-7 grid-rows-6">
-                            {['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].map(d => <div key={d} className="p-2 text-center text-xs font-bold uppercase border-b bg-slate-50">{d}</div>)}
-                            {Array.from({ length: startDay }).map((_, i) => <div key={'empty'+i} className="border-b border-r bg-slate-50/30"></div>)}
-                            {Array.from({ length: daysInMonth }).map((_, i) => (
-                                <div key={i} className="border-b border-r p-1 relative min-h-[80px]">
-                                    <span className="text-xs font-bold text-slate-400 absolute top-1 right-2">{i + 1}</span>
-                                    <div className="mt-4 space-y-1">
-                                        {getEvents(i+1).map((e, idx) => (
-                                            <div key={idx} className={`text-[10px] px-1 rounded truncate ${e.color}`}>{e.title}</div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
-            // JÓVENES & EBD (Genéricos)
-            const GenericMinistry = ({ title, col, fields }) => {
-                const [isAdding, setIsAdding] = useState(false);
-                const [form, setForm] = useState({});
-                const items = col === 'ebd' ? ebd : youth;
+                const eventsList = col === 'youth' ? youth : ebd;
+                const ministryTasks = tasks.filter(t => t.ministry === col);
+                const availableMembers = members.filter(m => m.ministry === filterMinistry || m.role === 'Líder');
 
                 return (
                     <div className="space-y-6 fade-in">
                         <div className="flex justify-between items-center">
                             <h2 className="text-2xl font-bold">{title}</h2>
-                            <Button icon="Plus" onClick={()=>setIsAdding(true)}>Nuevo</Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {items.map(i => (
-                                <Card key={i.id}>
-                                    <div className="flex justify-between">
-                                        <h3 className="font-bold">{i.topic || i.title}</h3>
-                                        <span className="text-xs text-slate-400">{formatDate(i.date)}</span>
-                                    </div>
-                                    <p className="text-sm text-slate-500 mt-1">{i.teachers?.join(', ') || i.location}</p>
-                                    <Button variant="secondary" className="mt-2 text-xs py-1" onClick={()=>deleteData(col, i.id)}>Eliminar</Button>
-                                </Card>
-                            ))}
-                        </div>
-                        <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title={`Nuevo en ${title}`}>
-                            <div className="space-y-4">
-                                {fields.map(f => (
-                                    <input key={f.key} className="w-full border p-2 rounded" placeholder={f.label} type={f.type || 'text'} 
-                                        onChange={e => setForm({...form, [f.key]: f.type==='array'?e.target.value.split(','):e.target.value})} />
-                                ))}
-                                <Button className="w-full" onClick={()=>{addData(col, form); setIsAdding(false);}}>Guardar</Button>
+                            <div className="flex gap-2">
+                                <button onClick={()=>setTab('events')} className={`px-3 py-1 text-xs font-bold rounded ${tab==='events'?'bg-slate-800 text-white':'bg-slate-200'}`}>Eventos</button>
+                                <button onClick={()=>setTab('tasks')} className={`px-3 py-1 text-xs font-bold rounded ${tab==='tasks'?'bg-slate-800 text-white':'bg-slate-200'}`}>Tareas</button>
                             </div>
-                        </Modal>
+                        </div>
+
+                        {tab === 'events' ? (
+                            <>
+                                <Button className="w-full md:w-auto" icon="Plus" onClick={()=>{setEvtForm({ date: '', time: '', title: '', location: '' }); setIsAdding(true);}}>Nuevo Evento</Button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                    {eventsList.map(e => (
+                                        <Card key={e.id}>
+                                            <h3 className="font-bold">{e.title || e.topic}</h3>
+                                            <p className="text-sm text-slate-500">{formatDate(e.date)} - {formatTime(e.time)}</p>
+                                            <p className="text-xs mt-1 text-slate-400">{e.location}</p>
+                                            <button onClick={()=>deleteData(col, e.id)} className="text-red-400 text-xs mt-2 hover:underline">Eliminar</button>
+                                        </Card>
+                                    ))}
+                                </div>
+                                <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title="Evento">
+                                    <div className="space-y-4">
+                                        <input className="input-modern" placeholder="Título/Tema" onChange={e=>setEvtForm({...evtForm, title:e.target.value})} />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input type="date" className="input-modern" onChange={e=>setEvtForm({...evtForm, date:e.target.value})}/>
+                                            <input type="time" className="input-modern" onChange={e=>setEvtForm({...evtForm, time:e.target.value})}/>
+                                        </div>
+                                        <input className="input-modern" placeholder="Lugar" onChange={e=>setEvtForm({...evtForm, location:e.target.value})} />
+                                        <Button className="w-full" onClick={()=>{addData(col, evtForm); setIsAdding(false);}}>Guardar</Button>
+                                    </div>
+                                </Modal>
+                            </>
+                        ) : (
+                            <>
+                                <Button className="w-full md:w-auto" icon="Clipboard" onClick={()=>setIsAdding(true)}>Asignar Tarea</Button>
+                                <div className="space-y-2 mt-4">
+                                    {ministryTasks.map(t => (
+                                        <div key={t.id} className="bg-white p-3 rounded-lg border flex justify-between items-center">
+                                            <div>
+                                                <p className="font-bold text-sm">{t.description}</p>
+                                                <p className="text-xs text-slate-500">Resp: <span className="text-brand-600 font-bold">{t.assignedTo}</span> • Vence: {formatDate(t.dueDate)}</p>
+                                            </div>
+                                            <Badge type={t.status === 'Pendiente' ? 'warning' : 'success'}>{t.status}</Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Modal isOpen={isAdding} onClose={()=>setIsAdding(false)} title="Nueva Tarea">
+                                    <div className="space-y-4">
+                                        <input className="input-modern" placeholder="Descripción de la tarea" onChange={e=>setTaskForm({...taskForm, description:e.target.value})}/>
+                                        <div>
+                                            <label className="label-modern">Responsable</label>
+                                            <select className="input-modern" onChange={e=>setTaskForm({...taskForm, assignedTo:e.target.value})}>
+                                                <option value="">Seleccionar...</option>
+                                                {availableMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div><label className="label-modern">Fecha Límite</label><input type="date" className="input-modern" onChange={e=>setTaskForm({...taskForm, dueDate:e.target.value})}/></div>
+                                        <Button className="w-full" onClick={()=>{addData('tasks', { ...taskForm, ministry: col }); setIsAdding(false);}}>Asignar</Button>
+                                    </div>
+                                </Modal>
+                            </>
+                        )}
+                    </div>
+                );
+            };
+
+            // 7. MENSAJERÍA COMPLETA
+            const Messaging = () => {
+                const [compose, setCompose] = useState({ to: '', content: '' });
+                const myInbox = messages.filter(m => (m.to === 'all' || m.to === userProfile.id));
+
+                const handleSend = () => {
+                    if(!compose.content) return;
+                    const msg = {
+                        from: userProfile.id,
+                        fromName: userProfile.name,
+                        to: compose.to, // 'all' o userId
+                        content: compose.content,
+                        date: new Date().toISOString(),
+                        readBy: []
+                    };
+                    addData('messages', msg);
+                    setCompose({ to: '', content: '' });
+                    alert("Mensaje enviado");
+                };
+
+                return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in">
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold">Mis Mensajes</h2>
+                            <div className="space-y-3">
+                                {myInbox.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m => (
+                                    <Card key={m.id} className={`border-l-4 ${m.to==='all'?'border-l-blue-400':'border-l-brand-500'}`}>
+                                        <div className="flex justify-between mb-2">
+                                            <span className="font-bold text-sm text-slate-700">{m.fromName}</span>
+                                            <span className="text-xs text-slate-400">{formatDate(m.date)}</span>
+                                        </div>
+                                        <p className="text-slate-600 text-sm">{m.content}</p>
+                                        {m.to === 'all' && <span className="text-[10px] bg-blue-100 text-blue-700 px-1 rounded mt-2 inline-block">Difusión</span>}
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <Card className="sticky top-6">
+                                <h3 className="font-bold mb-4">Redactar Nuevo</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="label-modern">Destinatario</label>
+                                        <select className="input-modern" value={compose.to} onChange={e=>setCompose({...compose, to:e.target.value})}>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="all">📢 TODOS (Difusión)</option>
+                                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label-modern">Mensaje</label>
+                                        <textarea className="input-modern h-32" value={compose.content} onChange={e=>setCompose({...compose, content:e.target.value})}></textarea>
+                                    </div>
+                                    <Button icon="Mail" className="w-full" onClick={handleSend}>Enviar Mensaje</Button>
+                                </div>
+                            </Card>
+                        </div>
                     </div>
                 );
             };
@@ -702,25 +945,23 @@
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    {/* Sidebar */}
                     <aside className={`fixed md:relative z-40 w-72 bg-brand-900 text-white h-full flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-8"><div className="bg-white/10 p-2 rounded-lg"><Icon name="Home" /></div><span className="font-bold text-lg">Conquistadores</span></div>
-                            <nav>
+                            <nav className="space-y-1">
                                 <NavItem id="dashboard" icon="Home" label="Inicio" />
-                                <NavItem id="calendar" icon="Calendar" label="Calendario" />
                                 <NavItem id="directory" icon="Users" label="Directorio" />
-                                <div className="my-4 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Ministerios</div>
+                                <NavItem id="calendar" icon="Calendar" label="Calendario" />
+                                
+                                <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Ministerios</div>
                                 {(userProfile.role === 'Pastor' || userProfile.ministry === 'Alabanza') && <NavItem id="worship" icon="Music" label="Alabanza" />}
+                                {(userProfile.role === 'Pastor' || userProfile.ministry === 'Servidores' || userProfile.ministry === 'General') && <NavItem id="servers" icon="Hand" label="Servidores" />}
                                 {(userProfile.role === 'Pastor' || userProfile.ministry === 'EBD') && <NavItem id="ebd" icon="Book" label="Escuela Bíblica" />}
                                 {(userProfile.role === 'Pastor' || userProfile.ministry === 'Jóvenes') && <NavItem id="youth" icon="Smile" label="Jóvenes" />}
-                                {userProfile.role === 'Pastor' && (
-                                    <>
-                                        <div className="my-4 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Admin</div>
-                                        <NavItem id="finances" icon="Wallet" label="Tesorería" />
-                                        <NavItem id="messages" icon="Mail" label="Mensajería" />
-                                    </>
-                                )}
+                                
+                                <div className="mt-6 mb-2 px-4 text-xs font-bold text-brand-500/60 uppercase tracking-widest">Gestión</div>
+                                {userProfile.role === 'Pastor' && <NavItem id="finances" icon="Wallet" label="Tesorería" />}
+                                <NavItem id="messages" icon="Mail" label="Mensajería" />
                             </nav>
                         </div>
                         <div className="mt-auto p-6 bg-brand-950 flex items-center justify-between">
@@ -732,7 +973,6 @@
                         </div>
                     </aside>
 
-                    {/* Main Content */}
                     <main className="flex-1 overflow-y-auto bg-slate-50 w-full relative">
                         <header className="md:hidden bg-white p-4 sticky top-0 z-30 shadow-sm flex justify-between items-center">
                             <span className="font-bold text-brand-900">App</span>
@@ -741,21 +981,18 @@
                         <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24 h-full">
                             {activeTab === 'dashboard' && <Dashboard />}
                             {activeTab === 'directory' && <Directory />}
-                            {activeTab === 'finances' && <Finances />}
                             {activeTab === 'worship' && <Worship />}
-                            {activeTab === 'calendar' && <CalendarView />}
-                            {activeTab === 'ebd' && <GenericMinistry title="Escuela Bíblica" col="ebd" fields={[{key:'date',label:'Fecha',type:'date'},{key:'topic',label:'Tema'},{key:'teachers',label:'Maestros (Sep. comas)',type:'array'}]} />}
-                            {activeTab === 'youth' && <GenericMinistry title="Jóvenes" col="youth" fields={[{key:'date',label:'Fecha',type:'date'},{key:'title',label:'Título Evento'},{key:'location',label:'Lugar'}]} />}
-                            {activeTab === 'messages' && (
+                            {activeTab === 'servers' && <ServersMinistry />}
+                            {activeTab === 'finances' && <Finances />}
+                            {activeTab === 'messages' && <Messaging />}
+                            {activeTab === 'ebd' && <MinistryWithTasks title="Escuela Bíblica" col="ebd" filterMinistry="EBD" />}
+                            {activeTab === 'youth' && <MinistryWithTasks title="Jóvenes" col="youth" filterMinistry="Jóvenes" />}
+                            {activeTab === 'calendar' && (
                                 <div className="fade-in">
-                                    <h2 className="text-2xl font-bold mb-4">Mensajería</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <Card>
-                                            <h3 className="font-bold mb-2">Enviar Mensaje</h3>
-                                            <textarea className="w-full border p-2 rounded h-32 mb-2" placeholder="Escribe aquí..."></textarea>
-                                            <Button icon="Mail" onClick={()=>alert("Mensaje simulado enviado.")}>Enviar</Button>
-                                        </Card>
-                                    </div>
+                                    <h2 className="text-2xl font-bold mb-4">Calendario Global</h2>
+                                    <Card className="bg-white">
+                                        <p className="text-center text-slate-500 py-12">Vista de calendario completa (integrada en Dashboard)</p>
+                                    </Card>
                                 </div>
                             )}
                         </div>
