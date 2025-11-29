@@ -86,10 +86,12 @@
 
         // --- 2. UTILS & HOOKS ---
         const { useState, useEffect, useMemo } = React;
+        
+        // RECHARTS SAFETY CHECK (Evita pantalla blanca si falla la carga)
         const RechartsObj = window.Recharts || {};
         const { BarChart, Bar, XAxis, YAxis, Tooltip: RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie } = RechartsObj;
 
-        // Icons - CORREGIDO: Se agregaron los fragmentos <>...</> faltantes en Edit, Send y Mail
+        // Icons - CORREGIDO: Sintaxis JSX estricta
         const Icon = ({ name, size = 20, className = "" }) => {
             const icons = {
                 Home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>,
@@ -266,22 +268,16 @@
             // Helper: Obtener detalles completos de un día
             const getFullEventDetails = (dateStr) => {
                 const combined = [];
-                // Alabanza
                 worship.filter(e => e.date === dateStr).forEach(e => combined.push({...e, src:'Alabanza', color:'bg-purple-100 text-purple-800'}));
-                // Servidores
                 servers.filter(e => e.date === dateStr).forEach(e => combined.push({...e, src:'Servidores', color:'bg-blue-100 text-blue-800'}));
-                // EBD
                 ebd.filter(e => e.date === dateStr).forEach(e => combined.push({...e, src:'EBD', color:'bg-emerald-100 text-emerald-800'}));
-                // Jovenes
                 youth.filter(e => e.date === dateStr).forEach(e => combined.push({...e, src:'Jóvenes', color:'bg-orange-100 text-orange-800'}));
-                
                 return combined;
             };
 
-            // --- VISTAS ---
+            // --- VISTAS (DEFINIDAS DENTRO PARA ACCESO FACIL A STATE, PERO PROTEGIDAS) ---
 
             const Dashboard = () => {
-                // Cálculo de equidad en servicios
                 const serviceCount = useMemo(() => {
                     const counts = {};
                     [...servers, ...worship, ...ebd, ...youth].forEach(ev => {
@@ -297,7 +293,6 @@
                 const nextEvent = [...worship, ...youth, ...servers].filter(e => new Date(e.date) >= new Date().setHours(0,0,0,0)).sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
                 const pendingMsgs = messages.filter(m => (m.to === 'all' || m.to === profile.id) && !m.readBy?.includes(profile.id)).length;
                 
-                // Mis Tareas (Extraer de todos los eventos donde aparezca mi nombre)
                 const myTasksCount = [...worship, ...servers, ...ebd, ...youth].filter(ev => {
                     const allAssigned = [...Object.values(ev.assignments || {}).flat(), ...Object.values(ev.team || {}).flat()];
                     return allAssigned.includes(profile.name) && new Date(ev.date) >= new Date();
@@ -337,25 +332,30 @@
                                 <div className="bg-blue-100 text-blue-700 p-3 rounded-full"><Icon name="Calendar" /></div>
                                 <span className="font-bold text-stone-700">Agenda</span>
                             </button>
-                            {/* Acceso directo a mi ministerio */}
                             <button onClick={()=>setActiveTab(profile.ministry === 'Alabanza' ? 'worship' : profile.ministry === 'Jóvenes' ? 'youth' : 'servers')} className="card-elegant p-4 hover:border-brand-300 transition-all flex flex-col items-center justify-center gap-2">
                                 <div className="bg-emerald-100 text-emerald-700 p-3 rounded-full"><Icon name="Briefcase" /></div>
                                 <span className="font-bold text-stone-700">Mi Ministerio</span>
                             </button>
                         </div>
 
-                        {/* Métricas de Rotación (Justicia) */}
                         <div className="card-elegant p-6">
                             <h3 className="font-bold text-lg text-stone-800 mb-4">Balance de Servicio (Mes Actual)</h3>
                             <div className="h-64 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={serviceCount}>
-                                        <XAxis dataKey="name" tick={{fontSize:10}} interval={0}/>
-                                        <YAxis allowDecimals={false}/>
-                                        <RechartsTooltip contentStyle={{borderRadius:'12px', border:'none'}}/>
-                                        <Bar dataKey="val" radius={[4,4,0,0]} fill="#be123c" />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                                {/* SEGURIDAD: Solo renderiza Recharts si BarChart está definido */}
+                                {BarChart ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={serviceCount}>
+                                            <XAxis dataKey="name" tick={{fontSize:10}} interval={0}/>
+                                            <YAxis allowDecimals={false}/>
+                                            {RechartsTooltip && <RechartsTooltip contentStyle={{borderRadius:'12px', border:'none'}}/>}
+                                            <Bar dataKey="val" radius={[4,4,0,0]} fill="#be123c" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex items-center justify-center h-full text-stone-400">
+                                        Gráfico no disponible (Librería bloqueada)
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -368,10 +368,7 @@
                 const [openId, setOpenId] = useState(null);
                 const [viewContext, setViewContext] = useState(null);
 
-                // Mensajes + Tareas generadas automáticamente de eventos
                 const myMessages = messages.filter(m => m.to === 'all' || m.to === profile.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
-                
-                // Generar "Tareas" basadas en asignaciones en eventos
                 const myTasks = [];
                 [...worship, ...servers, ...ebd, ...youth].forEach(ev => {
                     const allAssigned = [...Object.values(ev.assignments || {}).flat(), ...Object.values(ev.team || {}).flat()];
@@ -455,7 +452,6 @@
                             </div>
                         </Modal>
 
-                        {/* Modal Contexto */}
                         <Modal isOpen={!!viewContext} onClose={()=>setViewContext(null)} title={`Contexto: ${formatDate(viewContext)}`}>
                             {viewContext && getFullEventDetails(viewContext).map((ev, i) => (
                                 <div key={i} className={`p-4 rounded-xl mb-2 border ${ev.color}`}>
@@ -476,16 +472,14 @@
                 const [modalOpen, setModalOpen] = useState(false);
                 const [editing, setEditing] = useState(null);
                 const [form, setForm] = useState({});
-                const [tab, setTab] = useState('events'); // events | songs (solo alabanza)
+                const [tab, setTab] = useState('events');
 
-                // Filtro Mes
                 const monthData = data.filter(d => d.date.startsWith(date.toISOString().slice(0,7))).sort((a,b)=>new Date(a.date)-new Date(b.date));
-                
                 const changeMonth = (d) => { const n = new Date(date); n.setMonth(n.getMonth()+d); setDate(n); };
 
                 const openEdit = (item=null) => {
                     setEditing(item);
-                    setForm(item || { date: '', time: '', type: 'Culto', theme: '', assignments: {}, team: {} }); // Reset form
+                    setForm(item || { date: '', time: '', type: 'Culto', theme: '', assignments: {}, team: {} });
                     setModalOpen(true);
                 };
 
@@ -495,7 +489,6 @@
                     setModalOpen(false);
                 };
 
-                // Componente Biblioteca Canciones
                 const SongLibrary = () => {
                     const [songModal, setSongModal] = useState(false);
                     const [songForm, setSongForm] = useState({});
@@ -576,7 +569,6 @@
                                                     )}
                                                 </div>
                                                 
-                                                {/* Asignaciones Dinámicas Multi-User */}
                                                 <div className="mt-4 flex flex-wrap gap-2">
                                                     {[...Object.entries(item.assignments||{}), ...Object.entries(item.team||{})].map(([k,v]) => (
                                                         v && v.length > 0 && (
@@ -607,7 +599,6 @@
 
                                 <div className="border-t pt-4">
                                     <h4 className="font-bold text-brand-900 mb-3">Asignaciones (Multi-selección)</h4>
-                                    {/* Generador de campos según colección */}
                                     {(collection === 'worship' ? ['Vocal', 'Guitarra', 'Bajo', 'Batería', 'Teclado'] 
                                       : collection === 'servers' ? ['Recepción', 'Baños', 'Altar', 'Ofrenda', 'Seguridad']
                                       : ['Líder', 'Colaborador', 'Logística']).map(role => (
