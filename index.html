@@ -4,1145 +4,862 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Conquistadores App - Gestión Integral</title>
-
-    <!-- ====================================================================================
-         SECUENCIA CRÍTICA DE CARGA (NO MODIFICAR)
-         ==================================================================================== -->
     
-    <!-- 1. React Core (v18) -->
+    <!-- 1. React Core (Orden Crítico) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- 2. PropTypes (Requerido por Recharts ANTES de cargar Recharts) -->
+    <!-- 2. Prop-types (Requerido para Recharts) -->
     <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
     
-    <!-- 3. Recharts (Librería Gráfica) -->
+    <!-- 3. Recharts -->
     <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
-
-    <!-- 4. Babel (Compilador JSX) -->
+    
+    <!-- 4. Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+    
     <!-- 5. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- 6. Firebase SDKs (Compat v9.23.0) -->
+    
+    <!-- 6. Firebase SDKs (Compat v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <!-- Configuración de Estilos y Branding -->
+    <!-- Fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
                     colors: {
-                        church: {
-                            navy: '#1A438D', // Primario
-                            gold: '#F5C71D', // Acento
-                            50: '#f0f4fd',
-                            100: '#e4ebfa',
-                            600: '#1A438D',
-                            700: '#153673',
-                            800: '#142d5f',
-                        }
+                        // Azul Marino Fuerte (#1A438D) y Dorado (#F5C71D)
+                        brand: { 
+                            50:'#f0f4fa', 
+                            100:'#dce7f4', 
+                            200:'#c0d4ec', 
+                            300:'#94b9e0', 
+                            400:'#6199d0', 
+                            500:'#3e7cba', 
+                            600:'#2b609c', 
+                            700:'#1a438d', // Primario
+                            800:'#193973', 
+                            900:'#17305d' 
+                        },
+                        accent: { 
+                            100: '#fef3c7',
+                            400: '#fbbf24',
+                            500: '#f5c71d', // Dorado
+                            600: '#d97706' 
+                        }, 
+                        surface: '#f8fafc'
                     },
-                    fontFamily: {
-                        sans: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(26, 67, 141, 0.08)',
+                        'glow': '0 0 15px rgba(245, 199, 29, 0.4)'
                     }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #f8fafc; -webkit-font-smoothing: antialiased; }
         .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-enter { animation: enter 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Estilos específicos para inputs y formularios */
-        .input-std { @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-church-navy focus:ring-2 focus:ring-church-navy/20 outline-none transition-all text-sm font-medium; }
-        .label-std { @apply block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1; }
-        .btn-action { @apply active:scale-95 transition-transform; }
+        .input-ui { @apply w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium placeholder-slate-400; }
+        .label-ui { @apply block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1; }
+        .card-ui { @apply bg-white rounded-2xl p-5 shadow-soft border border-slate-100 transition-all hover:shadow-md; }
+        .chip { @apply px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer border select-none; }
+        .chip.active { @apply bg-brand-700 text-white border-brand-700 shadow-lg shadow-brand-700/20; }
+        .chip.inactive { @apply bg-white text-slate-500 border-slate-200 hover:bg-slate-50; }
+        
+        /* Modal Custom Scroll */
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // ====================================================================================
-        // 1. INICIALIZACIÓN Y UTILIDADES
-        // ====================================================================================
-        const { useState, useEffect, useMemo, useContext, createContext, useCallback, useRef } = React;
+        // ==========================================
+        // 1. CONFIGURACIÓN E INICIALIZACIÓN
+        // ==========================================
         
-        // --- FIX RECHARTS: Acceso seguro al objeto global ---
-        const RechartsObj = window.Recharts || {};
-        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } = RechartsObj;
-
-        // --- Configuración Firebase (Variables Globales) ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'conquistadores-app-prod';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            // Fallback config por si falla la inyección (opcional, solo dev)
-             apiKey: "AIzaSyDXK_EcXsFGhRmXfkKG8SMdsM69c4PNfHw", authDomain: "conquistadoresapp.firebaseapp.com", projectId: "conquistadoresapp"
+        // Uso de variables globales del entorno o fallback
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'conquistadores-app-v1';
+        
+        // Configuración Firebase (Reemplaza con tu config real si __firebase_config no existe)
+        const firebaseConfigRaw = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDXK_EcXsFGhRmXfkKG8SMdsM69c4PNfHw",
+            authDomain: "conquistadoresapp.firebaseapp.com",
+            projectId: "conquistadoresapp",
+            storageBucket: "conquistadoresapp.firebasestorage.app",
+            messagingSenderId: "518647225464",
+            appId: "1:518647225464:web:b3344ca5172498187e218d"
         };
-        
-        if (!firebase.apps.length) {
-            try {
-                firebase.initializeApp(firebaseConfig);
-            } catch (e) {
-                console.error("Firebase Init Error:", e);
-            }
-        }
-        
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfigRaw);
         const db = firebase.firestore();
         const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // --- Iconos SVG (Lucide-like) Expandidos ---
+        const { useState, useEffect, useMemo, Fragment } = React;
+        const RechartsObj = window.Recharts || {};
+        const { BarChart, Bar, XAxis, YAxis, Tooltip: RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie } = RechartsObj;
+
+        // ==========================================
+        // 2. HELPERS & UTILIDADES
+        // ==========================================
+        
         const Icon = ({ name, size = 20, className = "" }) => {
             const icons = {
-                Menu: <path d="M4 6h16M4 12h16M4 18h16" />,
-                X: <path d="M18 6L6 18M6 6l12 12" />,
-                Home: <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />,
-                Users: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />,
-                Music: <path d="M9 18V5l12-2v13" />,
-                Briefcase: <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />,
-                Book: <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />,
-                Smile: <circle cx="12" cy="12" r="10" />,
-                DollarSign: <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />,
-                Bell: <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />,
-                Calendar: <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />,
-                ChevronLeft: <path d="M15 18l-6-6 6-6" />,
-                ChevronRight: <path d="M9 18l6-6-6-6" />,
-                Plus: <path d="M12 5v14M5 12h14" />,
-                Trash: <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />,
-                Edit: <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />,
-                Check: <polyline points="20 6 9 17 4 12" />,
-                LogOut: <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />,
-                Search: <React.Fragment><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></React.Fragment>,
-                Filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
-                Mic: <React.Fragment><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></React.Fragment>
+                Home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>,
+                Users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
+                Calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+                Music: <><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></>,
+                Briefcase: <rect x="2" y="7" width="20" height="14" rx="2" ry="2" transform="translate(0 -2)"/>,
+                DollarSign: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,
+                Bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>,
+                Menu: <><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>,
+                X: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+                ChevronLeft: <polyline points="15 18 9 12 15 6"/>,
+                ChevronRight: <polyline points="9 18 15 12 9 6"/>,
+                Plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+                Trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
+                Edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+                LogOut: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+                BookOpen: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
+                Smile: <><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></>,
+                Mail: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,
+                Alert: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
+                Info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>,
+                Mic: <><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></>
             };
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name] || <circle cx="12" cy="12" r="2" />}
-                </svg>
-            );
+            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || <circle cx="12" cy="12" r="10"/>}</svg>;
         };
 
-        // --- Helpers ---
-        const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        
-        const getMonthChips = () => {
-            const today = new Date();
-            let chips = [];
-            // Generar 12 meses: 4 atrás y 7 adelante
-            for (let i = -4; i <= 7; i++) {
-                const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
-                chips.push(d);
-            }
-            return chips;
-        };
-
-        const formatDate = (dateStr) => {
-            if (!dateStr) return '';
-            const [y, m, d] = dateStr.split('-');
-            const date = new Date(y, m - 1, d);
-            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        const formatDate = (d, fmt = 'short') => {
+            if(!d) return '';
+            const date = new Date(d);
+            if(d.length === 10) date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+            if(fmt === 'long') return date.toLocaleDateString('es-AR', { weekday:'long', day: 'numeric', month: 'long' });
+            if(fmt === 'month') return date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+            return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
         };
         
-        const getDayName = (dateStr) => {
-            if (!dateStr) return '';
-            const [y, m, d] = dateStr.split('-');
-            const date = new Date(y, m - 1, d);
-            return date.toLocaleDateString('es-ES', { weekday: 'short' });
-        }
+        const formatMoney = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(amount);
 
-        const formatMoney = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(val);
+        // ==========================================
+        // 3. COMPONENTES UI GLOBALES
+        // ==========================================
 
-        // ====================================================================================
-        // 2. COMPONENTES UI REUTILIZABLES
-        // ====================================================================================
-        
-        const Modal = ({ isOpen, onClose, title, children, footer, size = "md" }) => {
+        // Modal Universal
+        const Modal = ({ isOpen, onClose, title, children, footer, size="max-w-xl" }) => {
             if (!isOpen) return null;
-            const sizeClasses = {
-                sm: "max-w-md",
-                md: "max-w-xl",
-                lg: "max-w-4xl"
-            };
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm fade-in">
-                    <div className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[95vh] overflow-hidden flex flex-col`}>
-                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-church-navy text-white">
-                            <h3 className="font-bold text-lg tracking-wide">{title}</h3>
-                            <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-full transition-colors"><Icon name="X" /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-enter">
+                    <div className={`bg-white rounded-3xl shadow-2xl w-full ${size} max-h-[90vh] flex flex-col`}>
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-3xl">
+                            <h3 className="text-xl font-extrabold text-brand-900 tracking-tight">{title}</h3>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-red-500"><Icon name="X" /></button>
                         </div>
-                        <div className="p-6 flex-1 overflow-y-auto bg-slate-50">
+                        <div className="p-6 overflow-y-auto modal-content flex-1">
                             {children}
                         </div>
-                        {footer && (
-                            <div className="p-4 border-t border-slate-100 bg-white flex justify-end gap-3 rounded-b-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                                {footer}
-                            </div>
-                        )}
+                        {footer && <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-3xl">{footer}</div>}
                     </div>
                 </div>
             );
         };
 
-        const Button = ({ children, onClick, variant = 'primary', className = "", icon, disabled = false, type="button" }) => {
-            const styles = {
-                primary: "bg-church-navy text-white hover:bg-church-800 shadow-lg shadow-church-navy/30",
-                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
-                accent: "bg-church-gold text-church-navy font-bold hover:bg-yellow-400 shadow-lg shadow-yellow-500/20",
-                danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-            };
-            return (
-                <button type={type} disabled={disabled} onClick={onClick} className={`btn-action flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${styles[variant]} ${className}`}>
-                    {icon && <Icon name={icon} size={18} />}
-                    {children}
-                </button>
-            );
-        };
-
-        const Input = ({ label, type = "text", value, onChange, placeholder, required = false, name }) => (
-            <div className="mb-4">
-                <label className="label-std">{label} {required && <span className="text-red-500">*</span>}</label>
-                <input 
-                    name={name}
-                    type={type} 
-                    value={value} 
-                    onChange={onChange} 
-                    placeholder={placeholder}
-                    className="input-std"
-                />
-            </div>
+        // Confirmación Personalizada (Reemplaza alert/confirm)
+        const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => (
+            <Modal isOpen={isOpen} onClose={onCancel} title={title} size="max-w-sm">
+                <div className="text-center py-4">
+                    <div className="w-16 h-16 bg-accent-100 text-accent-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Icon name="Alert" size={32}/>
+                    </div>
+                    <p className="text-slate-600">{message}</p>
+                </div>
+                <div className="flex gap-3 mt-4">
+                    <button onClick={onCancel} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">Cancelar</button>
+                    <button onClick={onConfirm} className="flex-1 py-3 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition shadow-lg shadow-brand-500/30">Confirmar</button>
+                </div>
+            </Modal>
         );
 
-        const Select = ({ label, value, onChange, options, name }) => (
-            <div className="mb-4">
-                <label className="label-std">{label}</label>
-                <select 
-                    name={name}
-                    value={value} 
-                    onChange={onChange} 
-                    className="input-std appearance-none"
-                >
-                    {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-            </div>
-        );
-
-        // ====================================================================================
-        // 3. LOGICA PRINCIPAL (APP)
-        // ====================================================================================
-
-        const App = () => {
-            // --- ESTADOS GLOBALES ---
-            const [user, setUser] = useState(null); 
-            const [userData, setUserData] = useState(null); 
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [selectedMonth, setSelectedMonth] = useState(new Date()); 
-            
-            // --- DATOS (Colecciones) ---
-            const [people, setPeople] = useState([]);
-            const [worshipEvents, setWorshipEvents] = useState([]);
-            const [serverEvents, setServerEvents] = useState([]);
-            const [ebdEvents, setEbdEvents] = useState([]);
-            const [youthEvents, setYouthEvents] = useState([]);
-            const [finances, setFinances] = useState([]);
-            const [songs, setSongs] = useState([]);
-            const [tasks, setTasks] = useState([]);
-            const [messages, setMessages] = useState([]);
-
-            // --- UI States ---
-            const [sidebarOpen, setSidebarOpen] = useState(false);
-            const [globalModalEvent, setGlobalModalEvent] = useState(null); 
-            const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', data: null }); 
-
-            // --- AUTHENTICATION INIT ---
-            useEffect(() => {
-                const initAuth = async () => {
-                    const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    if (initialToken) {
-                        await auth.signInWithCustomToken(initialToken);
-                    } else {
-                        // Fallback anónimo si no hay token
-                        await auth.signInAnonymously();
-                    }
-                };
-                initAuth();
-
-                return auth.onAuthStateChanged(async (u) => {
-                    if (u) {
-                        setUser(u);
-                        // Buscar perfil en Firestore
-                        const docPath = `artifacts/${appId}/public/data/people`;
-                        let doc = await db.collection(docPath).doc(u.uid).get();
-                        
-                        if (doc.exists) {
-                            setUserData({ id: doc.id, ...doc.data() });
-                        } else {
-                            // Intento de buscar por email si el ID no coincide (para migraciones)
-                            if (u.email) {
-                                const snapshot = await db.collection(docPath).where('email', '==', u.email).limit(1).get();
-                                if (!snapshot.empty) {
-                                    setUserData({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
-                                    return;
-                                }
-                            }
-                            // Crear perfil default
-                            const newProfile = {
-                                name: u.displayName || 'Nuevo Usuario',
-                                role: 'Servidor',
-                                email: u.email || '',
-                                createdAt: new Date().toISOString()
-                            };
-                            await db.collection(docPath).doc(u.uid).set(newProfile);
-                            setUserData({ id: u.uid, ...newProfile });
-                        }
-                    }
-                });
+        // Selector de Meses (Chips)
+        const MonthNavigator = ({ currentDate, onChange }) => {
+            const months = useMemo(() => {
+                const arr = [];
+                for(let i=-2; i<=2; i++) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + i);
+                    arr.push(d);
+                }
+                return arr;
             }, []);
 
-            // --- DATA FETCHING (Unificado) ---
-            useEffect(() => {
-                if (!user) return;
-                
-                const basePath = `artifacts/${appId}/public/data`;
-                const subs = [];
-                
-                const sub = (col, setter) => {
-                    subs.push(db.collection(`${basePath}/${col}`).onSnapshot(snap => {
-                        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        setter(data);
-                    }, err => console.error(`Error fetching ${col}:`, err)));
-                };
-
-                sub('people', setPeople);
-                sub('worship_events', setWorshipEvents);
-                sub('server_events', setServerEvents);
-                sub('ebd_events', setEbdEvents);
-                sub('youth_events', setYouthEvents);
-                sub('finances', setFinances);
-                sub('songs', setSongs);
-                sub('tasks', setTasks);
-                sub('messages', setMessages);
-
-                return () => subs.forEach(unsub => unsub());
-            }, [user]);
-
-            // --- FILTROS DE MES ---
-            const filterByMonth = (list) => {
-                if (!list) return [];
-                const y = selectedMonth.getFullYear();
-                const m = selectedMonth.getMonth(); 
-                return list.filter(item => {
-                    if (!item.date) return false;
-                    // Comparar string YYYY-MM
-                    const itemDate = item.date.substring(0, 7); // "2023-10"
-                    const filterDate = `${y}-${String(m+1).padStart(2,'0')}`;
-                    return itemDate === filterDate;
-                });
-            };
-
-            // --- PERMISOS ---
-            const canEdit = (ministry) => {
-                if (!userData) return false;
-                if (userData.role === 'Pastor') return true;
-                if (userData.role.includes(ministry)) return true; // Ej: "Líder de Alabanza"
-                return false;
-            };
-
-            // --- CRUD ACTIONS ---
-            const handleSave = async (collection, data, id = null) => {
-                const path = `artifacts/${appId}/public/data/${collection}`;
-                try {
-                    // Limpieza de datos undefined
-                    const cleanData = JSON.parse(JSON.stringify(data));
-                    
-                    if (id) {
-                        await db.collection(path).doc(id).update(cleanData);
-                    } else {
-                        await db.collection(path).add({ ...cleanData, createdAt: new Date().toISOString() });
-                    }
-                    setModalConfig({ isOpen: false, type: '', data: null });
-                } catch (e) {
-                    console.error(e);
-                    // Fallback visual simple
-                    const errDiv = document.createElement('div');
-                    errDiv.innerHTML = `<div class="fixed top-4 right-4 bg-red-500 text-white p-4 rounded shadow-lg z-[60]">Error: ${e.message}</div>`;
-                    document.body.appendChild(errDiv);
-                    setTimeout(()=>errDiv.remove(), 3000);
-                }
-            };
-
-            const handleDelete = async (collection, id) => {
-                if(!id) return;
-                // Confirmación Custom (No alert)
-                setModalConfig({ 
-                    isOpen: true, 
-                    type: 'confirm_delete', 
-                    data: { collection, id } 
-                });
-            };
-
-            const confirmDelete = async () => {
-                const { collection, id } = modalConfig.data;
-                const path = `artifacts/${appId}/public/data/${collection}`;
-                await db.collection(path).doc(id).delete();
-                setModalConfig({ isOpen: false, type: '', data: null });
-            };
-
-            // --- VISTA GLOBAL DE EVENTO (MODAL UNIFICADO) ---
-            const openGlobalEvent = (date, baseEvent) => {
-                const matches = {
-                    base: baseEvent,
-                    worship: worshipEvents.find(e => e.date === date),
-                    server: serverEvents.find(e => e.date === date),
-                    ebd: ebdEvents.find(e => e.date === date),
-                    youth: youthEvents.find(e => e.date === date)
-                };
-                setGlobalModalEvent(matches);
-            };
-
-            // =================================================================================
-            // 4. SUB-COMPONENTES DE PANTALLA
-            // =================================================================================
-
-            // --- COMPONENTE: NAVEGACIÓN MENSUAL (CHIPS) ---
-            const MonthNav = () => (
-                <div className="flex overflow-x-auto gap-2 py-3 px-4 hide-scroll bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100 items-center">
-                    <Icon name="Calendar" className="text-church-navy mr-2 flex-shrink-0" />
-                    {getMonthChips().map((d, i) => {
-                        const isSelected = d.getMonth() === selectedMonth.getMonth() && d.getFullYear() === selectedMonth.getFullYear();
+            return (
+                <div className="flex overflow-x-auto gap-2 pb-2 hide-scroll mb-6">
+                    {months.map((d, i) => {
+                        const isCurrent = d.toISOString().slice(0,7) === currentDate.toISOString().slice(0,7);
                         return (
-                            <button 
-                                key={i}
-                                onClick={() => setSelectedMonth(d)}
-                                className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${isSelected ? 'bg-church-navy text-white border-church-navy shadow-lg shadow-church-navy/20' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300'}`}
-                            >
-                                {MONTHS[d.getMonth()].substring(0,3)} {d.getFullYear() !== new Date().getFullYear() && d.getFullYear()}
+                            <button key={i} onClick={()=>onChange(d)} 
+                                className={`chip ${isCurrent ? 'active' : 'inactive'}`}>
+                                {formatDate(d, 'month')}
                             </button>
                         );
                     })}
                 </div>
             );
+        };
 
-            // --- COMPONENTE: DASHBOARD ---
-            const DashboardView = () => {
-                // Cálculo de Equidad (Recharts)
-                const serverStats = useMemo(() => {
-                    const counts = {};
-                    serverEvents.forEach(evt => {
-                        Object.values(evt.assignments || {}).forEach(name => {
-                            if (name) counts[name] = (counts[name] || 0) + 1;
-                        });
-                    });
-                    // Agregar Alabanza también
-                    worshipEvents.forEach(evt => {
-                         Object.values(evt.assignments || {}).forEach(name => {
-                            if (name) counts[name] = (counts[name] || 0) + 1;
-                        });
-                    });
-
-                    return Object.entries(counts)
-                        .map(([name, count]) => ({ name, count }))
-                        .sort((a,b) => b.count - a.count)
-                        .slice(0, 10);
-                }, [serverEvents, worshipEvents]);
-
-                const unreadMessages = messages.filter(m => (m.to === 'all' || m.to === userData?.id) && !(m.readBy || []).includes(userData?.id)).length;
-                const myPendingTasks = tasks.filter(t => t.assignedToId === userData?.id && t.status === 'Pendiente').length;
-
-                return (
-                    <div className="space-y-6 fade-in pb-10">
-                        {/* Header Personal */}
-                        <div className="bg-gradient-to-r from-church-navy to-church-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
-                            <div className="relative z-10">
-                                <h1 className="text-3xl font-extrabold mb-2">Hola, {userData?.name?.split(' ')[0] || 'Conquistador'}</h1>
-                                <p className="text-church-100 font-medium">Bienvenido a tu panel de gestión.</p>
-                                <div className="mt-6 flex gap-3">
-                                    <div onClick={() => setActiveTab('inbox')} className="bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-white/20 transition-colors">
-                                        <Icon name="Bell" size={16} />
-                                        <span className="font-bold">{unreadMessages} Mensajes</span>
-                                    </div>
-                                    <div onClick={() => setActiveTab('inbox')} className="bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-white/20 transition-colors">
-                                        <Icon name="Check" size={16} />
-                                        <span className="font-bold">{myPendingTasks} Tareas</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <Icon name="Home" size={150} className="absolute -right-6 -bottom-6 text-white/5 rotate-12" />
-                        </div>
-
-                        {/* Quick Stats Grid */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center text-center hover:border-church-gold transition-colors cursor-pointer" onClick={() => setActiveTab('directory')}>
-                                <div className="bg-blue-50 text-church-navy p-3 rounded-full mb-2"><Icon name="Users" /></div>
-                                <span className="text-2xl font-black text-slate-800">{people.length}</span>
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Miembros</span>
-                            </div>
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center text-center hover:border-church-gold transition-colors cursor-pointer" onClick={() => setActiveTab('servers')}>
-                                <div className="bg-green-50 text-green-600 p-3 rounded-full mb-2"><Icon name="Briefcase" /></div>
-                                <span className="text-2xl font-black text-slate-800">{serverEvents.length}</span>
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Eventos</span>
-                            </div>
-                        </div>
-
-                        {/* Gráfico Recharts (Solo Lideres/Pastores) */}
-                        {userData?.role !== 'Servidor' && serverStats.length > 0 && BarChart && (
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                <h3 className="font-bold text-lg mb-6 text-church-navy flex items-center gap-2">
-                                    <Icon name="Filter" size={18} /> Rotación de Servicio
-                                </h3>
-                                <div className="h-64 w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={serverStats}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="name" tick={{fontSize: 10, fill: '#64748b'}} interval={0} />
-                                            <YAxis allowDecimals={false} tick={{fontSize: 10, fill: '#64748b'}} />
-                                            <Tooltip 
-                                                cursor={{fill: '#f8fafc'}} 
-                                                contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}}
-                                            />
-                                            <Bar dataKey="count" fill="#1A438D" radius={[4, 4, 0, 0]} barSize={32}>
-                                                {serverStats.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={index < 3 ? '#F5C71D' : '#1A438D'} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
+        const Button = ({ children, onClick, variant = 'primary', icon, className = "", disabled=false }) => {
+            const variants = {
+                primary: "bg-brand-700 text-white hover:bg-brand-800 shadow-glow",
+                accent: "bg-accent-500 text-brand-900 hover:bg-accent-400 shadow-glow",
+                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
+                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
+                ghost: "bg-transparent text-slate-500 hover:bg-slate-100"
             };
+            return (
+                <button disabled={disabled} onClick={onClick} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}>
+                    {icon && <Icon name={icon} size={18} />}{children}
+                </button>
+            );
+        };
 
-            // --- COMPONENTE: BANDEJA DE ENTRADA (MESSAGING + TASKS) ---
-            const InboxView = () => {
-                const [filter, setFilter] = useState('all'); // all, tasks, messages
-                
-                // Procesar Tareas
-                const myTasks = tasks.filter(t => t.assignedToId === userData?.id || t.assignedToName === userData?.name);
-                // Procesar Mensajes
-                const myMessages = messages.filter(m => m.to === 'all' || m.to === userData?.id).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // ==========================================
+        // 4. MÓDULOS DE NEGOCIO
+        // ==========================================
 
-                const combined = [
-                    ...myTasks.map(t => ({...t, type: 'task', sortDate: t.createdAt})),
-                    ...myMessages.map(m => ({...m, type: 'message', sortDate: m.createdAt}))
-                ].sort((a,b) => new Date(b.sortDate) - new Date(a.sortDate));
+        const Dashboard = ({ profile, tasks, messages, worship, servers, ebd, youth, setActiveTab }) => {
+            const [selectedMonth, setSelectedMonth] = useState(new Date());
 
-                const filteredList = filter === 'all' ? combined : combined.filter(i => i.type === filter);
+            // Filtrado global por mes
+            const filterByMonth = (list) => list.filter(item => item.date && item.date.startsWith(selectedMonth.toISOString().slice(0, 7)));
 
-                const markRead = async (msg) => {
-                    const currentReads = msg.readBy || [];
-                    if (!currentReads.includes(userData.id)) {
-                        await db.collection(`artifacts/${appId}/public/data/messages`).doc(msg.id).update({
-                            readBy: [...currentReads, userData.id]
-                        });
-                    }
-                };
+            const nextEvent = useMemo(() => {
+                const all = [...worship, ...youth, ...ebd, ...servers].filter(e => new Date(e.date) >= new Date().setHours(0,0,0,0));
+                return all.sort((a,b) => new Date(a.date) - new Date(b.date))[0];
+            }, [worship, youth, ebd, servers]);
 
-                const completeTask = async (task) => {
-                    await db.collection(`artifacts/${appId}/public/data/tasks`).doc(task.id).update({ status: 'Completado' });
-                };
+            // Stats de rotación para Pastor
+            const rotationStats = useMemo(() => {
+                const counts = {};
+                filterByMonth(servers).forEach(s => {
+                    Object.values(s.assignments || {}).forEach(name => {
+                        if(name) counts[name] = (counts[name] || 0) + 1;
+                    });
+                });
+                return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a,b) => b.count - a.count).slice(0, 8);
+            }, [servers, selectedMonth]);
 
-                return (
-                    <div className="space-y-4 fade-in">
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-2xl font-bold text-church-navy">Buzón</h2>
-                            {(userData?.role === 'Pastor' || userData?.role.includes('Líder')) && (
-                                <Button icon="Plus" onClick={() => setModalConfig({ isOpen: true, type: 'compose_message' })} className="text-xs px-3">Nuevo</Button>
-                            )}
-                        </div>
+            const unread = messages.filter(m => !m.readBy?.includes(profile.id)).length;
+            const pendingTasks = tasks.filter(t => t.assignedTo === profile.name && t.status === 'Pendiente').length;
 
-                        <div className="flex gap-2 mb-4 overflow-x-auto hide-scroll">
-                            {['all', 'message', 'task'].map(f => (
-                                <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${filter === f ? 'bg-slate-800 text-white' : 'bg-white border border-slate-200 text-slate-500'}`}>
-                                    {f === 'all' ? 'Todo' : f === 'message' ? 'Mensajes' : 'Tareas'}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="space-y-3">
-                            {filteredList.length === 0 && <div className="text-center py-10 text-slate-400">No hay notificaciones.</div>}
+            return (
+                <div className="animate-enter space-y-6">
+                    {/* Header Card */}
+                    <div className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-600 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+                        <div className="absolute -right-10 -top-10 text-white/5 transform rotate-12"><Icon name="Home" size={200} /></div>
+                        <div className="relative z-10">
+                            <h2 className="text-3xl font-extrabold mb-1">Hola, {profile.name.split(' ')[0]}</h2>
+                            <p className="text-brand-200 font-medium mb-6">Bienvenido al panel de control.</p>
                             
-                            {filteredList.map(item => {
-                                if (item.type === 'task') {
-                                    return (
-                                        <div key={item.id} className="bg-white p-4 rounded-xl border-l-4 border-l-church-gold shadow-sm">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="bg-church-gold/20 text-church-navy px-2 py-0.5 rounded text-[10px] font-bold uppercase">Tarea</span>
-                                                        <span className="text-xs text-slate-400">{formatDate(item.createdAt?.substring(0,10))}</span>
-                                                    </div>
-                                                    <h4 className={`font-bold text-slate-800 ${item.status === 'Completado' ? 'line-through opacity-50' : ''}`}>{item.description}</h4>
-                                                    <p className="text-xs text-slate-500 mt-1">Asignado por: {item.createdBy}</p>
-                                                </div>
-                                                {item.status !== 'Completado' ? (
-                                                    <button onClick={() => completeTask(item)} className="p-2 bg-slate-100 hover:bg-green-100 text-slate-400 hover:text-green-600 rounded-lg transition-colors"><Icon name="Check" /></button>
-                                                ) : <Icon name="Check" className="text-green-500" />}
-                                            </div>
-                                        </div>
-                                    );
-                                } else {
-                                    const isRead = (item.readBy || []).includes(userData?.id);
-                                    return (
-                                        <details key={item.id} className="group bg-white rounded-xl border border-slate-100 shadow-sm open:shadow-md transition-all" onClick={() => !isRead && markRead(item)}>
-                                            <summary className="flex justify-between items-center p-4 cursor-pointer list-none">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`p-2 rounded-full ${isRead ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
-                                                        <Icon name="Bell" size={18} />
-                                                    </div>
-                                                    <div>
-                                                        <p className={`text-sm ${isRead ? 'font-medium text-slate-600' : 'font-bold text-slate-900'}`}>{item.subject || 'Mensaje Nuevo'}</p>
-                                                        <p className="text-xs text-slate-400">{formatDate(item.createdAt?.substring(0,10))} • De: {item.fromName}</p>
-                                                    </div>
-                                                </div>
-                                                <Icon name="ChevronRight" size={16} className="text-slate-300 group-open:rotate-90 transition-transform" />
-                                            </summary>
-                                            <div className="px-4 pb-4 pt-0 border-t border-slate-50 mt-2">
-                                                <p className="text-sm text-slate-600 whitespace-pre-line mt-4">{item.content}</p>
-                                            </div>
-                                        </details>
-                                    );
-                                }
-                            })}
-                        </div>
-                    </div>
-                );
-            };
-
-            // --- COMPONENTE: TESORERÍA (SOLO PASTOR) ---
-            const FinancesView = () => {
-                if (userData?.role !== 'Pastor') return <div className="p-10 text-center text-slate-400 bg-slate-100 rounded-xl m-4">🚫 Acceso Restringido</div>;
-
-                const filtered = filterByMonth(finances);
-                // Cálculos
-                const totalTithes = filtered.reduce((sum, item) => sum + (Number(item.tithes) || 0), 0);
-                const totalOfferings = filtered.reduce((sum, item) => sum + (Number(item.offerings) || 0), 0);
-                const totalIncome = filtered.filter(i => i.type === 'Ingreso').reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
-                const totalExpenses = filtered.filter(i => i.type === 'Gasto').reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
-                
-                const grandTotal = totalTithes + totalOfferings + totalIncome;
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-church-navy">Tesorería</h2>
-                            <div className="flex gap-2">
-                                <Button variant="secondary" onClick={() => setModalConfig({ isOpen: true, type: 'finance_income' })} className="text-xs px-3">Ingreso</Button>
-                                <Button variant="danger" onClick={() => setModalConfig({ isOpen: true, type: 'finance_expense' })} className="text-xs px-3">Gasto</Button>
-                            </div>
-                        </div>
-
-                        {/* Tarjetas Resumen */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-green-500">
-                                <p className="text-xs font-bold text-slate-400 uppercase">Ingresos Totales (Mes)</p>
-                                <p className="text-2xl font-black text-slate-800">{formatMoney(grandTotal)}</p>
-                                <div className="text-xs text-slate-500 mt-1 flex gap-2">
-                                    <span>Diezmos: {formatMoney(totalTithes)}</span>
-                                    <span>Ofrendas: {formatMoney(totalOfferings)}</span>
+                            <div className="flex gap-4 flex-wrap">
+                                <div onClick={()=>setActiveTab('inbox')} className="bg-white/10 backdrop-blur border border-white/20 p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-white/20 transition">
+                                    <div className="bg-accent-500 text-brand-900 p-2 rounded-lg"><Icon name="Bell" size={18}/></div>
+                                    <div><p className="text-xs text-brand-200 font-bold uppercase">Mensajes</p><p className="font-bold text-lg leading-none">{unread}</p></div>
+                                </div>
+                                <div onClick={()=>setActiveTab('inbox')} className="bg-white/10 backdrop-blur border border-white/20 p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-white/20 transition">
+                                    <div className="bg-blue-400 text-brand-900 p-2 rounded-lg"><Icon name="Briefcase" size={18}/></div>
+                                    <div><p className="text-xs text-brand-200 font-bold uppercase">Tareas</p><p className="font-bold text-lg leading-none">{pendingTasks}</p></div>
                                 </div>
                             </div>
-                            <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-red-500">
-                                <p className="text-xs font-bold text-slate-400 uppercase">Gastos (Mes)</p>
-                                <p className="text-2xl font-black text-slate-800">{formatMoney(totalExpenses)}</p>
-                            </div>
-                            <div className="bg-church-navy p-4 rounded-xl shadow-lg text-white">
-                                <p className="text-xs font-bold text-church-100 uppercase">Balance Neto</p>
-                                <p className="text-3xl font-black">{formatMoney(grandTotal - totalExpenses)}</p>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs border-b border-slate-200">
-                                    <tr>
-                                        <th className="p-4">Fecha</th>
-                                        <th className="p-4">Concepto</th>
-                                        <th className="p-4 text-right">Monto</th>
-                                        <th className="p-4 w-10"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(f => {
-                                        const amount = (Number(f.tithes)||0) + (Number(f.offerings)||0) + (Number(f.amount)||0);
-                                        return (
-                                            <tr key={f.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="p-4 font-medium text-slate-600">{formatDate(f.date)}</td>
-                                                <td className="p-4">
-                                                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase mr-2 ${f.type === 'Gasto' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{f.type}</span>
-                                                    {f.notes}
-                                                </td>
-                                                <td className={`p-4 text-right font-mono font-bold ${f.type === 'Gasto' ? 'text-red-600' : 'text-slate-700'}`}>
-                                                    {formatMoney(amount)}
-                                                </td>
-                                                <td className="p-4">
-                                                    <button onClick={() => handleDelete('finances', f.id)} className="text-slate-300 hover:text-red-500"><Icon name="Trash" size={16} /></button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {filtered.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-slate-400">Sin movimientos este mes.</td></tr>}
-                                </tbody>
-                            </table>
                         </div>
                     </div>
-                );
+
+                    <MonthNavigator currentDate={selectedMonth} onChange={setSelectedMonth} />
+
+                    {/* Next Event */}
+                    {nextEvent && (
+                        <div className="card-ui border-l-4 border-l-accent-500">
+                            <p className="text-xs font-bold text-slate-400 uppercase mb-2">Próximo Evento Global</p>
+                            <div className="flex items-center gap-4">
+                                <div className="text-center bg-slate-50 p-3 rounded-xl min-w-[70px]">
+                                    <div className="text-xs font-bold text-brand-600 uppercase">{formatDate(nextEvent.date).split(' ')[0]}</div>
+                                    <div className="text-2xl font-black text-slate-800">{new Date(nextEvent.date).getDate()}</div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-800">{nextEvent.theme || nextEvent.title || 'Evento General'}</h3>
+                                    <p className="text-sm text-slate-500">{nextEvent.time} hs • {nextEvent.location || 'Auditorio Principal'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Chart for Pastor */}
+                    {profile.role === 'Pastor' && rotationStats.length > 0 && (
+                        <div className="card-ui">
+                            <h3 className="font-bold text-slate-800 mb-4">Rotación de Servidores ({formatDate(selectedMonth, 'month')})</h3>
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer>
+                                    <BarChart data={rotationStats} layout="vertical" margin={{left: 40}}>
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="name" type="category" width={100} tick={{fontSize:12, fill:'#64748b'}} />
+                                        <RechartsTooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                                        <Bar dataKey="count" fill="#1a438d" radius={[0, 4, 4, 0]} barSize={20} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const MinistryManager = ({ title, collection, data, profile, members, songs = [], isWorship, isServer, isGeneric }) => {
+            const [date, setDate] = useState(new Date());
+            const [modalOpen, setModalOpen] = useState(false);
+            const [editItem, setEditItem] = useState(null);
+            
+            // Permisos
+            const canManage = profile.role === 'Pastor' || (profile.role === 'Líder' && profile.ministry === title);
+            const canView = true; // Todos pueden ver
+
+            // Form State
+            const [form, setForm] = useState({});
+            
+            // Sugerencia de Equipos Logic (Solo Servidores)
+            const getSuggestion = (role) => {
+                if(!isServer) return [];
+                // Lógica simple: Buscar quien NO sirvió las últimas 2 veces
+                // En app real esto chequearía historial previo.
+                // Aquí devolvemos aleatorios disponibles que no estén asignados
+                return members.filter(m => (m.ministry === 'Servidores' || m.ministry === 'General') && !Object.values(form.assignments || {}).includes(m.name)).slice(0,3);
             };
 
-            // --- COMPONENTE: LISTAS DE MINISTERIOS (GENÉRICO) ---
-            const MinistryView = ({ title, events, collection, ministryKey, icon }) => {
-                const filtered = filterByMonth(events);
-                const hasPermission = canEdit(ministryKey);
+            const handleSave = async () => {
+                const payload = { ...form };
+                if (editItem) await db.collection(collection).doc(editItem.id).update(payload);
+                else await db.collection(collection).add({ ...payload, createdAt: new Date().toISOString() });
+                setModalOpen(false);
+            };
 
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                <Icon name={icon} className="text-church-navy" /> {title}
-                            </h2>
-                            {hasPermission && <Button icon="Plus" onClick={() => setModalConfig({ isOpen: true, type: collection })}>Planificar</Button>}
-                        </div>
+            const handleDelete = async (id) => {
+               if(confirm("¿Eliminar actividad?")) await db.collection(collection).doc(id).delete();
+            };
 
-                        {filtered.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200">
-                                <Icon name="Calendar" size={48} className="text-slate-200 mb-4" />
-                                <p className="text-slate-400 font-medium">No hay eventos programados.</p>
-                                {hasPermission && <button onClick={() => setModalConfig({ isOpen: true, type: collection })} className="mt-2 text-church-navy font-bold text-sm hover:underline">Crear el primero</button>}
-                            </div>
-                        )}
+            const filteredData = data.filter(d => d.date && d.date.startsWith(date.toISOString().slice(0, 7)));
 
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {filtered.sort((a,b) => new Date(a.date) - new Date(b.date)).map(evt => (
-                                <div key={evt.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-church-gold transition-all cursor-pointer group relative flex flex-col h-full" onClick={() => openGlobalEvent(evt.date, evt)}>
-                                    
-                                    {/* Cabecera Tarjeta */}
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="bg-slate-50 px-3 py-2 rounded-xl text-center border border-slate-100 min-w-[60px]">
-                                            <div className="text-[10px] font-bold text-slate-400 uppercase">{getDayName(evt.date)}</div>
-                                            <div className="text-xl font-black text-church-navy">{evt.date.split('-')[2]}</div>
+            return (
+                <div className="space-y-6 animate-enter">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-brand-900">{title}</h2>
+                        {canManage && <Button icon="Plus" onClick={()=>{setEditItem(null); setForm({date:'', time:'', assignments:{}, team:{}, songList:[], type:'Culto'}); setModalOpen(true);}}>Planificar</Button>}
+                    </div>
+
+                    <MonthNavigator currentDate={date} onChange={setDate} />
+
+                    <div className="grid grid-cols-1 gap-4">
+                        {filteredData.length === 0 && <div className="text-center py-10 text-slate-400 italic">No hay actividades planificadas.</div>}
+                        {filteredData.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(item => (
+                            <div key={item.id} className="card-ui group relative hover:border-brand-300">
+                                {canManage && <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={()=>{setEditItem(item); setForm(item); setModalOpen(true);}} className="p-2 bg-slate-100 hover:bg-white text-brand-600 rounded-lg shadow-sm"><Icon name="Edit" size={16}/></button>
+                                    <button onClick={()=>handleDelete(item.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg shadow-sm"><Icon name="Trash" size={16}/></button>
+                                </div>}
+                                
+                                <div className="flex items-start gap-4">
+                                    <div className="flex flex-col items-center bg-slate-50 p-3 rounded-xl min-w-[70px]">
+                                        <span className="text-xs font-bold uppercase text-slate-400">{new Date(item.date).toLocaleDateString('es-AR',{weekday:'short'})}</span>
+                                        <span className="text-2xl font-black text-brand-700">{new Date(item.date).getDate()}</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[10px] font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded uppercase tracking-wide">{item.type || 'Reunión'}</span>
+                                            <span className="text-xs font-bold text-slate-400">{item.time} hs</span>
                                         </div>
-                                        {hasPermission && (
-                                            <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                                                <button onClick={() => setModalConfig({ isOpen: true, type: collection, data: evt })} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-church-navy transition-colors"><Icon name="Edit" size={16} /></button>
-                                                <button onClick={() => handleDelete(collection, evt.id)} className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"><Icon name="Trash" size={16} /></button>
+                                        <h3 className="font-bold text-lg text-slate-800 leading-tight mb-2">{item.theme || item.title || 'Actividad General'}</h3>
+                                        
+                                        {item.preacher && <div className="flex items-center gap-2 text-sm text-slate-600 mb-3"><Icon name="Mic" size={14} className="text-brand-500"/> <strong>Predica:</strong> {item.preacher}</div>}
+
+                                        {/* Detalle Alabanza */}
+                                        {isWorship && item.songList && (
+                                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm mb-2">
+                                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Setlist</p>
+                                                <div className="flex flex-wrap gap-2">{item.songList.map((s,i)=><span key={i} className="bg-white border px-2 py-0.5 rounded text-xs text-slate-600">{s}</span>)}</div>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Detalle Asignaciones */}
+                                        {(item.assignments || item.team) && (
+                                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mt-3 border-t border-slate-100 pt-3">
+                                                {Object.entries(item.assignments || item.team || {}).map(([role, val]) => val && val.length > 0 && (
+                                                    <div key={role} className="flex justify-between"><span className="text-slate-500">{role}:</span> <span className="font-bold text-slate-700 text-right">{Array.isArray(val)?val.join(', '):val}</span></div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
-
-                                    {/* Contenido */}
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-lg text-slate-800 leading-tight mb-2">{evt.title || evt.theme || 'Servicio General'}</h3>
-                                        <div className="flex flex-wrap gap-2 mb-3">
-                                            <span className="inline-flex items-center gap-1 text-xs font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded">
-                                                <Icon name="Calendar" size={12}/> {evt.time} hs
-                                            </span>
-                                            {evt.preacher && (
-                                                <span className="inline-flex items-center gap-1 text-xs font-bold bg-church-gold/10 text-church-800 px-2 py-1 rounded border border-church-gold/20">
-                                                    <Icon name="Mic" size={12}/> {evt.preacher}
-                                                </span>
-                                            )}
-                                        </div>
-                                        
-                                        {/* Resumen Equipo (Solo muestra conteo o primeros nombres) */}
-                                        <div className="pt-3 border-t border-slate-50 text-xs text-slate-500">
-                                            {collection === 'worship_events' && evt.songsText && <p className="line-clamp-1 italic">🎵 {evt.songsText}</p>}
-                                            {collection === 'server_events' && evt.assignments && (
-                                                <div className="flex gap-2 mt-1">
-                                                    <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded">Recepción: {evt.assignments['Recepción'] || '--'}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
-            // --- COMPONENTE: DIRECTORIO (CRUD COMPLETO) ---
-            const DirectoryView = () => {
-                const [search, setSearch] = useState("");
-                // Filtro local
-                const filtered = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.email?.toLowerCase().includes(search.toLowerCase()));
-
-                return (
-                    <div className="space-y-6 fade-in">
-                        <div className="flex flex-col md:flex-row justify-between gap-4">
-                            <h2 className="text-2xl font-bold text-slate-800">Directorio de Miembros</h2>
-                            <div className="flex gap-2 w-full md:w-auto">
-                                <div className="relative flex-1 md:w-64">
-                                    <Icon name="Search" size={16} className="absolute left-3 top-3.5 text-slate-400" />
-                                    <input 
-                                        type="text" 
-                                        placeholder="Buscar por nombre..." 
-                                        className="pl-9 input-std mb-0" 
-                                        value={search}
-                                        onChange={e => setSearch(e.target.value)}
-                                    />
-                                </div>
-                                <Button icon="Plus" onClick={() => setModalConfig({ isOpen: true, type: 'person' })}>Nuevo</Button>
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filtered.map(p => (
-                                <div key={p.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow group">
-                                    <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-lg flex-shrink-0">
-                                        {p.name.charAt(0)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-bold text-slate-800 truncate">{p.name}</h3>
-                                            <button onClick={() => setModalConfig({ isOpen: true, type: 'person', data: p })} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-church-navy transition-opacity"><Icon name="Edit" size={16} /></button>
-                                        </div>
-                                        <p className="text-xs font-bold text-church-navy mb-1">{p.role}</p>
-                                        <div className="text-xs text-slate-500 space-y-0.5">
-                                            {p.phone && <p>📞 {p.phone}</p>}
-                                            {p.email && <p className="truncate">✉️ {p.email}</p>}
-                                            {p.address && <p className="truncate">📍 {p.address}</p>}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        ))}
                     </div>
-                );
-            };
 
-            // =================================================================================
-            // 5. MODALES Y FORMULARIOS
-            // =================================================================================
-
-            const renderModalContent = () => {
-                const { type, data } = modalConfig;
-                // Hook para formulario
-                const [form, setForm] = useState(data || {});
-
-                // Sugerencias de Equipo (Regla de 2 servicios)
-                const getSuggestions = () => {
-                    if (type !== 'server_events') return [];
-                    const lastEvents = serverEvents
-                        .filter(e => e.date < (form.date || '9999'))
-                        .sort((a,b) => new Date(b.date) - new Date(a.date))
-                        .slice(0, 2);
-                    
-                    const recentlyServed = new Set();
-                    lastEvents.forEach(e => Object.values(e.assignments || {}).forEach(p => recentlyServed.add(p)));
-                    // Filtrar gente que no sirvió recientemente
-                    return people.filter(p => !recentlyServed.has(p.name)).slice(0, 5); 
-                };
-
-                const handleChange = (f, v) => setForm(prev => ({ ...prev, [f]: v }));
-
-                // Footer de Guardado Genérico
-                const saveBtn = <Button onClick={() => handleSave(
-                    type === 'person' ? 'people' : 
-                    type === 'finance_income' || type === 'finance_expense' ? 'finances' : 
-                    type === 'compose_message' ? 'messages' : 
-                    type, 
-                    form, 
-                    data?.id
-                )}>Guardar Datos</Button>;
-
-                // --- FORMULARIO PERSONA (Directorio Completo) ---
-                if (type === 'person') return (
-                    <div className="space-y-4">
-                        <Input label="Nombre Completo" value={form.name || ''} onChange={e => handleChange('name', e.target.value)} required />
-                        <div className="grid grid-cols-2 gap-4">
-                            <Select label="Rol Ministerial" value={form.role || 'Servidor'} onChange={e => handleChange('role', e.target.value)} 
-                                options={Object.values({PASTOR:'Pastor',LW:'Líder de Alabanza',LS:'Líder de Servidores',LE:'Líder de EBD',LY:'Líder de Jóvenes',SV:'Servidor'}).map(v => ({value:v, label:v}))} 
-                            />
-                            <Input label="Edad" type="number" value={form.age || ''} onChange={e => handleChange('age', e.target.value)} />
-                        </div>
-                        <Input label="Teléfono / WhatsApp" value={form.phone || ''} onChange={e => handleChange('phone', e.target.value)} required />
-                        <Input label="Correo Electrónico" type="email" value={form.email || ''} onChange={e => handleChange('email', e.target.value)} required />
-                        <Input label="Dirección / Localidad" value={form.address || ''} onChange={e => handleChange('address', e.target.value)} />
-                        <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
-                    </div>
-                );
-
-                // --- FORMULARIO ALABANZA ---
-                if (type === 'worship_events') return (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <Input label="Fecha" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
-                            <Input label="Hora" type="time" value={form.time || ''} onChange={e => handleChange('time', e.target.value)} />
-                        </div>
-                        <Input label="Tema Principal" value={form.theme || ''} onChange={e => handleChange('theme', e.target.value)} />
-                        
-                        <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
-                            <label className="label-std mb-2">Lista de Canciones</label>
-                            <textarea 
-                                className="input-std min-h-[100px]" 
-                                value={form.songsText || ''} 
-                                onChange={e => handleChange('songsText', e.target.value)}
-                                placeholder="Escribe la lista de canciones aquí..."
-                            ></textarea>
-                        </div>
-                        <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
-                    </div>
-                );
-
-                // --- FORMULARIO SERVIDORES (Con Predicador y Sugerencias) ---
-                if (type === 'server_events') {
-                    const suggestions = getSuggestions();
-                    return (
+                    {/* MODAL PLANIFICADOR */}
+                    <Modal isOpen={modalOpen} onClose={()=>setModalOpen(false)} title={editItem ? "Editar Actividad" : "Nueva Planificación"}>
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <Input label="Fecha" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
-                                <Input label="Hora" type="time" value={form.time || ''} onChange={e => handleChange('time', e.target.value)} />
+                                <div><label className="label-ui">Fecha</label><input type="date" className="input-ui" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/></div>
+                                <div><label className="label-ui">Hora</label><input type="time" className="input-ui" value={form.time} onChange={e=>setForm({...form, time:e.target.value})}/></div>
                             </div>
-                            <Input label="Predicador" value={form.preacher || ''} onChange={e => handleChange('preacher', e.target.value)} placeholder="¿Quién predica hoy?" />
+                            <div><label className="label-ui">Tema / Título</label><input className="input-ui" value={form.theme || form.title} onChange={e=>setForm({...form, theme:e.target.value, title:e.target.value})}/></div>
                             
-                            <div className="border-t border-slate-200 pt-4 mt-2">
-                                <h4 className="font-bold text-church-navy mb-3">Asignación de Roles</h4>
-                                {['Recepción', 'Limpieza', 'Altar', 'Multimedia', 'Niños'].map(role => (
-                                    <div key={role} className="mb-3 flex items-center gap-3">
-                                        <label className="w-24 text-xs font-bold text-slate-500 uppercase">{role}</label>
-                                        <select 
-                                            className="input-std flex-1 py-2"
-                                            value={form.assignments?.[role] || ''} 
-                                            onChange={e => handleChange('assignments', { ...(form.assignments || {}), [role]: e.target.value })}
-                                        >
-                                            <option value="">-- Seleccionar --</option>
-                                            {people.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-                                        </select>
-                                    </div>
-                                ))}
-                            </div>
-                            
-                            {suggestions.length > 0 && (
-                                <div className="bg-green-50 p-3 rounded-lg border border-green-100 text-xs">
-                                    <strong className="text-green-800 block mb-1">Sugerencia (Descansados):</strong> 
-                                    <div className="flex flex-wrap gap-2">
-                                        {suggestions.map(s => <span key={s.id} className="bg-white px-2 py-1 rounded shadow-sm text-green-700">{s.name}</span>)}
-                                    </div>
+                            {/* Campo Predicador para Servidores */}
+                            {isServer && <div><label className="label-ui">Predicador</label><input className="input-ui" placeholder="Nombre del predicador" value={form.preacher || ''} onChange={e=>setForm({...form, preacher:e.target.value})}/></div>}
+
+                            {/* Selector de Canciones para Alabanza */}
+                            {isWorship && (
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                    <label className="label-ui">Canciones</label>
+                                    <select className="input-ui mb-2" onChange={(e)=>{ if(e.target.value) setForm({...form, songList:[...(form.songList||[]), e.target.value]}) }}>
+                                        <option value="">Agregar canción...</option>
+                                        {songs.map(s=><option key={s.id} value={s.title}>{s.title}</option>)}
+                                    </select>
+                                    <div className="flex flex-wrap gap-2">{(form.songList||[]).map((s,i)=><span key={i} className="chip active flex items-center gap-2">{s} <button onClick={()=>setForm({...form, songList:form.songList.filter((_,idx)=>idx!==i)})}><Icon name="X" size={12}/></button></span>)}</div>
                                 </div>
                             )}
-                            <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
-                        </div>
-                    );
-                }
 
-                // --- FORMULARIO TESORERÍA (Separado) ---
-                if (type === 'finance_income') return (
-                    <div className="space-y-4">
-                        <Input label="Fecha de Cierre" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
-                        <div className="grid grid-cols-2 gap-4">
-                            <Input label="Monto Diezmos" type="number" value={form.tithes || ''} onChange={e => handleChange('tithes', e.target.value)} />
-                            <Input label="Monto Ofrendas" type="number" value={form.offerings || ''} onChange={e => handleChange('offerings', e.target.value)} />
-                        </div>
-                        <Input label="Monto Otros Ingresos" type="number" value={form.amount || ''} onChange={e => handleChange('amount', e.target.value)} />
-                        <Input label="Notas / Detalle" value={form.notes || ''} onChange={e => handleChange('notes', e.target.value)} />
-                        <div className="flex justify-end pt-4 border-t mt-4">
-                            <Button onClick={() => handleSave('finances', { ...form, type: 'Ingreso' })}>Guardar Cierre</Button>
-                        </div>
-                    </div>
-                );
-
-                if (type === 'finance_expense') return (
-                    <div className="space-y-4">
-                        <Input label="Fecha Gasto" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
-                        <Input label="Monto Total" type="number" value={form.amount || ''} onChange={e => handleChange('amount', e.target.value)} />
-                        <Input label="Motivo / Detalle" value={form.notes || ''} onChange={e => handleChange('notes', e.target.value)} />
-                        <div className="flex justify-end pt-4 border-t mt-4">
-                            <Button variant="danger" onClick={() => handleSave('finances', { ...form, type: 'Gasto' })}>Registrar Salida</Button>
-                        </div>
-                    </div>
-                );
-
-                // --- FORMULARIO MENSAJES (Nuevo) ---
-                if (type === 'compose_message') return (
-                    <div className="space-y-4">
-                        <Input label="Asunto" value={form.subject || ''} onChange={e => handleChange('subject', e.target.value)} />
-                        <div className="mb-4">
-                            <label className="label-std">Contenido</label>
-                            <textarea className="input-std h-32" value={form.content || ''} onChange={e => handleChange('content', e.target.value)}></textarea>
-                        </div>
-                        {/* Simplificado: Siempre broadcast o tareas en V2 */}
-                        <div className="bg-blue-50 p-3 rounded text-xs text-blue-700">Este mensaje se enviará a todos los usuarios (Difusión).</div>
-                        <div className="flex justify-end pt-4 border-t mt-4">
-                            <Button onClick={() => handleSave('messages', { ...form, to: 'all', fromName: userData.name, fromId: userData.id })}>Enviar</Button>
-                        </div>
-                    </div>
-                );
-
-                // --- FORMULARIO GENÉRICO EBD/JOVENES ---
-                if (type === 'ebd_events' || type === 'youth_events') return (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <Input label="Fecha" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
-                            <Input label="Hora" type="time" value={form.time || ''} onChange={e => handleChange('time', e.target.value)} />
-                        </div>
-                        <Input label="Tema / Actividad" value={form.title || ''} onChange={e => handleChange('title', e.target.value)} />
-                        <Input label="Lugar" value={form.location || ''} onChange={e => handleChange('location', e.target.value)} />
-                        <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
-                    </div>
-                );
-
-                // --- CONFIRM DELETE ---
-                if (type === 'confirm_delete') return (
-                    <div className="text-center py-6">
-                        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Icon name="Trash" size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">¿Estás seguro?</h3>
-                        <p className="text-slate-500 mb-8">Esta acción no se puede deshacer.</p>
-                        <div className="flex justify-center gap-4">
-                            <Button variant="secondary" onClick={() => setModalConfig({isOpen:false})}>Cancelar</Button>
-                            <Button variant="danger" onClick={confirmDelete}>Sí, Eliminar</Button>
-                        </div>
-                    </div>
-                );
-
-                return <div>Formulario no configurado</div>;
-            };
-
-            // --- VISTA GLOBAL DE EVENTO (MODAL DETALLE) ---
-            const renderGlobalEvent = () => {
-                if (!globalModalEvent) return null;
-                const { worship, server, ebd, youth, base } = globalModalEvent;
-                const date = base?.date;
-
-                return (
-                    <div className="space-y-6">
-                        <div className="text-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                            <h2 className="text-2xl font-black text-church-navy uppercase tracking-widest">{formatDate(date)}</h2>
-                            <p className="text-slate-500 font-bold mt-1">{getDayName(date)} • {base?.time} hs</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                            {/* Tarjeta Alabanza */}
-                            <div className="bg-white p-4 rounded-xl border border-l-4 border-l-purple-500 shadow-sm">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3 border-b pb-2"><Icon name="Music" className="text-purple-500"/> Alabanza</h3>
-                                {worship ? (
-                                    <div className="text-sm space-y-2">
-                                        <p><strong className="text-slate-500">Tema:</strong> {worship.theme}</p>
-                                        <div className="bg-slate-50 p-3 rounded text-slate-600 whitespace-pre-wrap text-xs font-mono">{worship.songsText || 'Sin lista de canciones'}</div>
-                                    </div>
-                                ) : <span className="text-slate-400 italic text-sm">Sin planificación.</span>}
-                            </div>
-
-                            {/* Tarjeta Servidores */}
-                            <div className="bg-white p-4 rounded-xl border border-l-4 border-l-green-500 shadow-sm">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3 border-b pb-2"><Icon name="Briefcase" className="text-green-500"/> Servidores</h3>
-                                {server ? (
-                                    <div className="text-sm space-y-2">
-                                        <p><strong className="text-slate-500">Predicador:</strong> {server.preacher || '--'}</p>
-                                        <div className="grid grid-cols-2 gap-2 mt-2">
-                                            {Object.entries(server.assignments || {}).map(([k,v]) => (
-                                                <div key={k} className="bg-green-50 p-2 rounded"><span className="block text-[10px] font-bold uppercase text-green-700">{k}</span> <span className="font-medium">{v}</span></div>
-                                            ))}
+                            {/* Asignaciones Dinámicas */}
+                            {(isWorship || isServer) && (
+                                <div className="space-y-3 pt-2">
+                                    <p className="label-ui">Asignaciones de Equipo</p>
+                                    {(isWorship ? ['Vocal','Guitarra','Bajo','Batería','Teclado'] : ['Recepción','Baños','Altar','Ofrenda','Limpieza']).map(role => (
+                                        <div key={role} className="flex flex-col gap-1">
+                                            <div className="flex justify-between">
+                                                <span className="text-xs font-bold text-brand-600 uppercase">{role}</span>
+                                                {isServer && <span className="text-[10px] text-accent-600 cursor-pointer" onClick={()=>{const sugg = getSuggestion(role); if(sugg.length) alert(`Sugerencia: ${sugg.map(s=>s.name).join(', ')}`);}}>💡 Ver sugerencia</span>}
+                                            </div>
+                                            <select className="input-ui py-2" value={isWorship ? '' : (form.assignments?.[role] || '')} onChange={(e)=>{
+                                                const val = e.target.value;
+                                                if(isWorship) {
+                                                    const curr = form.team?.[role] || [];
+                                                    if(!curr.includes(val)) setForm({...form, team:{...form.team, [role]:[...curr, val]}});
+                                                } else {
+                                                    setForm({...form, assignments:{...form.assignments, [role]:val}});
+                                                }
+                                            }}>
+                                                <option value="">Seleccionar...</option>
+                                                {members.map(m=><option key={m.id} value={m.name}>{m.name}</option>)}
+                                            </select>
+                                            {isWorship && <div className="flex flex-wrap gap-1">{(form.team?.[role]||[]).map(p=><span key={p} className="text-xs bg-white border px-1 rounded">{p}</span>)}</div>}
                                         </div>
-                                    </div>
-                                ) : <span className="text-slate-400 italic text-sm">Sin planificación.</span>}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <Button onClick={handleSave} className="w-full mt-4">Guardar Planificación</Button>
                         </div>
-                        
-                        <div className="text-center pt-2">
-                            <Button variant="secondary" onClick={() => setGlobalModalEvent(null)} className="w-full">Cerrar</Button>
-                        </div>
-                    </div>
-                );
+                    </Modal>
+                </div>
+            );
+        };
+
+        const Finances = ({ finances }) => {
+            const [date, setDate] = useState(new Date());
+            const [modalOpen, setModalOpen] = useState(false);
+            const [form, setForm] = useState({ type: 'Culto', date: '', tithes: 0, offerings: 0, amount: 0, notes: '' });
+
+            const filtered = finances.filter(f => f.date.startsWith(date.toISOString().slice(0, 7)));
+            const stats = useMemo(() => filtered.reduce((acc, curr) => ({ 
+                in: acc.in + (curr.total > 0 ? curr.total : 0), 
+                out: acc.out + (curr.total < 0 ? Math.abs(curr.total) : 0),
+                tithes: acc.tithes + (curr.tithes || 0)
+            }), { in: 0, out: 0, tithes: 0 }), [filtered]);
+
+            const handleSave = () => {
+                let total = 0;
+                if(form.type === 'Culto') total = Number(form.tithes) + Number(form.offerings);
+                else total = form.type === 'Gasto' ? -Math.abs(Number(form.amount)) : Number(form.amount);
+                
+                db.collection('finances').add({ ...form, total, date: form.date || new Date().toISOString().split('T')[0] });
+                setModalOpen(false);
             };
 
-            // =================================================================================
-            // 6. RENDERIZADO (LAYOUT)
-            // =================================================================================
             return (
-                <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
-                    {/* SIDEBAR NAVIGATION */}
-                    <aside className={`fixed inset-y-0 left-0 z-40 w-72 bg-church-navy text-white transition-transform duration-300 shadow-2xl md:relative md:translate-x-0 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                        <div className="p-6">
-                            <div className="flex items-center gap-3 mb-10">
-                                <div className="w-10 h-10 bg-church-gold rounded-xl flex items-center justify-center text-church-navy font-black text-xl shadow-lg shadow-church-gold/20">C</div>
+                <div className="space-y-6 animate-enter">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-brand-900">Tesorería</h2>
+                        <Button icon="DollarSign" onClick={()=>{setForm({type:'Culto', tithes:0, offerings:0, amount:0, date:'', notes:''}); setModalOpen(true);}}>Registrar Movimiento</Button>
+                    </div>
+
+                    <MonthNavigator currentDate={date} onChange={setDate} />
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="card-ui bg-emerald-50 border-emerald-100">
+                            <p className="text-xs font-bold uppercase text-emerald-600">Ingresos Totales</p>
+                            <p className="text-2xl font-black text-emerald-800">{formatMoney(stats.in)}</p>
+                        </div>
+                        <div className="card-ui bg-red-50 border-red-100">
+                            <p className="text-xs font-bold uppercase text-red-600">Gastos Totales</p>
+                            <p className="text-2xl font-black text-red-800">{formatMoney(stats.out)}</p>
+                        </div>
+                        <div className="card-ui bg-blue-50 border-blue-100">
+                            <p className="text-xs font-bold uppercase text-blue-600">Total Diezmos</p>
+                            <p className="text-2xl font-black text-blue-800">{formatMoney(stats.tithes)}</p>
+                        </div>
+                    </div>
+
+                    <div className="card-ui p-0 overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                                <tr><th className="p-4">Fecha</th><th className="p-4">Concepto</th><th className="p-4 text-right">Monto</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filtered.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(f => (
+                                    <tr key={f.id} className="hover:bg-slate-50 transition">
+                                        <td className="p-4 font-medium text-slate-600">{formatDate(f.date)}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase mr-2 ${f.type==='Gasto'?'bg-red-100 text-red-700':'bg-emerald-100 text-emerald-700'}`}>{f.type}</span>
+                                            {f.notes}
+                                            {f.tithes > 0 && <span className="block text-xs text-slate-400 mt-1">Diezmos: {formatMoney(f.tithes)} | Ofrendas: {formatMoney(f.offerings)}</span>}
+                                        </td>
+                                        <td className={`p-4 text-right font-bold ${f.total<0?'text-red-600':'text-emerald-600'}`}>{formatMoney(f.total)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <Modal isOpen={modalOpen} onClose={()=>setModalOpen(false)} title="Registrar Movimiento">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="label-ui">Tipo</label><select className="input-ui" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}><option>Culto</option><option>Ingreso Vario</option><option>Gasto</option></select></div>
+                                <div><label className="label-ui">Fecha</label><input type="date" className="input-ui" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/></div>
+                            </div>
+                            
+                            {form.type === 'Culto' ? (
+                                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                    <div><label className="label-ui">Diezmos</label><input type="number" className="input-ui" value={form.tithes} onChange={e=>setForm({...form, tithes:e.target.value})}/></div>
+                                    <div><label className="label-ui">Ofrendas</label><input type="number" className="input-ui" value={form.offerings} onChange={e=>setForm({...form, offerings:e.target.value})}/></div>
+                                </div>
+                            ) : (
+                                <div><label className="label-ui">Monto Total</label><input type="number" className="input-ui" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})}/></div>
+                            )}
+
+                            <div><label className="label-ui">Notas / Detalle</label><textarea className="input-ui" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/></div>
+                            <Button onClick={handleSave} className="w-full">Registrar</Button>
+                        </div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        const Directory = ({ members }) => {
+            const [modalOpen, setModalOpen] = useState(false);
+            const [edit, setEdit] = useState(null);
+            const [form, setForm] = useState({ name:'', email:'', role:'Miembro', age:'', phone:'', location:'', address:'' });
+
+            const handleSave = async () => {
+                if(!form.name || !form.email) return; // Validación básica
+                const payload = { ...form, photo: `https://ui-avatars.com/api/?name=${form.name}&background=random` };
+                if(edit) await db.collection('members').doc(edit.id).update(payload);
+                else await db.collection('members').add(payload);
+                setModalOpen(false);
+            };
+
+            const handleDelete = async (id) => { if(confirm("¿Eliminar persona?")) await db.collection('members').doc(id).delete(); };
+
+            return (
+                <div className="space-y-6 animate-enter">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-brand-900">Directorio</h2>
+                        <Button icon="Plus" onClick={()=>{setEdit(null); setForm({name:'', email:'', role:'Miembro', age:'', phone:'', location:'', address:''}); setModalOpen(true);}}>Nueva Persona</Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {members.map(m => (
+                            <div key={m.id} className="card-ui flex items-center gap-4 group relative">
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                    <button onClick={()=>{setEdit(m); setForm(m); setModalOpen(true);}} className="p-1 bg-slate-100 rounded text-slate-500 hover:text-brand-600"><Icon name="Edit" size={14}/></button>
+                                    <button onClick={()=>handleDelete(m.id)} className="p-1 bg-red-50 rounded text-red-500 hover:bg-red-100"><Icon name="Trash" size={14}/></button>
+                                </div>
+                                <img src={m.photo} className="w-12 h-12 rounded-full object-cover bg-slate-200"/>
                                 <div>
-                                    <h1 className="font-bold text-lg leading-none tracking-tight">Conquistadores</h1>
-                                    <p className="text-xs text-church-100 opacity-60">Gestión Integral</p>
+                                    <p className="font-bold text-slate-800">{m.name}</p>
+                                    <p className="text-xs font-bold text-brand-600 uppercase">{m.role}</p>
+                                    <p className="text-xs text-slate-400">{m.phone} • {m.location}</p>
                                 </div>
                             </div>
+                        ))}
+                    </div>
 
-                            <nav className="space-y-1.5">
-                                <button onClick={() => {setActiveTab('dashboard'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'dashboard' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}>
-                                    <Icon name="Home" /> Dashboard
-                                </button>
-                                <button onClick={() => {setActiveTab('inbox'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'inbox' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}>
-                                    <Icon name="Bell" /> Buzón <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full ml-auto font-bold">{messages.length}</span>
-                                </button>
+                    <Modal isOpen={modalOpen} onClose={()=>setModalOpen(false)} title={edit ? "Editar Persona" : "Agregar Persona"}>
+                        <div className="space-y-4">
+                            <div><label className="label-ui">Nombre Completo *</label><input className="input-ui" value={form.name} onChange={e=>setForm({...form, name:e.target.value})}/></div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="label-ui">Rol</label><select className="input-ui" value={form.role} onChange={e=>setForm({...form, role:e.target.value})}><option>Miembro</option><option>Servidor</option><option>Líder</option><option>Pastor</option></select></div>
+                                <div><label className="label-ui">Edad</label><input type="number" className="input-ui" value={form.age} onChange={e=>setForm({...form, age:e.target.value})}/></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="label-ui">Email *</label><input type="email" className="input-ui" value={form.email} onChange={e=>setForm({...form, email:e.target.value})}/></div>
+                                <div><label className="label-ui">Teléfono</label><input className="input-ui" value={form.phone} onChange={e=>setForm({...form, phone:e.target.value})}/></div>
+                            </div>
+                            <div><label className="label-ui">Localidad</label><input className="input-ui" value={form.location} onChange={e=>setForm({...form, location:e.target.value})}/></div>
+                            <div><label className="label-ui">Dirección (Opcional)</label><input className="input-ui" value={form.address} onChange={e=>setForm({...form, address:e.target.value})}/></div>
+                            <Button onClick={handleSave} className="w-full">Guardar</Button>
+                        </div>
+                    </Modal>
+                </div>
+            );
+        };
 
-                                <div className="mt-8 mb-2 px-4 text-xs font-bold text-church-gold uppercase tracking-widest opacity-80">Ministerios</div>
-                                <button onClick={() => {setActiveTab('worship'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'worship' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Music" /> Alabanza</button>
-                                <button onClick={() => {setActiveTab('servers'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'servers' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Briefcase" /> Servidores</button>
-                                <button onClick={() => {setActiveTab('ebd'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'ebd' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Book" /> EBD / Jóvenes</button>
+        // ==========================================
+        // 5. APP PRINCIPAL
+        // ==========================================
+        
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [profile, setProfile] = useState(null);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            
+            // Collections Data
+            const [members, setMembers] = useState([]);
+            const [worship, setWorship] = useState([]);
+            const [servers, setServers] = useState([]);
+            const [ebd, setEbd] = useState([]);
+            const [youth, setYouth] = useState([]);
+            const [tasks, setTasks] = useState([]);
+            const [messages, setMessages] = useState([]);
+            const [songs, setSongs] = useState([]);
+            const [finances, setFinances] = useState([]);
 
-                                {userData?.role === 'Pastor' && (
-                                    <>
-                                        <div className="mt-8 mb-2 px-4 text-xs font-bold text-church-gold uppercase tracking-widest opacity-80">Administración</div>
-                                        <button onClick={() => {setActiveTab('finances'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'finances' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="DollarSign" /> Tesorería</button>
-                                        <button onClick={() => {setActiveTab('directory'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'directory' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Users" /> Directorio</button>
-                                    </>
-                                )}
+            // Global Activity Modal State
+            const [globalModalOpen, setGlobalModalOpen] = useState(false);
+            const [globalEventData, setGlobalEventData] = useState(null);
+
+            useEffect(() => {
+                const unsub = auth.onAuthStateChanged(async (u) => {
+                    if (u) {
+                        setUser(u);
+                        // Check profile or create if not exists
+                        const snap = await db.collection('members').where('email', '==', u.email).get();
+                        if (!snap.empty) {
+                            setProfile({ ...snap.docs[0].data(), id: snap.docs[0].id });
+                        } else {
+                            // First user logic handled by manual DB entry usually, but here auto-create simple member
+                            // In real app, block or require approval.
+                            const newProfile = { name: u.displayName, email: u.email, role: 'Miembro', photo: u.photoURL, createdAt: new Date().toISOString() };
+                            const ref = await db.collection('members').add(newProfile);
+                            setProfile({ ...newProfile, id: ref.id });
+                        }
+                    } else {
+                        setUser(null); setProfile(null);
+                    }
+                });
+                return () => unsub();
+            }, []);
+
+            useEffect(() => {
+                if(!profile) return;
+                const subs = [
+                    db.collection('members').onSnapshot(s => setMembers(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('worship').onSnapshot(s => setWorship(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('servers').onSnapshot(s => setServers(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('ebd').onSnapshot(s => setEbd(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('youth').onSnapshot(s => setYouth(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('tasks').onSnapshot(s => setTasks(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('messages').onSnapshot(s => setMessages(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    db.collection('songs').onSnapshot(s => setSongs(s.docs.map(d=>({id:d.id, ...d.data()})))),
+                    profile.role === 'Pastor' ? db.collection('finances').onSnapshot(s => setFinances(s.docs.map(d=>({id:d.id, ...d.data()})))) : ()=>{}
+                ];
+                return () => subs.forEach(fn => fn && fn());
+            }, [profile]);
+
+            // Función para abrir modal global
+            const openGlobalEvent = (date) => {
+                // Buscar todo lo que coincida con esa fecha
+                const day = date.split('T')[0];
+                const w = worship.find(x => x.date.startsWith(day));
+                const s = servers.find(x => x.date.startsWith(day));
+                const e = ebd.find(x => x.date.startsWith(day));
+                const y = youth.find(x => x.date.startsWith(day));
+                
+                setGlobalEventData({ worship: w, servers: s, ebd: e, youth: y, date: day });
+                setGlobalModalOpen(true);
+            };
+
+            if (!user) return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+                    <div className="max-w-md w-full text-center space-y-8">
+                        <div className="w-24 h-24 bg-brand-700 rounded-3xl mx-auto flex items-center justify-center text-accent-500 shadow-glow mb-6 animate-enter">
+                            <Icon name="Home" size={48}/>
+                        </div>
+                        <div>
+                            <h1 className="text-4xl font-extrabold text-brand-900 tracking-tight">Conquistadores</h1>
+                            <p className="text-slate-500 mt-2">Plataforma de Gestión Integral</p>
+                        </div>
+                        <button onClick={()=>auth.signInWithPopup(googleProvider)} className="w-full bg-white border border-slate-200 p-4 rounded-xl flex items-center justify-center gap-3 font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5"/>
+                            Ingresar con Google
+                        </button>
+                    </div>
+                </div>
+            );
+
+            if (!profile) return <div className="flex h-screen items-center justify-center text-brand-600 font-bold animate-pulse">Cargando perfil...</div>;
+
+            const NavItem = ({ id, label, icon }) => (
+                <button onClick={() => setActiveTab(id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all mb-1 ${activeTab === id ? 'bg-accent-500 text-brand-900 shadow-glow' : 'text-brand-100 hover:bg-brand-800'}`}>
+                    <Icon name={icon} /> {label}
+                </button>
+            );
+
+            return (
+                <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+                    {/* Sidebar */}
+                    <aside className="w-72 bg-brand-900 text-white flex flex-col hidden md:flex">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-10 text-accent-500">
+                                <Icon name="Home" size={28}/>
+                                <span className="font-extrabold text-xl tracking-tight text-white">Conquistadores</span>
+                            </div>
+                            <nav>
+                                <NavItem id="dashboard" icon="Home" label="Inicio" />
+                                <NavItem id="inbox" icon="Bell" label="Notificaciones" />
+                                <div className="mt-8 mb-4 px-4 text-xs font-bold text-brand-400 uppercase tracking-widest">Ministerios</div>
+                                <NavItem id="worship" icon="Music" label="Alabanza" />
+                                <NavItem id="servers" icon="Briefcase" label="Servidores" />
+                                <NavItem id="ebd" icon="BookOpen" label="Escuela Bíblica" />
+                                <NavItem id="youth" icon="Smile" label="Jóvenes" />
+                                <div className="mt-8 mb-4 px-4 text-xs font-bold text-brand-400 uppercase tracking-widest">General</div>
+                                {profile.role === 'Pastor' && <NavItem id="finances" icon="DollarSign" label="Tesorería" />}
+                                <NavItem id="directory" icon="Users" label="Directorio" />
                             </nav>
                         </div>
-                        
-                        <div className="mt-auto p-4 m-4 bg-church-800 rounded-2xl flex items-center gap-3 shadow-lg">
-                            <div className="w-10 h-10 rounded-full bg-white text-church-navy flex items-center justify-center font-bold text-lg">{userData?.name?.charAt(0)}</div>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-bold truncate">{userData?.name}</p>
-                                <p className="text-xs text-church-gold opacity-80 truncate">{userData?.role}</p>
+                        <div className="mt-auto p-6 bg-brand-950 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <img src={profile.photo} className="w-10 h-10 rounded-full bg-brand-800"/>
+                                <div className="leading-tight">
+                                    <p className="font-bold text-sm">{profile.name}</p>
+                                    <p className="text-[10px] text-accent-500 uppercase font-bold">{profile.role}</p>
+                                </div>
                             </div>
-                            <button onClick={() => auth.signOut()} className="text-church-100 hover:text-white"><Icon name="LogOut" size={18} /></button>
+                            <button onClick={()=>auth.signOut()} className="text-brand-400 hover:text-red-400"><Icon name="LogOut"/></button>
                         </div>
                     </aside>
 
-                    {/* MAIN CONTENT AREA */}
-                    <main className="flex-1 flex flex-col h-full overflow-hidden relative w-full bg-slate-50">
-                        {/* Mobile Header */}
-                        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-100 shadow-sm z-30">
-                            <div className="flex items-center gap-2 font-bold text-church-navy"><Icon name="Home" className="text-church-gold"/> Conquistadores</div>
-                            <button onClick={() => setSidebarOpen(true)} className="p-2"><Icon name="Menu" /></button>
-                        </header>
+                    {/* Mobile Header */}
+                    <div className="md:hidden fixed top-0 w-full bg-brand-900 z-20 p-4 flex justify-between items-center text-white">
+                        <span className="font-bold">Conquistadores</span>
+                        <button onClick={()=>auth.signOut()}><Icon name="LogOut"/></button>
+                    </div>
 
-                        {/* Month Nav Filter */}
-                        <MonthNav />
-
-                        {/* Content Scrollable */}
-                        <div className="flex-1 overflow-y-auto">
-                            <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
-                                {activeTab === 'dashboard' && <DashboardView />}
-                                {activeTab === 'inbox' && <InboxView />}
-                                {activeTab === 'finances' && <FinancesView />}
-                                {activeTab === 'directory' && <DirectoryView />}
-                                {activeTab === 'worship' && <MinistryView title="Ministerio de Alabanza" events={worshipEvents} collection="worship_events" ministryKey="Alabanza" icon="Music" />}
-                                {activeTab === 'servers' && <MinistryView title="Servidores y Orden" events={serverEvents} collection="server_events" ministryKey="Servidores" icon="Briefcase" />}
-                                {activeTab === 'ebd' && (
-                                    <div className="space-y-10">
-                                        <MinistryView title="Escuela Bíblica" events={ebdEvents} collection="ebd_events" ministryKey="EBD" icon="Book" />
-                                        <MinistryView title="Jóvenes" events={youthEvents} collection="youth_events" ministryKey="Jóvenes" icon="Smile" />
+                    {/* Main Content */}
+                    <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-8 bg-slate-50">
+                        <div className="max-w-5xl mx-auto pb-24">
+                            {activeTab === 'dashboard' && <Dashboard profile={profile} tasks={tasks} messages={messages} worship={worship} servers={servers} ebd={ebd} youth={youth} setActiveTab={setActiveTab} />}
+                            
+                            {activeTab === 'inbox' && (
+                                <div className="space-y-6 animate-enter">
+                                    <h2 className="text-2xl font-bold text-brand-900">Bandeja de Entrada</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <h3 className="font-bold text-slate-500 uppercase text-xs">Mensajes</h3>
+                                            {messages.filter(m => m.to === 'all' || m.to === profile.id).map(m => (
+                                                <div key={m.id} className="card-ui border-l-4 border-l-brand-500 cursor-pointer" onClick={()=>{
+                                                    if(!m.readBy?.includes(profile.id)) db.collection('messages').doc(m.id).update({readBy: firebase.firestore.FieldValue.arrayUnion(profile.id)});
+                                                }}>
+                                                    <div className="flex justify-between mb-1">
+                                                        <span className="font-bold text-sm text-brand-700">{m.fromName}</span>
+                                                        <span className="text-xs text-slate-400">{formatDate(m.date)}</span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-600">{m.content}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="space-y-4">
+                                            <h3 className="font-bold text-slate-500 uppercase text-xs">Mis Tareas</h3>
+                                            {tasks.filter(t => t.assignedTo === profile.name).map(t => (
+                                                <div key={t.id} className="card-ui flex justify-between items-center">
+                                                    <div>
+                                                        <p className="font-bold text-sm text-slate-800">{t.description}</p>
+                                                        <p className="text-xs text-slate-500">Vence: {formatDate(t.dueDate)}</p>
+                                                    </div>
+                                                    {t.status === 'Pendiente' ? 
+                                                        <button onClick={()=>db.collection('tasks').doc(t.id).update({status:'Completada'})} className="px-3 py-1 bg-accent-100 text-accent-700 rounded-lg text-xs font-bold hover:bg-accent-200">Marcar Lista</button>
+                                                        : <span className="text-green-600 text-xs font-bold">✓ Completada</span>
+                                                    }
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'worship' && <MinistryManager title="Alabanza" collection="worship" data={worship} profile={profile} members={members} songs={songs} isWorship={true} />}
+                            {activeTab === 'servers' && <MinistryManager title="Servidores" collection="servers" data={servers} profile={profile} members={members} isServer={true} />}
+                            {activeTab === 'ebd' && <MinistryManager title="Escuela Bíblica" collection="ebd" data={ebd} profile={profile} members={members} isGeneric={true} />}
+                            {activeTab === 'youth' && <MinistryManager title="Jóvenes" collection="youth" data={youth} profile={profile} members={members} isGeneric={true} />}
+                            {activeTab === 'finances' && <Finances finances={finances} />}
+                            {activeTab === 'directory' && <Directory members={members} />}
                         </div>
                     </main>
 
-                    {/* OVERLAY Mobile */}
-                    {sidebarOpen && <div className="fixed inset-0 bg-slate-900/50 z-30 md:hidden backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)}></div>}
+                    {/* Mobile Nav Bottom */}
+                    <div className="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around p-3 z-30">
+                        <button onClick={()=>setActiveTab('dashboard')} className={`p-2 rounded-xl ${activeTab==='dashboard'?'text-brand-600 bg-brand-50':'text-slate-400'}`}><Icon name="Home"/></button>
+                        <button onClick={()=>setActiveTab('inbox')} className={`p-2 rounded-xl ${activeTab==='inbox'?'text-brand-600 bg-brand-50':'text-slate-400'}`}><Icon name="Bell"/></button>
+                        <button onClick={()=>setActiveTab('worship')} className={`p-2 rounded-xl ${activeTab==='worship'?'text-brand-600 bg-brand-50':'text-slate-400'}`}><Icon name="Music"/></button>
+                        <button onClick={()=>setActiveTab('directory')} className={`p-2 rounded-xl ${activeTab==='directory'?'text-brand-600 bg-brand-50':'text-slate-400'}`}><Icon name="Menu"/></button>
+                    </div>
 
-                    {/* MODALES */}
-                    <Modal isOpen={!!globalModalEvent} onClose={() => setGlobalModalEvent(null)} title="Detalle del Día" size="sm">
-                        {renderGlobalEvent()}
-                    </Modal>
+                    {/* Global Event Modal */}
+                    <Modal isOpen={globalModalOpen} onClose={()=>setGlobalModalOpen(false)} title="Detalle Global del Evento">
+                        {globalEventData && (
+                            <div className="space-y-6">
+                                <div className="text-center border-b border-slate-100 pb-4">
+                                    <h2 className="text-2xl font-black text-brand-900">{formatDate(globalEventData.date, 'long')}</h2>
+                                </div>
+                                
+                                {globalEventData.servers ? (
+                                    <div className="bg-brand-50 p-4 rounded-xl border border-brand-100">
+                                        <h4 className="font-bold text-brand-800 mb-2 flex items-center gap-2"><Icon name="Briefcase" size={16}/> Culto & Servidores</h4>
+                                        <p className="text-sm"><strong>Predicador:</strong> {globalEventData.servers.preacher || 'No asignado'}</p>
+                                        <div className="mt-2 text-xs grid grid-cols-2 gap-2">
+                                            {Object.entries(globalEventData.servers.assignments || {}).map(([k,v]) => <div key={k}><span className="text-brand-400 uppercase font-bold">{k}:</span> {v}</div>)}
+                                        </div>
+                                    </div>
+                                ) : <p className="text-slate-400 italic text-sm text-center">Sin planificación de Servidores</p>}
 
-                    <Modal isOpen={modalConfig.isOpen} onClose={() => setModalConfig({ isOpen: false, type: '', data: null })} title={modalConfig.data ? 'Editar Registro' : 'Nuevo Registro'} size={modalConfig.type === 'confirm_delete' ? 'sm' : 'md'}>
-                        {modalConfig.isOpen && renderModalContent()}
+                                {globalEventData.worship ? (
+                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                                        <h4 className="font-bold text-purple-800 mb-2 flex items-center gap-2"><Icon name="Music" size={16}/> Alabanza</h4>
+                                        <p className="text-sm font-bold mb-1">Setlist:</p>
+                                        <ul className="list-disc list-inside text-xs text-purple-900 mb-2">
+                                            {(globalEventData.worship.songList || []).map(s=><li key={s}>{s}</li>)}
+                                        </ul>
+                                    </div>
+                                ) : <p className="text-slate-400 italic text-sm text-center">Sin planificación de Alabanza</p>}
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                        <h4 className="font-bold text-orange-800 text-xs uppercase mb-1">EBD</h4>
+                                        <p className="text-sm">{globalEventData.ebd ? globalEventData.ebd.title : 'No hay actividad'}</p>
+                                    </div>
+                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                        <h4 className="font-bold text-blue-800 text-xs uppercase mb-1">Jóvenes</h4>
+                                        <p className="text-sm">{globalEventData.youth ? globalEventData.youth.title : 'No hay actividad'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </Modal>
 
                 </div>
