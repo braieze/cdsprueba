@@ -3,875 +3,1148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Conquistadores - Sistema Integral</title>
+    <title>Conquistadores App - Gestión Integral</title>
+
+    <!-- ====================================================================================
+         SECUENCIA CRÍTICA DE CARGA (NO MODIFICAR)
+         ==================================================================================== -->
     
-    <!-- 1. React Core -->
+    <!-- 1. React Core (v18) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- 2. Dependencias de Gráficos (ORDEN CRÍTICO: PropTypes -> Recharts) -->
+    <!-- 2. PropTypes (Requerido por Recharts ANTES de cargar Recharts) -->
     <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    
+    <!-- 3. Recharts (Librería Gráfica) -->
     <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
-    
-    <!-- 3. Babel (Para compilar JSX) -->
+
+    <!-- 4. Babel (Compilador JSX) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- 4. Tailwind CSS -->
+
+    <!-- 5. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 5. Firebase SDKs (Compat Version - Estable para Single File) -->
+
+    <!-- 6. Firebase SDKs (Compat v9.23.0) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <!-- Configuración de Estilos y Branding -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        // Colores Iglesia: Azul Marino Principal, Acento Dorado/Naranja
-                        brand: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 800:'#1e40af', 900:'#1e3a8a' }, 
-                        accent: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
+                        church: {
+                            navy: '#1A438D', // Primario
+                            gold: '#F5C71D', // Acento
+                            50: '#f0f4fd',
+                            100: '#e4ebfa',
+                            600: '#1A438D',
+                            700: '#153673',
+                            800: '#142d5f',
+                        }
                     },
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #f8fafc; color: #1e293b; }
-        /* Efecto Glass */
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); }
-        
-        /* Inputs Modernos */
-        .input-std { @apply w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 block p-3 transition-all outline-none shadow-sm; }
-        .label-std { @apply block mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider; }
-        
-        /* Botones */
-        .btn-primary { @apply text-white bg-brand-800 hover:bg-brand-900 focus:ring-4 focus:ring-brand-300 font-bold rounded-xl text-sm px-5 py-3 transition-all shadow-lg shadow-brand-900/20 active:scale-95 flex items-center justify-center gap-2; }
-        .btn-accent { @apply text-white bg-accent-500 hover:bg-accent-600 focus:ring-4 focus:ring-accent-300 font-bold rounded-xl text-sm px-5 py-3 transition-all shadow-lg shadow-accent-500/20 active:scale-95 flex items-center justify-center gap-2; }
-        .btn-ghost { @apply text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 font-bold rounded-xl text-sm px-5 py-3 transition-all active:scale-95 flex items-center justify-center gap-2; }
-        
-        /* Animaciones */
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
+        body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Estilos específicos para inputs y formularios */
+        .input-std { @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-church-navy focus:ring-2 focus:ring-church-navy/20 outline-none transition-all text-sm font-medium; }
+        .label-std { @apply block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1; }
+        .btn-action { @apply active:scale-95 transition-transform; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- 1. CONFIGURACIÓN E INICIALIZACIÓN ---
-        const { useState, useEffect, useMemo, useRef } = React;
+        // ====================================================================================
+        // 1. INICIALIZACIÓN Y UTILIDADES
+        // ====================================================================================
+        const { useState, useEffect, useMemo, useContext, createContext, useCallback, useRef } = React;
         
-        // Inicialización segura de Recharts
+        // --- FIX RECHARTS: Acceso seguro al objeto global ---
         const RechartsObj = window.Recharts || {};
-        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } = RechartsObj;
+        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } = RechartsObj;
 
-        // --- 2. ICONOS (LUCIDE SVG) ---
+        // --- Configuración Firebase (Variables Globales) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'conquistadores-app-prod';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            // Fallback config por si falla la inyección (opcional, solo dev)
+             apiKey: "AIzaSyDXK_EcXsFGhRmXfkKG8SMdsM69c4PNfHw", authDomain: "conquistadoresapp.firebaseapp.com", projectId: "conquistadoresapp"
+        };
+        
+        if (!firebase.apps.length) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+            } catch (e) {
+                console.error("Firebase Init Error:", e);
+            }
+        }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // --- Iconos SVG (Lucide-like) Expandidos ---
         const Icon = ({ name, size = 20, className = "" }) => {
             const icons = {
-                Home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>,
-                Users: <React.Fragment><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></React.Fragment>,
-                Wallet: <React.Fragment><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></React.Fragment>,
-                Music: <React.Fragment><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></React.Fragment>,
-                Calendar: <React.Fragment><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></React.Fragment>,
-                Mail: <React.Fragment><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></React.Fragment>,
-                Menu: <React.Fragment><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></React.Fragment>,
-                X: <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
-                Plus: <React.Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></React.Fragment>,
-                Hand: <React.Fragment><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></React.Fragment>,
-                ChevronLeft: <polyline points="15 18 9 12 15 6"/>,
-                ChevronRight: <polyline points="9 18 15 12 9 6"/>,
-                Check: <polyline points="20 6 9 17 4 12"/>,
-                Clock: <React.Fragment><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></React.Fragment>,
-                LogOut: <React.Fragment><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></React.Fragment>,
-                Trash: <React.Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></React.Fragment>,
-                Edit: <React.Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></React.Fragment>,
-                Sparkles: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                Menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+                X: <path d="M18 6L6 18M6 6l12 12" />,
+                Home: <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />,
+                Users: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />,
+                Music: <path d="M9 18V5l12-2v13" />,
+                Briefcase: <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />,
+                Book: <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />,
+                Smile: <circle cx="12" cy="12" r="10" />,
+                DollarSign: <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />,
+                Bell: <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />,
+                Calendar: <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />,
+                ChevronLeft: <path d="M15 18l-6-6 6-6" />,
+                ChevronRight: <path d="M9 18l6-6-6-6" />,
+                Plus: <path d="M12 5v14M5 12h14" />,
+                Trash: <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />,
+                Edit: <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />,
+                Check: <polyline points="20 6 9 17 4 12" />,
+                LogOut: <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />,
+                Search: <React.Fragment><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></React.Fragment>,
+                Filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
+                Mic: <React.Fragment><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></React.Fragment>
             };
-            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || <circle cx="12" cy="12" r="10"/>}</svg>;
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || <circle cx="12" cy="12" r="2" />}
+                </svg>
+            );
         };
 
-        // --- 3. UTILS & HELPERS ---
-        const formatDate = (d) => { if(!d) return ''; return new Date(d + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }); };
-        const formatMoney = (v) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(v);
-        const getMonthName = (m) => new Date(2024, m, 1).toLocaleDateString('es-AR', { month: 'long' });
+        // --- Helpers ---
+        const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         
-        // RUTA DE FIRESTORE (REGLA 1)
-        const getPath = (appId, col) => `artifacts/${appId}/public/data/${col}`;
-        const getUserPath = (appId, uid) => `artifacts/${appId}/users/${uid}/data`;
+        const getMonthChips = () => {
+            const today = new Date();
+            let chips = [];
+            // Generar 12 meses: 4 atrás y 7 adelante
+            for (let i = -4; i <= 7; i++) {
+                const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                chips.push(d);
+            }
+            return chips;
+        };
 
-        // --- 4. COMPONENTES DE UI ---
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            const date = new Date(y, m - 1, d);
+            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        };
+        
+        const getDayName = (dateStr) => {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            const date = new Date(y, m - 1, d);
+            return date.toLocaleDateString('es-ES', { weekday: 'short' });
+        }
 
-        const Modal = ({ isOpen, onClose, title, children }) => {
+        const formatMoney = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(val);
+
+        // ====================================================================================
+        // 2. COMPONENTES UI REUTILIZABLES
+        // ====================================================================================
+        
+        const Modal = ({ isOpen, onClose, title, children, footer, size = "md" }) => {
             if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white/95 backdrop-blur z-10 p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Icon name="X" /></button>
-                        </div>
-                        <div className="p-6">{children}</div>
-                    </div>
-                </div>
-            );
-        };
-
-        const MultiSelect = ({ options, selected = [], onChange, label }) => {
-            const toggle = (val) => {
-                if (selected.includes(val)) onChange(selected.filter(x => x !== val));
-                else onChange([...selected, val]);
+            const sizeClasses = {
+                sm: "max-w-md",
+                md: "max-w-xl",
+                lg: "max-w-4xl"
             };
             return (
-                <div className="mb-4">
-                    <label className="label-std">{label}</label>
-                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border rounded-xl bg-slate-50">
-                        {options.map(opt => (
-                            <button key={opt.id || opt} onClick={() => toggle(opt.name || opt)}
-                                className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 ${selected.includes(opt.name || opt) ? 'bg-brand-100 border-brand-300 text-brand-700 font-bold' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}>
-                                {selected.includes(opt.name || opt) && <Icon name="Check" size={12}/>}
-                                {opt.name || opt}
-                            </button>
-                        ))}
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm fade-in">
+                    <div className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[95vh] overflow-hidden flex flex-col`}>
+                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-church-navy text-white">
+                            <h3 className="font-bold text-lg tracking-wide">{title}</h3>
+                            <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-full transition-colors"><Icon name="X" /></button>
+                        </div>
+                        <div className="p-6 flex-1 overflow-y-auto bg-slate-50">
+                            {children}
+                        </div>
+                        {footer && (
+                            <div className="p-4 border-t border-slate-100 bg-white flex justify-end gap-3 rounded-b-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                                {footer}
+                            </div>
+                        )}
                     </div>
                 </div>
             );
         };
 
-        const Accordion = ({ title, subtitle, children, defaultOpen = false, badge }) => {
-            const [isOpen, setIsOpen] = useState(defaultOpen);
-            return (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-3 transition-all">
-                    <div className="p-4 cursor-pointer flex justify-between items-center bg-slate-50/50 hover:bg-slate-50" onClick={() => setIsOpen(!isOpen)}>
-                        <div>
-                            <h4 className="font-bold text-slate-800">{title}</h4>
-                            {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {badge && <span className="text-[10px] bg-brand-100 text-brand-700 px-2 py-1 rounded font-bold uppercase">{badge}</span>}
-                            <Icon name={isOpen ? "ChevronLeft" : "ChevronRight"} className={`text-slate-400 transition-transform ${isOpen ? '-rotate-90' : 'rotate-90'}`} />
-                        </div>
-                    </div>
-                    {isOpen && <div className="p-4 border-t border-slate-100 bg-white animate-fadeIn">{children}</div>}
-                </div>
-            );
-        };
-
-        const MonthNavigator = ({ date, setDate }) => {
-            const changeMonth = (delta) => {
-                const newDate = new Date(date.getFullYear(), date.getMonth() + delta, 1);
-                setDate(newDate);
+        const Button = ({ children, onClick, variant = 'primary', className = "", icon, disabled = false, type="button" }) => {
+            const styles = {
+                primary: "bg-church-navy text-white hover:bg-church-800 shadow-lg shadow-church-navy/30",
+                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
+                accent: "bg-church-gold text-church-navy font-bold hover:bg-yellow-400 shadow-lg shadow-yellow-500/20",
+                danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
             };
             return (
-                <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-200 mb-6 w-fit mx-auto md:mx-0">
-                    <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-brand-600"><Icon name="ChevronLeft"/></button>
-                    <span className="font-bold text-slate-800 w-32 text-center uppercase tracking-wide">{getMonthName(date.getMonth())} {date.getFullYear()}</span>
-                    <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-brand-600"><Icon name="ChevronRight"/></button>
-                </div>
+                <button type={type} disabled={disabled} onClick={onClick} className={`btn-action flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${styles[variant]} ${className}`}>
+                    {icon && <Icon name={icon} size={18} />}
+                    {children}
+                </button>
             );
         };
 
-        // --- 5. MÓDULOS DE NEGOCIO ---
+        const Input = ({ label, type = "text", value, onChange, placeholder, required = false, name }) => (
+            <div className="mb-4">
+                <label className="label-std">{label} {required && <span className="text-red-500">*</span>}</label>
+                <input 
+                    name={name}
+                    type={type} 
+                    value={value} 
+                    onChange={onChange} 
+                    placeholder={placeholder}
+                    className="input-std"
+                />
+            </div>
+        );
 
-        // DIRECTORIO
-        const DirectoryManager = ({ db, appId, canEdit }) => {
-            const [users, setUsers] = useState([]);
-            const [isOpen, setIsOpen] = useState(false);
-            const [form, setForm] = useState({});
-            const [editingId, setEditingId] = useState(null);
+        const Select = ({ label, value, onChange, options, name }) => (
+            <div className="mb-4">
+                <label className="label-std">{label}</label>
+                <select 
+                    name={name}
+                    value={value} 
+                    onChange={onChange} 
+                    className="input-std appearance-none"
+                >
+                    {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+            </div>
+        );
 
+        // ====================================================================================
+        // 3. LOGICA PRINCIPAL (APP)
+        // ====================================================================================
+
+        const App = () => {
+            // --- ESTADOS GLOBALES ---
+            const [user, setUser] = useState(null); 
+            const [userData, setUserData] = useState(null); 
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [selectedMonth, setSelectedMonth] = useState(new Date()); 
+            
+            // --- DATOS (Colecciones) ---
+            const [people, setPeople] = useState([]);
+            const [worshipEvents, setWorshipEvents] = useState([]);
+            const [serverEvents, setServerEvents] = useState([]);
+            const [ebdEvents, setEbdEvents] = useState([]);
+            const [youthEvents, setYouthEvents] = useState([]);
+            const [finances, setFinances] = useState([]);
+            const [songs, setSongs] = useState([]);
+            const [tasks, setTasks] = useState([]);
+            const [messages, setMessages] = useState([]);
+
+            // --- UI States ---
+            const [sidebarOpen, setSidebarOpen] = useState(false);
+            const [globalModalEvent, setGlobalModalEvent] = useState(null); 
+            const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', data: null }); 
+
+            // --- AUTHENTICATION INIT ---
             useEffect(() => {
-                const unsub = db.collection(getPath(appId, 'users_directory')).onSnapshot(snap => 
-                    setUsers(snap.docs.map(d => ({id:d.id, ...d.data()})))
-                );
-                return () => unsub();
-            }, [db, appId]);
-
-            const handleSave = async () => {
-                try {
-                    const col = db.collection(getPath(appId, 'users_directory'));
-                    if (!form.name || !form.role || !form.ministry) {
-                        alert("Faltan campos obligatorios");
-                        return;
+                const initAuth = async () => {
+                    const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (initialToken) {
+                        await auth.signInWithCustomToken(initialToken);
+                    } else {
+                        // Fallback anónimo si no hay token
+                        await auth.signInAnonymously();
                     }
-                    const payload = { ...form, name: form.name.trim(), email: (form.email || '').toLowerCase().trim() };
-                    
-                    if(editingId) await col.doc(editingId).update(payload);
-                    else await col.add({ ...payload, createdAt: new Date().toISOString() });
-                    
-                    setIsOpen(false); setForm({}); setEditingId(null);
-                } catch(e) { console.error(e); }
-            };
+                };
+                initAuth();
 
-            const handleDelete = async (id) => {
-                if(!confirm("¿Eliminar miembro?")) return;
-                await db.collection(getPath(appId, 'users_directory')).doc(id).delete();
-            };
-
-            return (
-                <div className="fade-in">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-brand-900">Directorio de Miembros</h2>
-                        {canEdit && <button onClick={()=>{setForm({}); setEditingId(null); setIsOpen(true)}} className="btn-primary"><Icon name="Plus"/> Nuevo Miembro</button>}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {users.map(u => (
-                            <div key={u.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 relative group">
-                                <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xl">{u.name.charAt(0)}</div>
-                                <div>
-                                    <h4 className="font-bold text-slate-800">{u.name}</h4>
-                                    <p className="text-xs text-slate-500 font-bold uppercase">{u.role} • {u.ministry}</p>
-                                    <p className="text-xs text-slate-400">{u.email || 'Sin email'}</p>
-                                </div>
-                                {canEdit && <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={()=>{setForm(u); setEditingId(u.id); setIsOpen(true)}} className="p-2 text-slate-300 hover:text-brand-600"><Icon name="Edit" size={16}/></button>
-                                    <button onClick={()=>handleDelete(u.id)} className="p-2 text-slate-300 hover:text-red-500"><Icon name="Trash" size={16}/></button>
-                                </div>}
-                            </div>
-                        ))}
-                    </div>
-                    
-                    <Modal isOpen={isOpen} onClose={()=>setIsOpen(false)} title={editingId ? "Editar Miembro" : "Nuevo Miembro"}>
-                        <div className="space-y-4">
-                            <input className="input-std" placeholder="Nombre Completo" value={form.name||''} onChange={e=>setForm({...form, name:e.target.value})}/>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="label-std">Rol</label><select className="input-std" value={form.role||'Miembro'} onChange={e=>setForm({...form, role:e.target.value})}><option>Pastor</option><option>Líder</option><option>Servidor</option><option>Miembro</option></select></div>
-                                <div><label className="label-std">Ministerio</label><select className="input-std" value={form.ministry||'General'} onChange={e=>setForm({...form, ministry:e.target.value})}><option>Pastoral</option><option>Alabanza</option><option>Servidores</option><option>Jóvenes</option><option>EBD</option><option>General</option></select></div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <input className="input-std" placeholder="Email (Login)" value={form.email||''} onChange={e=>setForm({...form, email:e.target.value})}/>
-                                <input className="input-std" placeholder="Teléfono" value={form.phone||''} onChange={e=>setForm({...form, phone:e.target.value})}/>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <input className="input-std" type="number" placeholder="Edad" value={form.age||''} onChange={e=>setForm({...form, age:e.target.value})}/>
-                                <input className="input-std" placeholder="Localidad" value={form.location||''} onChange={e=>setForm({...form, location:e.target.value})}/>
-                            </div>
-                            <input className="input-std" placeholder="Dirección (Opcional)" value={form.address||''} onChange={e=>setForm({...form, address:e.target.value})}/>
-                            <button onClick={handleSave} className="btn-primary w-full mt-4">Guardar Registro</button>
-                        </div>
-                    </Modal>
-                </div>
-            );
-        };
-
-        // MENSAJERÍA
-        const Messaging = ({ db, appId, currentUser, canSend }) => {
-            const [inbox, setInbox] = useState([]);
-            const [tab, setTab] = useState('inbox');
-            const [compose, setCompose] = useState({ to: 'all', content: '' });
-            const [users, setUsers] = useState([]);
-
-            useEffect(() => {
-                const unsubMsgs = db.collection(getPath(appId, 'messages')).onSnapshot(snap => {
-                    const all = snap.docs.map(d => ({id:d.id, ...d.data()}));
-                    // Filtrar mis mensajes
-                    setInbox(all.filter(m => m.to === 'all' || m.to === currentUser.email));
-                });
-                const unsubUsers = db.collection(getPath(appId, 'users_directory')).onSnapshot(snap => 
-                    setUsers(snap.docs.map(d => d.data()))
-                );
-                return () => { unsubMsgs(); unsubUsers(); };
-            }, [db, appId, currentUser]);
-
-            const handleSend = async () => {
-                if(!compose.content) return;
-                await db.collection(getPath(appId, 'messages')).add({
-                    from: currentUser.name,
-                    fromEmail: currentUser.email,
-                    to: compose.to,
-                    content: compose.content,
-                    date: new Date().toISOString(),
-                    readBy: []
-                });
-                setCompose({ to: 'all', content: '' });
-                alert("Mensaje enviado");
-                setTab('inbox');
-            };
-
-            return (
-                <div className="fade-in max-w-4xl mx-auto">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-brand-900">Bandeja de Entrada</h2>
-                        {canSend && <button onClick={()=>setTab(tab==='compose'?'inbox':'compose')} className="btn-accent"><Icon name="Mail"/> {tab==='compose'?'Volver':'Redactar'}</button>}
-                    </div>
-
-                    {tab === 'inbox' ? (
-                        <div className="space-y-4">
-                            {inbox.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m => (
-                                <Accordion key={m.id} title={m.from} subtitle={new Date(m.date).toLocaleDateString()} badge={m.to==='all'?'Difusión':'Privado'}>
-                                    <p className="text-slate-700 whitespace-pre-wrap">{m.content}</p>
-                                </Accordion>
-                            ))}
-                            {inbox.length === 0 && <p className="text-center text-slate-400 py-10">No tienes mensajes nuevos.</p>}
-                        </div>
-                    ) : (
-                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-lg">
-                            <h3 className="font-bold mb-4">Nuevo Mensaje</h3>
-                            <label className="label-std">Destinatario</label>
-                            <select className="input-std mb-4" value={compose.to} onChange={e=>setCompose({...compose, to:e.target.value})}>
-                                <option value="all">📢 TODOS (Difusión General)</option>
-                                {users.map(u => <option key={u.email} value={u.email}>{u.name} ({u.role})</option>)}
-                            </select>
-                            <label className="label-std">Mensaje</label>
-                            <textarea className="input-std h-40 mb-4" value={compose.content} onChange={e=>setCompose({...compose, content:e.target.value})}></textarea>
-                            <button onClick={handleSend} className="btn-primary w-full">Enviar Mensaje</button>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        // PLANIFICADOR UNIFICADO (Core de la App)
-        const MinistryPlanner = ({ db, appId, ministry, currentDate, canEdit, directory }) => {
-            const [events, setEvents] = useState([]);
-            const [isOpen, setIsOpen] = useState(false);
-            const [form, setForm] = useState({ roles: {}, tasks: [] });
-            const [editingId, setEditingId] = useState(null);
-            
-            // Sugerencia Inteligente
-            const [suggestions, setSuggestions] = useState([]);
-
-            const collectionName = `${ministry}_plannings`;
-            const monthId = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
-
-            useEffect(() => {
-                // Suscripción al mes actual
-                const unsub = db.collection(getPath(appId, collectionName)).doc(monthId).onSnapshot(doc => {
-                    if(doc.exists) setEvents(doc.data().list || []);
-                    else setEvents([]);
-                });
-                return () => unsub();
-            }, [db, appId, collectionName, monthId]);
-
-            const getSuggestions = async () => {
-                // Lógica simple: buscar en mes anterior y ver quién sirvió menos
-                const potential = directory.filter(u => u.ministry === 'General' || u.ministry === (ministry === 'servers' ? 'Servidores' : 'Alabanza'));
-                const random = potential.sort(() => 0.5 - Math.random()).slice(0, 5);
-                setSuggestions(random);
-            };
-
-            const handleSave = async () => {
-                const docRef = db.collection(getPath(appId, collectionName)).doc(monthId);
-                let newList;
-                const newItem = { ...form, id: editingId || Date.now().toString() };
-                
-                if(editingId) newList = events.map(e => e.id === editingId ? newItem : e);
-                else newList = [...events, newItem];
-
-                await docRef.set({ list: newList }, { merge: true });
-                setIsOpen(false); setForm({ roles: {}, tasks: [] }); setEditingId(null);
-            };
-
-            const handleDelete = async (id) => {
-                if(!confirm("¿Eliminar evento?")) return;
-                const docRef = db.collection(getPath(appId, collectionName)).doc(monthId);
-                const newList = events.filter(e => e.id !== id);
-                await docRef.set({ list: newList }, { merge: true });
-            };
-
-            // Roles Config
-            const rolesConfig = ministry === 'worship' 
-                ? ['Líder', 'Vocal', 'Guitarra', 'Bajo', 'Batería', 'Teclado'] 
-                : (ministry === 'servers' ? ['Predicador', 'Dirección', 'Altar', 'Ofrenda', 'Baños', 'Recepción'] : []);
-
-            return (
-                <div className="fade-in">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold capitalize text-brand-900">{ministry === 'worship' ? 'Alabanza' : (ministry === 'servers' ? 'Servidores' : ministry)}</h2>
-                        {canEdit && <button onClick={()=>{setForm({ roles: {}, tasks: [] }); setEditingId(null); setIsOpen(true); getSuggestions();}} className="btn-primary"><Icon name="Plus"/> Planificar Evento</button>}
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                        {events.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(e => (
-                            <div key={e.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-all">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-2xl font-bold text-slate-800">{new Date(e.date).getDate()}</span>
-                                            <div className="leading-tight">
-                                                <p className="text-xs font-bold text-slate-400 uppercase">{new Date(e.date).toLocaleDateString('es-AR',{month:'long'})}</p>
-                                                <p className="text-xs font-bold text-brand-600">{e.time}</p>
-                                            </div>
-                                        </div>
-                                        <h3 className="font-bold text-lg text-brand-800">{e.title}</h3>
-                                        {e.preacher && <p className="text-sm text-slate-600 italic">Predica: {e.preacher}</p>}
-                                    </div>
-                                    {canEdit && <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={()=>{setForm(e); setEditingId(e.id); setIsOpen(true)}} className="p-2 text-slate-400 hover:text-brand-600"><Icon name="Edit"/></button>
-                                        <button onClick={()=>handleDelete(e.id)} className="p-2 text-slate-400 hover:text-red-500"><Icon name="Trash"/></button>
-                                    </div>}
-                                </div>
-                                
-                                {/* Roles Chips */}
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                    {Object.entries(e.roles || {}).map(([role, people]) => (
-                                        <div key={role} className="bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase block">{role}</span>
-                                            <span className="text-xs font-bold text-slate-700">{people.join(', ')}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Tasks List (For Youth/EBD) */}
-                                {e.tasks && e.tasks.length > 0 && (
-                                    <div className="mt-3 pt-3 border-t border-slate-100">
-                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Tareas Asignadas</p>
-                                        {e.tasks.map((t, i) => (
-                                            <div key={i} className="flex justify-between text-xs text-slate-600 mb-1">
-                                                <span>{t.desc}</span>
-                                                <span className="font-bold text-brand-600">{t.assignedTo.join(', ')}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    <Modal isOpen={isOpen} onClose={()=>setIsOpen(false)} title="Planificar">
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="label-std">Fecha</label><input type="date" className="input-std" value={form.date||''} onChange={e=>setForm({...form, date:e.target.value})}/></div>
-                                <div><label className="label-std">Hora</label><input type="time" className="input-std" value={form.time||''} onChange={e=>setForm({...form, time:e.target.value})}/></div>
-                            </div>
-                            <div><label className="label-std">Título / Tema</label><input className="input-std" value={form.title||''} onChange={e=>setForm({...form, title:e.target.value})}/></div>
-                            
-                            {/* Sugerencia Inteligente */}
-                            {suggestions.length > 0 && ministry !== 'youth' && (
-                                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                                    <p className="text-xs font-bold text-amber-700 uppercase mb-2 flex items-center gap-1"><Icon name="Sparkles" size={12}/> Sugerencia de Rotación (Menos actividad reciente)</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {suggestions.map(s => <span key={s.id} className="text-xs bg-white px-2 py-1 rounded border text-amber-900">{s.name}</span>)}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Asignación de Roles */}
-                            {rolesConfig.length > 0 ? (
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                    <h4 className="font-bold text-slate-700 mb-3">Equipo & Roles</h4>
-                                    {rolesConfig.map(role => (
-                                        <MultiSelect 
-                                            key={role} 
-                                            label={role} 
-                                            options={directory.map(u => u.name)} 
-                                            selected={form.roles?.[role] || []}
-                                            onChange={(val) => setForm(prev => ({ ...prev, roles: { ...prev.roles, [role]: val } }))} 
-                                        />
-                                    ))}
-                                </div>
-                            ) : (
-                                // Tareas para Jovenes/EBD
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                    <h4 className="font-bold text-slate-700 mb-3">Tareas & Responsables</h4>
-                                    <div className="flex gap-2 mb-2">
-                                        <input id="newTaskDesc" className="input-std" placeholder="Descripción Tarea" />
-                                        <button onClick={()=>{
-                                            const desc = document.getElementById('newTaskDesc').value;
-                                            if(desc) setForm(prev => ({...prev, tasks: [...(prev.tasks||[]), {desc, assignedTo: []}]}));
-                                            document.getElementById('newTaskDesc').value = '';
-                                        }} className="btn-ghost">+</button>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {(form.tasks||[]).map((t, idx) => (
-                                            <div key={idx}>
-                                                <p className="text-xs font-bold mb-1">{t.desc}</p>
-                                                <MultiSelect 
-                                                    label="Asignar a:"
-                                                    options={directory.map(u => u.name)}
-                                                    selected={t.assignedTo}
-                                                    onChange={(val) => {
-                                                        const newTasks = [...form.tasks];
-                                                        newTasks[idx].assignedTo = val;
-                                                        setForm({...form, tasks: newTasks});
-                                                    }}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <button onClick={handleSave} className="btn-primary w-full mt-4">Guardar Planificación</button>
-                        </div>
-                    </Modal>
-                </div>
-            );
-        };
-
-        // TESORERÍA (Segura)
-        const Finances = ({ db, appId, currentDate }) => {
-            const [movements, setMovements] = useState([]);
-            const [isOpen, setIsOpen] = useState(false);
-            const [form, setForm] = useState({ type: 'ingreso_culto', date: new Date().toISOString().split('T')[0] });
-            
-            const monthId = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
-
-            useEffect(() => {
-                const unsub = db.collection(getPath(appId, 'finances')).doc(monthId).onSnapshot(doc => {
-                    if(doc.exists) setMovements(doc.data().movements || []);
-                    else setMovements([]);
-                });
-                return () => unsub();
-            }, [db, appId, monthId]);
-
-            const handleSave = async () => {
-                const docRef = db.collection(getPath(appId, 'finances')).doc(monthId);
-                const newItem = { ...form, id: Date.now().toString(), amountTithe: Number(form.amountTithe||0), amountOffering: Number(form.amountOffering||0), amount: Number(form.amount||0) };
-                
-                // Calcular total si es culto
-                if(form.type === 'ingreso_culto') newItem.total = newItem.amountTithe + newItem.amountOffering;
-                else newItem.total = newItem.amount;
-
-                const newList = [...movements, newItem];
-                await docRef.set({ movements: newList }, { merge: true });
-                setIsOpen(false); setForm({ type: 'ingreso_culto', date: new Date().toISOString().split('T')[0] });
-            };
-
-            const totals = movements.reduce((acc, m) => {
-                if(m.type === 'egreso') acc.egresos += m.total;
-                else {
-                    acc.ingresos += m.total;
-                    acc.diezmos += (m.amountTithe || 0);
-                    acc.ofrendas += (m.amountOffering || 0);
-                }
-                return acc;
-            }, { ingresos: 0, egresos: 0, diezmos: 0, ofrendas: 0 });
-
-            return (
-                <div className="fade-in">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-brand-900">Tesorería</h2>
-                        <button onClick={()=>setIsOpen(true)} className="btn-primary"><Icon name="Wallet"/> Registrar Movimiento</button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div className="bg-brand-600 text-white p-6 rounded-2xl shadow-lg shadow-brand-500/30">
-                            <p className="text-xs font-bold uppercase opacity-80">Saldo Mes</p>
-                            <p className="text-3xl font-black">{formatMoney(totals.ingresos - totals.egresos)}</p>
-                        </div>
-                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                            <p className="text-xs font-bold text-slate-400 uppercase">Diezmos vs Ofrendas</p>
-                            <div className="mt-2 space-y-1">
-                                <div className="flex justify-between text-sm"><span className="text-slate-600">Diezmos</span><span className="font-bold text-slate-800">{formatMoney(totals.diezmos)}</span></div>
-                                <div className="flex justify-between text-sm"><span className="text-slate-600">Ofrendas</span><span className="font-bold text-slate-800">{formatMoney(totals.ofrendas)}</span></div>
-                            </div>
-                        </div>
-                        <div className="bg-red-50 p-6 rounded-2xl border border-red-100 text-red-900">
-                            <p className="text-xs font-bold uppercase opacity-80">Gastos</p>
-                            <p className="text-3xl font-black">-{formatMoney(totals.egresos)}</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                        {movements.map(m => (
-                            <div key={m.id} className="p-4 border-b border-slate-100 flex justify-between items-center hover:bg-slate-50">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${m.type==='egreso'?'bg-red-100 text-red-700':(m.type==='ingreso_culto'?'bg-brand-100 text-brand-700':'bg-emerald-100 text-emerald-700')}`}>
-                                            {m.type === 'ingreso_culto' ? 'Culto' : m.type}
-                                        </span>
-                                        <span className="text-xs text-slate-400 font-bold">{formatDate(m.date)}</span>
-                                    </div>
-                                    <p className="text-sm font-bold text-slate-700 mt-1">{m.description || 'Cierre de Culto'}</p>
-                                </div>
-                                <span className={`font-mono font-bold ${m.type==='egreso'?'text-red-500':'text-slate-800'}`}>
-                                    {m.type==='egreso'?'-':'+'}{formatMoney(m.total)}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-
-                    <Modal isOpen={isOpen} onClose={()=>setIsOpen(false)} title="Movimiento de Caja">
-                        <div className="space-y-4">
-                            <select className="input-std" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}>
-                                <option value="ingreso_culto">Cierre de Culto (Diezmo + Ofrenda)</option>
-                                <option value="ingreso_general">Ingreso General</option>
-                                <option value="egreso">Gasto / Egreso</option>
-                            </select>
-                            <input type="date" className="input-std" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/>
-                            
-                            {form.type === 'ingreso_culto' ? (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="label-std">Total Diezmos</label><input type="number" className="input-std" onChange={e=>setForm({...form, amountTithe:e.target.value})}/></div>
-                                    <div><label className="label-std">Total Ofrendas</label><input type="number" className="input-std" onChange={e=>setForm({...form, amountOffering:e.target.value})}/></div>
-                                </div>
-                            ) : (
-                                <div><label className="label-std">Monto Total</label><input type="number" className="input-std" onChange={e=>setForm({...form, amount:e.target.value})}/></div>
-                            )}
-                            <input className="input-std" placeholder="Descripción / Detalle" value={form.description||''} onChange={e=>setForm({...form, description:e.target.value})}/>
-                            <button onClick={handleSave} className="btn-primary w-full mt-4">Guardar Movimiento</button>
-                        </div>
-                    </Modal>
-                </div>
-            );
-        };
-
-        // CALENDARIO UNIFICADO (El Mega Visor)
-        const UnifiedCalendar = ({ db, appId, currentDate }) => {
-            const [allEvents, setAllEvents] = useState({});
-            const [selectedDate, setSelectedDate] = useState(null);
-            const monthId = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
-
-            useEffect(() => {
-                const cols = ['worship_plannings', 'servers_plannings', 'youth_plannings', 'ebd_plannings'];
-                const unsubs = cols.map(col => 
-                    db.collection(getPath(appId, col)).doc(monthId).onSnapshot(doc => {
-                        if(doc.exists) {
-                            const list = doc.data().list || [];
-                            setAllEvents(prev => {
-                                const newState = { ...prev };
-                                list.forEach(e => {
-                                    if(!newState[e.date]) newState[e.date] = [];
-                                    // Evitar duplicados simples
-                                    if(!newState[e.date].find(x => x.id === e.id)) {
-                                        newState[e.date].push({ ...e, origin: col });
-                                    }
-                                });
-                                return newState;
-                            });
+                return auth.onAuthStateChanged(async (u) => {
+                    if (u) {
+                        setUser(u);
+                        // Buscar perfil en Firestore
+                        const docPath = `artifacts/${appId}/public/data/people`;
+                        let doc = await db.collection(docPath).doc(u.uid).get();
+                        
+                        if (doc.exists) {
+                            setUserData({ id: doc.id, ...doc.data() });
+                        } else {
+                            // Intento de buscar por email si el ID no coincide (para migraciones)
+                            if (u.email) {
+                                const snapshot = await db.collection(docPath).where('email', '==', u.email).limit(1).get();
+                                if (!snapshot.empty) {
+                                    setUserData({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+                                    return;
+                                }
+                            }
+                            // Crear perfil default
+                            const newProfile = {
+                                name: u.displayName || 'Nuevo Usuario',
+                                role: 'Servidor',
+                                email: u.email || '',
+                                createdAt: new Date().toISOString()
+                            };
+                            await db.collection(docPath).doc(u.uid).set(newProfile);
+                            setUserData({ id: u.uid, ...newProfile });
                         }
-                    })
-                );
-                return () => unsubs.forEach(u => u());
-            }, [db, appId, monthId]);
+                    }
+                });
+            }, []);
 
-            const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+            // --- DATA FETCHING (Unificado) ---
+            useEffect(() => {
+                if (!user) return;
+                
+                const basePath = `artifacts/${appId}/public/data`;
+                const subs = [];
+                
+                const sub = (col, setter) => {
+                    subs.push(db.collection(`${basePath}/${col}`).onSnapshot(snap => {
+                        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        setter(data);
+                    }, err => console.error(`Error fetching ${col}:`, err)));
+                };
 
-            return (
-                <div className="fade-in h-full flex flex-col">
-                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 flex-1 overflow-hidden">
-                        <div className="grid grid-cols-7 bg-slate-50 border-b border-slate-200">
-                            {['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'].map(d => <div key={d} className="p-3 text-center text-xs font-bold text-slate-400 tracking-widest">{d}</div>)}
-                        </div>
-                        <div className="grid grid-cols-7 auto-rows-fr h-full">
-                            {Array.from({length: firstDay}).map((_,i) => <div key={`empty-${i}`} className="bg-slate-50/30 border-r border-b border-slate-100"/>)}
-                            {Array.from({length: daysInMonth}).map((_,i) => {
-                                const day = i+1;
-                                const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                                const evs = allEvents[dateStr] || [];
-                                return (
-                                    <div key={day} onClick={()=>{if(evs.length) setSelectedDate({date: dateStr, list: evs})}} className={`min-h-[100px] border-r border-b border-slate-100 p-2 relative transition-all ${evs.length ? 'cursor-pointer hover:bg-brand-50' : ''}`}>
-                                        <span className={`text-sm font-bold block mb-1 ${evs.length ? 'text-brand-600' : 'text-slate-400'}`}>{day}</span>
-                                        <div className="space-y-1">
-                                            {evs.map((e, idx) => (
-                                                <div key={idx} className={`text-[9px] truncate px-1 rounded font-bold ${e.origin.includes('worship') ? 'bg-purple-100 text-purple-700' : (e.origin.includes('server') ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700')}`}>
-                                                    {e.title}
-                                                </div>
-                                            ))}
-                                        </div>
+                sub('people', setPeople);
+                sub('worship_events', setWorshipEvents);
+                sub('server_events', setServerEvents);
+                sub('ebd_events', setEbdEvents);
+                sub('youth_events', setYouthEvents);
+                sub('finances', setFinances);
+                sub('songs', setSongs);
+                sub('tasks', setTasks);
+                sub('messages', setMessages);
+
+                return () => subs.forEach(unsub => unsub());
+            }, [user]);
+
+            // --- FILTROS DE MES ---
+            const filterByMonth = (list) => {
+                if (!list) return [];
+                const y = selectedMonth.getFullYear();
+                const m = selectedMonth.getMonth(); 
+                return list.filter(item => {
+                    if (!item.date) return false;
+                    // Comparar string YYYY-MM
+                    const itemDate = item.date.substring(0, 7); // "2023-10"
+                    const filterDate = `${y}-${String(m+1).padStart(2,'0')}`;
+                    return itemDate === filterDate;
+                });
+            };
+
+            // --- PERMISOS ---
+            const canEdit = (ministry) => {
+                if (!userData) return false;
+                if (userData.role === 'Pastor') return true;
+                if (userData.role.includes(ministry)) return true; // Ej: "Líder de Alabanza"
+                return false;
+            };
+
+            // --- CRUD ACTIONS ---
+            const handleSave = async (collection, data, id = null) => {
+                const path = `artifacts/${appId}/public/data/${collection}`;
+                try {
+                    // Limpieza de datos undefined
+                    const cleanData = JSON.parse(JSON.stringify(data));
+                    
+                    if (id) {
+                        await db.collection(path).doc(id).update(cleanData);
+                    } else {
+                        await db.collection(path).add({ ...cleanData, createdAt: new Date().toISOString() });
+                    }
+                    setModalConfig({ isOpen: false, type: '', data: null });
+                } catch (e) {
+                    console.error(e);
+                    // Fallback visual simple
+                    const errDiv = document.createElement('div');
+                    errDiv.innerHTML = `<div class="fixed top-4 right-4 bg-red-500 text-white p-4 rounded shadow-lg z-[60]">Error: ${e.message}</div>`;
+                    document.body.appendChild(errDiv);
+                    setTimeout(()=>errDiv.remove(), 3000);
+                }
+            };
+
+            const handleDelete = async (collection, id) => {
+                if(!id) return;
+                // Confirmación Custom (No alert)
+                setModalConfig({ 
+                    isOpen: true, 
+                    type: 'confirm_delete', 
+                    data: { collection, id } 
+                });
+            };
+
+            const confirmDelete = async () => {
+                const { collection, id } = modalConfig.data;
+                const path = `artifacts/${appId}/public/data/${collection}`;
+                await db.collection(path).doc(id).delete();
+                setModalConfig({ isOpen: false, type: '', data: null });
+            };
+
+            // --- VISTA GLOBAL DE EVENTO (MODAL UNIFICADO) ---
+            const openGlobalEvent = (date, baseEvent) => {
+                const matches = {
+                    base: baseEvent,
+                    worship: worshipEvents.find(e => e.date === date),
+                    server: serverEvents.find(e => e.date === date),
+                    ebd: ebdEvents.find(e => e.date === date),
+                    youth: youthEvents.find(e => e.date === date)
+                };
+                setGlobalModalEvent(matches);
+            };
+
+            // =================================================================================
+            // 4. SUB-COMPONENTES DE PANTALLA
+            // =================================================================================
+
+            // --- COMPONENTE: NAVEGACIÓN MENSUAL (CHIPS) ---
+            const MonthNav = () => (
+                <div className="flex overflow-x-auto gap-2 py-3 px-4 hide-scroll bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100 items-center">
+                    <Icon name="Calendar" className="text-church-navy mr-2 flex-shrink-0" />
+                    {getMonthChips().map((d, i) => {
+                        const isSelected = d.getMonth() === selectedMonth.getMonth() && d.getFullYear() === selectedMonth.getFullYear();
+                        return (
+                            <button 
+                                key={i}
+                                onClick={() => setSelectedMonth(d)}
+                                className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${isSelected ? 'bg-church-navy text-white border-church-navy shadow-lg shadow-church-navy/20' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300'}`}
+                            >
+                                {MONTHS[d.getMonth()].substring(0,3)} {d.getFullYear() !== new Date().getFullYear() && d.getFullYear()}
+                            </button>
+                        );
+                    })}
+                </div>
+            );
+
+            // --- COMPONENTE: DASHBOARD ---
+            const DashboardView = () => {
+                // Cálculo de Equidad (Recharts)
+                const serverStats = useMemo(() => {
+                    const counts = {};
+                    serverEvents.forEach(evt => {
+                        Object.values(evt.assignments || {}).forEach(name => {
+                            if (name) counts[name] = (counts[name] || 0) + 1;
+                        });
+                    });
+                    // Agregar Alabanza también
+                    worshipEvents.forEach(evt => {
+                         Object.values(evt.assignments || {}).forEach(name => {
+                            if (name) counts[name] = (counts[name] || 0) + 1;
+                        });
+                    });
+
+                    return Object.entries(counts)
+                        .map(([name, count]) => ({ name, count }))
+                        .sort((a,b) => b.count - a.count)
+                        .slice(0, 10);
+                }, [serverEvents, worshipEvents]);
+
+                const unreadMessages = messages.filter(m => (m.to === 'all' || m.to === userData?.id) && !(m.readBy || []).includes(userData?.id)).length;
+                const myPendingTasks = tasks.filter(t => t.assignedToId === userData?.id && t.status === 'Pendiente').length;
+
+                return (
+                    <div className="space-y-6 fade-in pb-10">
+                        {/* Header Personal */}
+                        <div className="bg-gradient-to-r from-church-navy to-church-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
+                            <div className="relative z-10">
+                                <h1 className="text-3xl font-extrabold mb-2">Hola, {userData?.name?.split(' ')[0] || 'Conquistador'}</h1>
+                                <p className="text-church-100 font-medium">Bienvenido a tu panel de gestión.</p>
+                                <div className="mt-6 flex gap-3">
+                                    <div onClick={() => setActiveTab('inbox')} className="bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-white/20 transition-colors">
+                                        <Icon name="Bell" size={16} />
+                                        <span className="font-bold">{unreadMessages} Mensajes</span>
                                     </div>
-                                );
+                                    <div onClick={() => setActiveTab('inbox')} className="bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-white/20 transition-colors">
+                                        <Icon name="Check" size={16} />
+                                        <span className="font-bold">{myPendingTasks} Tareas</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <Icon name="Home" size={150} className="absolute -right-6 -bottom-6 text-white/5 rotate-12" />
+                        </div>
+
+                        {/* Quick Stats Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center text-center hover:border-church-gold transition-colors cursor-pointer" onClick={() => setActiveTab('directory')}>
+                                <div className="bg-blue-50 text-church-navy p-3 rounded-full mb-2"><Icon name="Users" /></div>
+                                <span className="text-2xl font-black text-slate-800">{people.length}</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Miembros</span>
+                            </div>
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center text-center hover:border-church-gold transition-colors cursor-pointer" onClick={() => setActiveTab('servers')}>
+                                <div className="bg-green-50 text-green-600 p-3 rounded-full mb-2"><Icon name="Briefcase" /></div>
+                                <span className="text-2xl font-black text-slate-800">{serverEvents.length}</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Eventos</span>
+                            </div>
+                        </div>
+
+                        {/* Gráfico Recharts (Solo Lideres/Pastores) */}
+                        {userData?.role !== 'Servidor' && serverStats.length > 0 && BarChart && (
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 className="font-bold text-lg mb-6 text-church-navy flex items-center gap-2">
+                                    <Icon name="Filter" size={18} /> Rotación de Servicio
+                                </h3>
+                                <div className="h-64 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={serverStats}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="name" tick={{fontSize: 10, fill: '#64748b'}} interval={0} />
+                                            <YAxis allowDecimals={false} tick={{fontSize: 10, fill: '#64748b'}} />
+                                            <Tooltip 
+                                                cursor={{fill: '#f8fafc'}} 
+                                                contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}}
+                                            />
+                                            <Bar dataKey="count" fill="#1A438D" radius={[4, 4, 0, 0]} barSize={32}>
+                                                {serverStats.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={index < 3 ? '#F5C71D' : '#1A438D'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            // --- COMPONENTE: BANDEJA DE ENTRADA (MESSAGING + TASKS) ---
+            const InboxView = () => {
+                const [filter, setFilter] = useState('all'); // all, tasks, messages
+                
+                // Procesar Tareas
+                const myTasks = tasks.filter(t => t.assignedToId === userData?.id || t.assignedToName === userData?.name);
+                // Procesar Mensajes
+                const myMessages = messages.filter(m => m.to === 'all' || m.to === userData?.id).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                const combined = [
+                    ...myTasks.map(t => ({...t, type: 'task', sortDate: t.createdAt})),
+                    ...myMessages.map(m => ({...m, type: 'message', sortDate: m.createdAt}))
+                ].sort((a,b) => new Date(b.sortDate) - new Date(a.sortDate));
+
+                const filteredList = filter === 'all' ? combined : combined.filter(i => i.type === filter);
+
+                const markRead = async (msg) => {
+                    const currentReads = msg.readBy || [];
+                    if (!currentReads.includes(userData.id)) {
+                        await db.collection(`artifacts/${appId}/public/data/messages`).doc(msg.id).update({
+                            readBy: [...currentReads, userData.id]
+                        });
+                    }
+                };
+
+                const completeTask = async (task) => {
+                    await db.collection(`artifacts/${appId}/public/data/tasks`).doc(task.id).update({ status: 'Completado' });
+                };
+
+                return (
+                    <div className="space-y-4 fade-in">
+                        <div className="flex justify-between items-center mb-2">
+                            <h2 className="text-2xl font-bold text-church-navy">Buzón</h2>
+                            {(userData?.role === 'Pastor' || userData?.role.includes('Líder')) && (
+                                <Button icon="Plus" onClick={() => setModalConfig({ isOpen: true, type: 'compose_message' })} className="text-xs px-3">Nuevo</Button>
+                            )}
+                        </div>
+
+                        <div className="flex gap-2 mb-4 overflow-x-auto hide-scroll">
+                            {['all', 'message', 'task'].map(f => (
+                                <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${filter === f ? 'bg-slate-800 text-white' : 'bg-white border border-slate-200 text-slate-500'}`}>
+                                    {f === 'all' ? 'Todo' : f === 'message' ? 'Mensajes' : 'Tareas'}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="space-y-3">
+                            {filteredList.length === 0 && <div className="text-center py-10 text-slate-400">No hay notificaciones.</div>}
+                            
+                            {filteredList.map(item => {
+                                if (item.type === 'task') {
+                                    return (
+                                        <div key={item.id} className="bg-white p-4 rounded-xl border-l-4 border-l-church-gold shadow-sm">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="bg-church-gold/20 text-church-navy px-2 py-0.5 rounded text-[10px] font-bold uppercase">Tarea</span>
+                                                        <span className="text-xs text-slate-400">{formatDate(item.createdAt?.substring(0,10))}</span>
+                                                    </div>
+                                                    <h4 className={`font-bold text-slate-800 ${item.status === 'Completado' ? 'line-through opacity-50' : ''}`}>{item.description}</h4>
+                                                    <p className="text-xs text-slate-500 mt-1">Asignado por: {item.createdBy}</p>
+                                                </div>
+                                                {item.status !== 'Completado' ? (
+                                                    <button onClick={() => completeTask(item)} className="p-2 bg-slate-100 hover:bg-green-100 text-slate-400 hover:text-green-600 rounded-lg transition-colors"><Icon name="Check" /></button>
+                                                ) : <Icon name="Check" className="text-green-500" />}
+                                            </div>
+                                        </div>
+                                    );
+                                } else {
+                                    const isRead = (item.readBy || []).includes(userData?.id);
+                                    return (
+                                        <details key={item.id} className="group bg-white rounded-xl border border-slate-100 shadow-sm open:shadow-md transition-all" onClick={() => !isRead && markRead(item)}>
+                                            <summary className="flex justify-between items-center p-4 cursor-pointer list-none">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-full ${isRead ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
+                                                        <Icon name="Bell" size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className={`text-sm ${isRead ? 'font-medium text-slate-600' : 'font-bold text-slate-900'}`}>{item.subject || 'Mensaje Nuevo'}</p>
+                                                        <p className="text-xs text-slate-400">{formatDate(item.createdAt?.substring(0,10))} • De: {item.fromName}</p>
+                                                    </div>
+                                                </div>
+                                                <Icon name="ChevronRight" size={16} className="text-slate-300 group-open:rotate-90 transition-transform" />
+                                            </summary>
+                                            <div className="px-4 pb-4 pt-0 border-t border-slate-50 mt-2">
+                                                <p className="text-sm text-slate-600 whitespace-pre-line mt-4">{item.content}</p>
+                                            </div>
+                                        </details>
+                                    );
+                                }
                             })}
                         </div>
                     </div>
+                );
+            };
 
-                    {/* Modal de Detalle Completo */}
-                    <Modal isOpen={!!selectedDate} onClose={()=>setSelectedDate(null)} title={`Eventos del ${selectedDate ? formatDate(selectedDate.date) : ''}`}>
-                        <div className="space-y-6">
-                            {(selectedDate?.list || []).map((e, i) => (
-                                <div key={i} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                    <h4 className="font-bold text-lg text-slate-800 mb-1">{e.title}</h4>
-                                    <p className="text-xs font-bold uppercase text-slate-400 mb-3">{e.time} hs • {e.origin.split('_')[0]}</p>
+            // --- COMPONENTE: TESORERÍA (SOLO PASTOR) ---
+            const FinancesView = () => {
+                if (userData?.role !== 'Pastor') return <div className="p-10 text-center text-slate-400 bg-slate-100 rounded-xl m-4">🚫 Acceso Restringido</div>;
+
+                const filtered = filterByMonth(finances);
+                // Cálculos
+                const totalTithes = filtered.reduce((sum, item) => sum + (Number(item.tithes) || 0), 0);
+                const totalOfferings = filtered.reduce((sum, item) => sum + (Number(item.offerings) || 0), 0);
+                const totalIncome = filtered.filter(i => i.type === 'Ingreso').reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+                const totalExpenses = filtered.filter(i => i.type === 'Gasto').reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+                
+                const grandTotal = totalTithes + totalOfferings + totalIncome;
+
+                return (
+                    <div className="space-y-6 fade-in">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-church-navy">Tesorería</h2>
+                            <div className="flex gap-2">
+                                <Button variant="secondary" onClick={() => setModalConfig({ isOpen: true, type: 'finance_income' })} className="text-xs px-3">Ingreso</Button>
+                                <Button variant="danger" onClick={() => setModalConfig({ isOpen: true, type: 'finance_expense' })} className="text-xs px-3">Gasto</Button>
+                            </div>
+                        </div>
+
+                        {/* Tarjetas Resumen */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-green-500">
+                                <p className="text-xs font-bold text-slate-400 uppercase">Ingresos Totales (Mes)</p>
+                                <p className="text-2xl font-black text-slate-800">{formatMoney(grandTotal)}</p>
+                                <div className="text-xs text-slate-500 mt-1 flex gap-2">
+                                    <span>Diezmos: {formatMoney(totalTithes)}</span>
+                                    <span>Ofrendas: {formatMoney(totalOfferings)}</span>
+                                </div>
+                            </div>
+                            <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-red-500">
+                                <p className="text-xs font-bold text-slate-400 uppercase">Gastos (Mes)</p>
+                                <p className="text-2xl font-black text-slate-800">{formatMoney(totalExpenses)}</p>
+                            </div>
+                            <div className="bg-church-navy p-4 rounded-xl shadow-lg text-white">
+                                <p className="text-xs font-bold text-church-100 uppercase">Balance Neto</p>
+                                <p className="text-3xl font-black">{formatMoney(grandTotal - totalExpenses)}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs border-b border-slate-200">
+                                    <tr>
+                                        <th className="p-4">Fecha</th>
+                                        <th className="p-4">Concepto</th>
+                                        <th className="p-4 text-right">Monto</th>
+                                        <th className="p-4 w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(f => {
+                                        const amount = (Number(f.tithes)||0) + (Number(f.offerings)||0) + (Number(f.amount)||0);
+                                        return (
+                                            <tr key={f.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="p-4 font-medium text-slate-600">{formatDate(f.date)}</td>
+                                                <td className="p-4">
+                                                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase mr-2 ${f.type === 'Gasto' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{f.type}</span>
+                                                    {f.notes}
+                                                </td>
+                                                <td className={`p-4 text-right font-mono font-bold ${f.type === 'Gasto' ? 'text-red-600' : 'text-slate-700'}`}>
+                                                    {formatMoney(amount)}
+                                                </td>
+                                                <td className="p-4">
+                                                    <button onClick={() => handleDelete('finances', f.id)} className="text-slate-300 hover:text-red-500"><Icon name="Trash" size={16} /></button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {filtered.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-slate-400">Sin movimientos este mes.</td></tr>}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            };
+
+            // --- COMPONENTE: LISTAS DE MINISTERIOS (GENÉRICO) ---
+            const MinistryView = ({ title, events, collection, ministryKey, icon }) => {
+                const filtered = filterByMonth(events);
+                const hasPermission = canEdit(ministryKey);
+
+                return (
+                    <div className="space-y-6 fade-in">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                <Icon name={icon} className="text-church-navy" /> {title}
+                            </h2>
+                            {hasPermission && <Button icon="Plus" onClick={() => setModalConfig({ isOpen: true, type: collection })}>Planificar</Button>}
+                        </div>
+
+                        {filtered.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                                <Icon name="Calendar" size={48} className="text-slate-200 mb-4" />
+                                <p className="text-slate-400 font-medium">No hay eventos programados.</p>
+                                {hasPermission && <button onClick={() => setModalConfig({ isOpen: true, type: collection })} className="mt-2 text-church-navy font-bold text-sm hover:underline">Crear el primero</button>}
+                            </div>
+                        )}
+
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {filtered.sort((a,b) => new Date(a.date) - new Date(b.date)).map(evt => (
+                                <div key={evt.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-church-gold transition-all cursor-pointer group relative flex flex-col h-full" onClick={() => openGlobalEvent(evt.date, evt)}>
                                     
-                                    {/* Roles */}
-                                    {e.roles && <div className="grid grid-cols-2 gap-2 mb-3">
-                                        {Object.entries(e.roles).map(([role, ppl]) => (
-                                            <div key={role} className="text-xs">
-                                                <span className="font-bold text-slate-500">{role}:</span> <span className="text-slate-800">{ppl.join(', ')}</span>
+                                    {/* Cabecera Tarjeta */}
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="bg-slate-50 px-3 py-2 rounded-xl text-center border border-slate-100 min-w-[60px]">
+                                            <div className="text-[10px] font-bold text-slate-400 uppercase">{getDayName(evt.date)}</div>
+                                            <div className="text-xl font-black text-church-navy">{evt.date.split('-')[2]}</div>
+                                        </div>
+                                        {hasPermission && (
+                                            <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                                                <button onClick={() => setModalConfig({ isOpen: true, type: collection, data: evt })} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-church-navy transition-colors"><Icon name="Edit" size={16} /></button>
+                                                <button onClick={() => handleDelete(collection, evt.id)} className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"><Icon name="Trash" size={16} /></button>
                                             </div>
-                                        ))}
-                                    </div>}
+                                        )}
+                                    </div>
 
-                                    {/* Tasks */}
-                                    {e.tasks && <div className="bg-white p-3 rounded border border-slate-100">
-                                        <p className="text-xs font-bold mb-2">Tareas</p>
-                                        {e.tasks.map((t, idx) => (
-                                            <p key={idx} className="text-xs text-slate-600">• {t.desc} ({t.assignedTo.join(', ')})</p>
-                                        ))}
-                                    </div>}
+                                    {/* Contenido */}
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-lg text-slate-800 leading-tight mb-2">{evt.title || evt.theme || 'Servicio General'}</h3>
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            <span className="inline-flex items-center gap-1 text-xs font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                                                <Icon name="Calendar" size={12}/> {evt.time} hs
+                                            </span>
+                                            {evt.preacher && (
+                                                <span className="inline-flex items-center gap-1 text-xs font-bold bg-church-gold/10 text-church-800 px-2 py-1 rounded border border-church-gold/20">
+                                                    <Icon name="Mic" size={12}/> {evt.preacher}
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Resumen Equipo (Solo muestra conteo o primeros nombres) */}
+                                        <div className="pt-3 border-t border-slate-50 text-xs text-slate-500">
+                                            {collection === 'worship_events' && evt.songsText && <p className="line-clamp-1 italic">🎵 {evt.songsText}</p>}
+                                            {collection === 'server_events' && evt.assignments && (
+                                                <div className="flex gap-2 mt-1">
+                                                    <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded">Recepción: {evt.assignments['Recepción'] || '--'}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                    </Modal>
-                </div>
-            );
-        };
+                    </div>
+                );
+            };
 
-        // --- 6. APP PRINCIPAL ---
-        const App = () => {
-            const [user, setUser] = useState(null);
-            const [profile, setProfile] = useState(null); // Role: Pastor, Lider, Servidor
-            const [directory, setDirectory] = useState([]); // Cargamos directorio para selects
-            const [currentDate, setCurrentDate] = useState(new Date());
-            const [tab, setTab] = useState('dashboard');
-            const [sidebarOpen, setSidebarOpen] = useState(false);
-            
-            // Firebase State
-            const [db, setDb] = useState(null);
-            const [appId, setAppId] = useState(null);
+            // --- COMPONENTE: DIRECTORIO (CRUD COMPLETO) ---
+            const DirectoryView = () => {
+                const [search, setSearch] = useState("");
+                // Filtro local
+                const filtered = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.email?.toLowerCase().includes(search.toLowerCase()));
 
-            useEffect(() => {
-                const app_id = typeof __app_id !== 'undefined' ? __app_id : 'default';
-                const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-                setAppId(app_id);
-
-                if (config) {
-                    firebase.initializeApp(config);
-                    setDb(firebase.firestore());
-                    const auth = firebase.auth();
-                    
-                    // Auth anónima o token para que funcione en preview
-                    if(typeof __initial_auth_token !== 'undefined') auth.signInWithCustomToken(__initial_auth_token);
-                    else auth.signInAnonymously();
-
-                    auth.onAuthStateChanged(async (u) => {
-                        if(u) {
-                            setUser(u);
-                            // Cargar directorio para uso global
-                            const dirSnap = await firebase.firestore().collection(`artifacts/${app_id}/public/data/users_directory`).get();
-                            const dirList = dirSnap.docs.map(d => ({id:d.id, ...d.data()}));
-                            setDirectory(dirList);
-
-                            // Buscar perfil en directorio
-                            const myProfile = dirList.find(p => p.email === u.email);
-                            if(myProfile) setProfile(myProfile);
-                            else {
-                                // Mock Profile para primera vez o si no está en directorio
-                                setProfile({ name: u.displayName || 'Usuario', role: 'Servidor', email: u.email, ministry: 'General' });
-                            }
-                        }
-                    });
-                }
-            }, []);
-
-            if(!profile) return <div className="h-screen flex items-center justify-center text-brand-600 font-bold animate-pulse">Cargando Sistema Conquistadores...</div>;
-
-            const isLeader = profile.role === 'Pastor' || profile.role === 'Líder';
-            const isPastor = profile.role === 'Pastor';
-
-            return (
-                <div className="flex h-screen overflow-hidden text-slate-800 bg-slate-50">
-                    {/* Sidebar */}
-                    <aside className={`fixed md:relative z-40 w-72 bg-brand-900 text-white h-full flex flex-col transition-transform duration-300 shadow-2xl ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                        <div className="p-8 border-b border-brand-800">
-                            <h1 className="font-extrabold text-2xl flex items-center gap-3 tracking-tight">
-                                <div className="w-10 h-10 bg-accent-500 rounded-xl flex items-center justify-center shadow-lg text-brand-900"><Icon name="Home"/></div>
-                                Conquistadores
-                            </h1>
+                return (
+                    <div className="space-y-6 fade-in">
+                        <div className="flex flex-col md:flex-row justify-between gap-4">
+                            <h2 className="text-2xl font-bold text-slate-800">Directorio de Miembros</h2>
+                            <div className="flex gap-2 w-full md:w-auto">
+                                <div className="relative flex-1 md:w-64">
+                                    <Icon name="Search" size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Buscar por nombre..." 
+                                        className="pl-9 input-std mb-0" 
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                    />
+                                </div>
+                                <Button icon="Plus" onClick={() => setModalConfig({ isOpen: true, type: 'person' })}>Nuevo</Button>
+                            </div>
                         </div>
-                        <nav className="flex-1 px-4 space-y-2 py-6 overflow-y-auto">
-                            {[
-                                {id: 'dashboard', icon: 'Home', label: 'Inicio', access: true},
-                                {id: 'calendar', icon: 'Calendar', label: 'Calendario Global', access: true},
-                                {id: 'directory', icon: 'Users', label: 'Directorio', access: isLeader},
-                                {id: 'worship', icon: 'Music', label: 'Alabanza', access: true},
-                                {id: 'servers', icon: 'Hand', label: 'Servidores', access: true},
-                                {id: 'youth', icon: 'Sparkles', label: 'Jóvenes', access: true},
-                                {id: 'finances', icon: 'Wallet', label: 'Tesorería', access: isPastor},
-                                {id: 'messages', icon: 'Mail', label: 'Mensajería', access: true},
-                            ].filter(i=>i.access).map(item => (
-                                <button key={item.id} onClick={()=>{setTab(item.id); setSidebarOpen(false);}} 
-                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all ${tab===item.id ? 'bg-brand-700 text-white shadow-lg' : 'text-brand-200 hover:bg-brand-800 hover:text-white'}`}>
-                                    <Icon name={item.icon} size={20}/> {item.label}
-                                </button>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filtered.map(p => (
+                                <div key={p.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow group">
+                                    <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-lg flex-shrink-0">
+                                        {p.name.charAt(0)}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="font-bold text-slate-800 truncate">{p.name}</h3>
+                                            <button onClick={() => setModalConfig({ isOpen: true, type: 'person', data: p })} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-church-navy transition-opacity"><Icon name="Edit" size={16} /></button>
+                                        </div>
+                                        <p className="text-xs font-bold text-church-navy mb-1">{p.role}</p>
+                                        <div className="text-xs text-slate-500 space-y-0.5">
+                                            {p.phone && <p>📞 {p.phone}</p>}
+                                            {p.email && <p className="truncate">✉️ {p.email}</p>}
+                                            {p.address && <p className="truncate">📍 {p.address}</p>}
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
-                        </nav>
-                        <div className="p-6 bg-brand-950/50">
-                            <p className="text-sm font-bold text-white truncate">{profile.name}</p>
-                            <p className="text-xs text-brand-300 uppercase font-bold">{profile.role}</p>
+                        </div>
+                    </div>
+                );
+            };
+
+            // =================================================================================
+            // 5. MODALES Y FORMULARIOS
+            // =================================================================================
+
+            const renderModalContent = () => {
+                const { type, data } = modalConfig;
+                // Hook para formulario
+                const [form, setForm] = useState(data || {});
+
+                // Sugerencias de Equipo (Regla de 2 servicios)
+                const getSuggestions = () => {
+                    if (type !== 'server_events') return [];
+                    const lastEvents = serverEvents
+                        .filter(e => e.date < (form.date || '9999'))
+                        .sort((a,b) => new Date(b.date) - new Date(a.date))
+                        .slice(0, 2);
+                    
+                    const recentlyServed = new Set();
+                    lastEvents.forEach(e => Object.values(e.assignments || {}).forEach(p => recentlyServed.add(p)));
+                    // Filtrar gente que no sirvió recientemente
+                    return people.filter(p => !recentlyServed.has(p.name)).slice(0, 5); 
+                };
+
+                const handleChange = (f, v) => setForm(prev => ({ ...prev, [f]: v }));
+
+                // Footer de Guardado Genérico
+                const saveBtn = <Button onClick={() => handleSave(
+                    type === 'person' ? 'people' : 
+                    type === 'finance_income' || type === 'finance_expense' ? 'finances' : 
+                    type === 'compose_message' ? 'messages' : 
+                    type, 
+                    form, 
+                    data?.id
+                )}>Guardar Datos</Button>;
+
+                // --- FORMULARIO PERSONA (Directorio Completo) ---
+                if (type === 'person') return (
+                    <div className="space-y-4">
+                        <Input label="Nombre Completo" value={form.name || ''} onChange={e => handleChange('name', e.target.value)} required />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Select label="Rol Ministerial" value={form.role || 'Servidor'} onChange={e => handleChange('role', e.target.value)} 
+                                options={Object.values({PASTOR:'Pastor',LW:'Líder de Alabanza',LS:'Líder de Servidores',LE:'Líder de EBD',LY:'Líder de Jóvenes',SV:'Servidor'}).map(v => ({value:v, label:v}))} 
+                            />
+                            <Input label="Edad" type="number" value={form.age || ''} onChange={e => handleChange('age', e.target.value)} />
+                        </div>
+                        <Input label="Teléfono / WhatsApp" value={form.phone || ''} onChange={e => handleChange('phone', e.target.value)} required />
+                        <Input label="Correo Electrónico" type="email" value={form.email || ''} onChange={e => handleChange('email', e.target.value)} required />
+                        <Input label="Dirección / Localidad" value={form.address || ''} onChange={e => handleChange('address', e.target.value)} />
+                        <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
+                    </div>
+                );
+
+                // --- FORMULARIO ALABANZA ---
+                if (type === 'worship_events') return (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Fecha" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
+                            <Input label="Hora" type="time" value={form.time || ''} onChange={e => handleChange('time', e.target.value)} />
+                        </div>
+                        <Input label="Tema Principal" value={form.theme || ''} onChange={e => handleChange('theme', e.target.value)} />
+                        
+                        <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                            <label className="label-std mb-2">Lista de Canciones</label>
+                            <textarea 
+                                className="input-std min-h-[100px]" 
+                                value={form.songsText || ''} 
+                                onChange={e => handleChange('songsText', e.target.value)}
+                                placeholder="Escribe la lista de canciones aquí..."
+                            ></textarea>
+                        </div>
+                        <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
+                    </div>
+                );
+
+                // --- FORMULARIO SERVIDORES (Con Predicador y Sugerencias) ---
+                if (type === 'server_events') {
+                    const suggestions = getSuggestions();
+                    return (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input label="Fecha" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
+                                <Input label="Hora" type="time" value={form.time || ''} onChange={e => handleChange('time', e.target.value)} />
+                            </div>
+                            <Input label="Predicador" value={form.preacher || ''} onChange={e => handleChange('preacher', e.target.value)} placeholder="¿Quién predica hoy?" />
+                            
+                            <div className="border-t border-slate-200 pt-4 mt-2">
+                                <h4 className="font-bold text-church-navy mb-3">Asignación de Roles</h4>
+                                {['Recepción', 'Limpieza', 'Altar', 'Multimedia', 'Niños'].map(role => (
+                                    <div key={role} className="mb-3 flex items-center gap-3">
+                                        <label className="w-24 text-xs font-bold text-slate-500 uppercase">{role}</label>
+                                        <select 
+                                            className="input-std flex-1 py-2"
+                                            value={form.assignments?.[role] || ''} 
+                                            onChange={e => handleChange('assignments', { ...(form.assignments || {}), [role]: e.target.value })}
+                                        >
+                                            <option value="">-- Seleccionar --</option>
+                                            {people.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                                        </select>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {suggestions.length > 0 && (
+                                <div className="bg-green-50 p-3 rounded-lg border border-green-100 text-xs">
+                                    <strong className="text-green-800 block mb-1">Sugerencia (Descansados):</strong> 
+                                    <div className="flex flex-wrap gap-2">
+                                        {suggestions.map(s => <span key={s.id} className="bg-white px-2 py-1 rounded shadow-sm text-green-700">{s.name}</span>)}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
+                        </div>
+                    );
+                }
+
+                // --- FORMULARIO TESORERÍA (Separado) ---
+                if (type === 'finance_income') return (
+                    <div className="space-y-4">
+                        <Input label="Fecha de Cierre" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Monto Diezmos" type="number" value={form.tithes || ''} onChange={e => handleChange('tithes', e.target.value)} />
+                            <Input label="Monto Ofrendas" type="number" value={form.offerings || ''} onChange={e => handleChange('offerings', e.target.value)} />
+                        </div>
+                        <Input label="Monto Otros Ingresos" type="number" value={form.amount || ''} onChange={e => handleChange('amount', e.target.value)} />
+                        <Input label="Notas / Detalle" value={form.notes || ''} onChange={e => handleChange('notes', e.target.value)} />
+                        <div className="flex justify-end pt-4 border-t mt-4">
+                            <Button onClick={() => handleSave('finances', { ...form, type: 'Ingreso' })}>Guardar Cierre</Button>
+                        </div>
+                    </div>
+                );
+
+                if (type === 'finance_expense') return (
+                    <div className="space-y-4">
+                        <Input label="Fecha Gasto" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
+                        <Input label="Monto Total" type="number" value={form.amount || ''} onChange={e => handleChange('amount', e.target.value)} />
+                        <Input label="Motivo / Detalle" value={form.notes || ''} onChange={e => handleChange('notes', e.target.value)} />
+                        <div className="flex justify-end pt-4 border-t mt-4">
+                            <Button variant="danger" onClick={() => handleSave('finances', { ...form, type: 'Gasto' })}>Registrar Salida</Button>
+                        </div>
+                    </div>
+                );
+
+                // --- FORMULARIO MENSAJES (Nuevo) ---
+                if (type === 'compose_message') return (
+                    <div className="space-y-4">
+                        <Input label="Asunto" value={form.subject || ''} onChange={e => handleChange('subject', e.target.value)} />
+                        <div className="mb-4">
+                            <label className="label-std">Contenido</label>
+                            <textarea className="input-std h-32" value={form.content || ''} onChange={e => handleChange('content', e.target.value)}></textarea>
+                        </div>
+                        {/* Simplificado: Siempre broadcast o tareas en V2 */}
+                        <div className="bg-blue-50 p-3 rounded text-xs text-blue-700">Este mensaje se enviará a todos los usuarios (Difusión).</div>
+                        <div className="flex justify-end pt-4 border-t mt-4">
+                            <Button onClick={() => handleSave('messages', { ...form, to: 'all', fromName: userData.name, fromId: userData.id })}>Enviar</Button>
+                        </div>
+                    </div>
+                );
+
+                // --- FORMULARIO GENÉRICO EBD/JOVENES ---
+                if (type === 'ebd_events' || type === 'youth_events') return (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Fecha" type="date" value={form.date || ''} onChange={e => handleChange('date', e.target.value)} />
+                            <Input label="Hora" type="time" value={form.time || ''} onChange={e => handleChange('time', e.target.value)} />
+                        </div>
+                        <Input label="Tema / Actividad" value={form.title || ''} onChange={e => handleChange('title', e.target.value)} />
+                        <Input label="Lugar" value={form.location || ''} onChange={e => handleChange('location', e.target.value)} />
+                        <div className="flex justify-end pt-4 border-t mt-4">{saveBtn}</div>
+                    </div>
+                );
+
+                // --- CONFIRM DELETE ---
+                if (type === 'confirm_delete') return (
+                    <div className="text-center py-6">
+                        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Icon name="Trash" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">¿Estás seguro?</h3>
+                        <p className="text-slate-500 mb-8">Esta acción no se puede deshacer.</p>
+                        <div className="flex justify-center gap-4">
+                            <Button variant="secondary" onClick={() => setModalConfig({isOpen:false})}>Cancelar</Button>
+                            <Button variant="danger" onClick={confirmDelete}>Sí, Eliminar</Button>
+                        </div>
+                    </div>
+                );
+
+                return <div>Formulario no configurado</div>;
+            };
+
+            // --- VISTA GLOBAL DE EVENTO (MODAL DETALLE) ---
+            const renderGlobalEvent = () => {
+                if (!globalModalEvent) return null;
+                const { worship, server, ebd, youth, base } = globalModalEvent;
+                const date = base?.date;
+
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <h2 className="text-2xl font-black text-church-navy uppercase tracking-widest">{formatDate(date)}</h2>
+                            <p className="text-slate-500 font-bold mt-1">{getDayName(date)} • {base?.time} hs</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                            {/* Tarjeta Alabanza */}
+                            <div className="bg-white p-4 rounded-xl border border-l-4 border-l-purple-500 shadow-sm">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3 border-b pb-2"><Icon name="Music" className="text-purple-500"/> Alabanza</h3>
+                                {worship ? (
+                                    <div className="text-sm space-y-2">
+                                        <p><strong className="text-slate-500">Tema:</strong> {worship.theme}</p>
+                                        <div className="bg-slate-50 p-3 rounded text-slate-600 whitespace-pre-wrap text-xs font-mono">{worship.songsText || 'Sin lista de canciones'}</div>
+                                    </div>
+                                ) : <span className="text-slate-400 italic text-sm">Sin planificación.</span>}
+                            </div>
+
+                            {/* Tarjeta Servidores */}
+                            <div className="bg-white p-4 rounded-xl border border-l-4 border-l-green-500 shadow-sm">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3 border-b pb-2"><Icon name="Briefcase" className="text-green-500"/> Servidores</h3>
+                                {server ? (
+                                    <div className="text-sm space-y-2">
+                                        <p><strong className="text-slate-500">Predicador:</strong> {server.preacher || '--'}</p>
+                                        <div className="grid grid-cols-2 gap-2 mt-2">
+                                            {Object.entries(server.assignments || {}).map(([k,v]) => (
+                                                <div key={k} className="bg-green-50 p-2 rounded"><span className="block text-[10px] font-bold uppercase text-green-700">{k}</span> <span className="font-medium">{v}</span></div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : <span className="text-slate-400 italic text-sm">Sin planificación.</span>}
+                            </div>
+                        </div>
+                        
+                        <div className="text-center pt-2">
+                            <Button variant="secondary" onClick={() => setGlobalModalEvent(null)} className="w-full">Cerrar</Button>
+                        </div>
+                    </div>
+                );
+            };
+
+            // =================================================================================
+            // 6. RENDERIZADO (LAYOUT)
+            // =================================================================================
+            return (
+                <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
+                    {/* SIDEBAR NAVIGATION */}
+                    <aside className={`fixed inset-y-0 left-0 z-40 w-72 bg-church-navy text-white transition-transform duration-300 shadow-2xl md:relative md:translate-x-0 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-6">
+                            <div className="flex items-center gap-3 mb-10">
+                                <div className="w-10 h-10 bg-church-gold rounded-xl flex items-center justify-center text-church-navy font-black text-xl shadow-lg shadow-church-gold/20">C</div>
+                                <div>
+                                    <h1 className="font-bold text-lg leading-none tracking-tight">Conquistadores</h1>
+                                    <p className="text-xs text-church-100 opacity-60">Gestión Integral</p>
+                                </div>
+                            </div>
+
+                            <nav className="space-y-1.5">
+                                <button onClick={() => {setActiveTab('dashboard'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'dashboard' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}>
+                                    <Icon name="Home" /> Dashboard
+                                </button>
+                                <button onClick={() => {setActiveTab('inbox'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'inbox' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}>
+                                    <Icon name="Bell" /> Buzón <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full ml-auto font-bold">{messages.length}</span>
+                                </button>
+
+                                <div className="mt-8 mb-2 px-4 text-xs font-bold text-church-gold uppercase tracking-widest opacity-80">Ministerios</div>
+                                <button onClick={() => {setActiveTab('worship'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'worship' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Music" /> Alabanza</button>
+                                <button onClick={() => {setActiveTab('servers'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'servers' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Briefcase" /> Servidores</button>
+                                <button onClick={() => {setActiveTab('ebd'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'ebd' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Book" /> EBD / Jóvenes</button>
+
+                                {userData?.role === 'Pastor' && (
+                                    <>
+                                        <div className="mt-8 mb-2 px-4 text-xs font-bold text-church-gold uppercase tracking-widest opacity-80">Administración</div>
+                                        <button onClick={() => {setActiveTab('finances'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'finances' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="DollarSign" /> Tesorería</button>
+                                        <button onClick={() => {setActiveTab('directory'); setSidebarOpen(false)}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'directory' ? 'bg-white text-church-navy shadow-lg' : 'text-church-100 hover:bg-white/10'}`}><Icon name="Users" /> Directorio</button>
+                                    </>
+                                )}
+                            </nav>
+                        </div>
+                        
+                        <div className="mt-auto p-4 m-4 bg-church-800 rounded-2xl flex items-center gap-3 shadow-lg">
+                            <div className="w-10 h-10 rounded-full bg-white text-church-navy flex items-center justify-center font-bold text-lg">{userData?.name?.charAt(0)}</div>
+                            <div className="flex-1 overflow-hidden">
+                                <p className="text-sm font-bold truncate">{userData?.name}</p>
+                                <p className="text-xs text-church-gold opacity-80 truncate">{userData?.role}</p>
+                            </div>
+                            <button onClick={() => auth.signOut()} className="text-church-100 hover:text-white"><Icon name="LogOut" size={18} /></button>
                         </div>
                     </aside>
 
-                    {/* Main Content */}
-                    <main className="flex-1 h-full overflow-y-auto relative bg-slate-50">
+                    {/* MAIN CONTENT AREA */}
+                    <main className="flex-1 flex flex-col h-full overflow-hidden relative w-full bg-slate-50">
                         {/* Mobile Header */}
-                        <header className="md:hidden bg-white p-4 sticky top-0 z-30 flex justify-between items-center shadow-sm">
-                            <span className="font-extrabold text-brand-900">App</span>
-                            <button onClick={()=>setSidebarOpen(true)} className="text-slate-600"><Icon name="Menu"/></button>
+                        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-100 shadow-sm z-30">
+                            <div className="flex items-center gap-2 font-bold text-church-navy"><Icon name="Home" className="text-church-gold"/> Conquistadores</div>
+                            <button onClick={() => setSidebarOpen(true)} className="p-2"><Icon name="Menu" /></button>
                         </header>
 
-                        <div className="p-6 md:p-10 max-w-7xl mx-auto pb-24">
-                            {/* Navegador de Meses Global (Excepto en Dashboard/Directorio) */}
-                            {['worship','servers','youth','calendar','finances'].includes(tab) && (
-                                <MonthNavigator date={currentDate} setDate={setCurrentDate} />
-                            )}
+                        {/* Month Nav Filter */}
+                        <MonthNav />
 
-                            {/* CONTENIDO DE PESTAÑAS */}
-                            
-                            {/* 1. DASHBOARD */}
-                            {tab === 'dashboard' && (
-                                <div className="space-y-8 fade-in">
-                                    <header>
-                                        <h2 className="text-3xl font-extrabold text-slate-800">Hola, {profile.name.split(' ')[0]} 👋</h2>
-                                        <p className="text-slate-500">Panel de {profile.ministry || 'Servicio'}</p>
-                                    </header>
-                                    
-                                    {/* Mis Tareas (Inbox) */}
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                                        <h3 className="font-bold text-xl mb-4 flex items-center gap-2"><Icon name="Check"/> Mis Asignaciones</h3>
-                                        <p className="text-slate-400 italic text-sm mb-4">Próximos turnos y tareas asignadas.</p>
-                                        <div className="p-4 bg-brand-50 rounded-xl border border-brand-100 text-brand-800 font-bold text-sm text-center">
-                                            Revisa el Calendario para ver tus turnos detallados
-                                        </div>
+                        {/* Content Scrollable */}
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
+                                {activeTab === 'dashboard' && <DashboardView />}
+                                {activeTab === 'inbox' && <InboxView />}
+                                {activeTab === 'finances' && <FinancesView />}
+                                {activeTab === 'directory' && <DirectoryView />}
+                                {activeTab === 'worship' && <MinistryView title="Ministerio de Alabanza" events={worshipEvents} collection="worship_events" ministryKey="Alabanza" icon="Music" />}
+                                {activeTab === 'servers' && <MinistryView title="Servidores y Orden" events={serverEvents} collection="server_events" ministryKey="Servidores" icon="Briefcase" />}
+                                {activeTab === 'ebd' && (
+                                    <div className="space-y-10">
+                                        <MinistryView title="Escuela Bíblica" events={ebdEvents} collection="ebd_events" ministryKey="EBD" icon="Book" />
+                                        <MinistryView title="Jóvenes" events={youthEvents} collection="youth_events" ministryKey="Jóvenes" icon="Smile" />
                                     </div>
-
-                                    {/* Métrica de Justicia (Solo Líderes) */}
-                                    {isLeader && (
-                                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                                            <h3 className="font-bold text-lg mb-4">Rotación de Servicio</h3>
-                                            <div className="h-48 flex items-center justify-center bg-slate-50 rounded-xl text-slate-400 text-xs">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={[{name: 'Juan', v: 5}, {name: 'Ana', v: 3}, {name: 'Luis', v: 2}]}>
-                                                        <XAxis dataKey="name" />
-                                                        <Tooltip />
-                                                        <Bar dataKey="v" fill="#3b82f6" radius={[4,4,0,0]} />
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* 2. DIRECTORIO (Solo Líderes) */}
-                            {tab === 'directory' && <DirectoryManager db={db} appId={appId} canEdit={true} />}
-
-                            {/* 3. MENSAJERÍA */}
-                            {tab === 'messages' && <Messaging db={db} appId={appId} currentUser={profile} canSend={isLeader} />}
-
-                            {/* 4. MINISTERIOS PLANIFICADORES */}
-                            {tab === 'worship' && (
-                                <div className="space-y-8">
-                                    <MinistryPlanner db={db} appId={appId} ministry="worship" currentDate={currentDate} canEdit={isLeader} directory={directory} />
-                                    {/* Biblioteca de Canciones (Simplificada) */}
-                                    <div className="bg-white p-6 rounded-3xl border border-slate-200">
-                                        <h3 className="font-bold text-xl mb-4 flex items-center gap-2"><Icon name="Music"/> Biblioteca de Canciones</h3>
-                                        <button className="btn-ghost w-full border-dashed">Gestionar Canciones (Próximamente)</button>
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {tab === 'servers' && <MinistryPlanner db={db} appId={appId} ministry="servers" currentDate={currentDate} canEdit={isLeader} directory={directory} /> }
-                            
-                            {tab === 'youth' && <MinistryPlanner db={db} appId={appId} ministry="youth" currentDate={currentDate} canEdit={isLeader} directory={directory} />}
-
-                            {/* 5. TESORERÍA */}
-                            {tab === 'finances' && isPastor && <Finances db={db} appId={appId} currentDate={currentDate} />}
-
-                            {/* 6. CALENDARIO */}
-                            {tab === 'calendar' && <UnifiedCalendar db={db} appId={appId} currentDate={currentDate} />}
+                                )}
+                            </div>
                         </div>
                     </main>
+
+                    {/* OVERLAY Mobile */}
+                    {sidebarOpen && <div className="fixed inset-0 bg-slate-900/50 z-30 md:hidden backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)}></div>}
+
+                    {/* MODALES */}
+                    <Modal isOpen={!!globalModalEvent} onClose={() => setGlobalModalEvent(null)} title="Detalle del Día" size="sm">
+                        {renderGlobalEvent()}
+                    </Modal>
+
+                    <Modal isOpen={modalConfig.isOpen} onClose={() => setModalConfig({ isOpen: false, type: '', data: null })} title={modalConfig.data ? 'Editar Registro' : 'Nuevo Registro'} size={modalConfig.type === 'confirm_delete' ? 'sm' : 'md'}>
+                        {modalConfig.isOpen && renderModalContent()}
+                    </Modal>
+
                 </div>
             );
         };
